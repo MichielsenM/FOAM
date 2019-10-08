@@ -1,0 +1,19 @@
+#!/bin/bash -l
+
+#PBS -A lp_mesa_modeling
+#PBS -l nodes=5:ppn=20:ivybridge
+#PBS -l pmem=3gb
+#PBS -l walltime=72:00:00
+#PBS -N MESA
+#PBS -m abe
+
+
+cd $PBS_O_WORKDIR
+module purge
+source $VSC_HOME/.bashrc
+
+bash run_MESA.sh $Zini $Mini $logD $aov $fov $output_dir $MESA_work_dir
+
+# This script is submitted to the cluster with the following 2 commands:
+# module load worker
+# wsub -data MESA_parameters.csv -batch submit_MESA.pbs

@@ -1,0 +1,19 @@
+#!/bin/bash -l
+
+#PBS -A lp_mesa_modeling
+#PBS -l nodes=5:ppn=20:ivybridge
+#PBS -l pmem=1gb
+#PBS -l walltime=24:00:00
+#PBS -N GYRE
+#PBS -o /dev/null
+#PBS -m abe
+
+cd $PBS_O_WORKDIR
+module purge
+source $VSC_HOME/.bashrc
+
+bash run_GYRE.sh $Zini $Mini $logD $aov $fov $Xc $GYRE_inlist $output_dir
+
+# This script is submitted to the cluster with the following 2 commands:
+# module load worker
+# wsub -data GYRE_parameters.csv -batch submit_GYRE.pbs
