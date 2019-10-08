@@ -8,14 +8,14 @@ $CONDA_PREFIX/lib/python3.7/site-packages/
 
 Be sure that $CONDA_PREFIX is set to your conda installation, this should be the case if you ran conda init when installing conda.
 
-This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in gpl-3.0.txt.
+This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 
 ## contents
 
 1. `templates`: a number of template files; GYRE inlists, bash scripts, VSC submit files.
+1. `LICENSE`: GNU general public license
 2. `functions_for_gyre.py`: Helpful functions for GYRE input and output.
 3. `functions_for_mesa.py`: Helpful functions to process MESA output.
-3. `gpl-3.0.txt`: GNU general public license
 4. `grid_building_slurm.py`: Functions for building MESA and GYRE grids on the SLURM framework.
 5. `grid_building_vsc.py`: Functions for building MESA and GYRE grids on the VSC framework.
 6. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
