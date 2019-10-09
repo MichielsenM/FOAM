@@ -142,7 +142,7 @@ def convert_units(input, quantity, convertto='cgs'):
     out: list of float
         converted numbers
     '''
-    # factors to convert
+    # conversion factors
     to_cgs = {'mass': 1.9892E33,
               'luminosity': 3.8418E33,
               'radius': 6.9598E10}

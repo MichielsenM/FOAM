@@ -33,7 +33,7 @@ def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
 ################################################################################
 def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega_rot=0.0, frame='inertial'):
     """
-    Calculate the frequency range for the sought radial orders of the g modes. (non-rotating case)
+    Calculate the frequency range for the sought radial orders of the g modes.
     ------- Parameters -------
     gyre_file_path: string
         absolute path to the gyre file that needs to be scanned
@@ -73,7 +73,7 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         f_max = np.sqrt(l*(l+1)) / (n_min_used*P0)
     else:
         # Make a pandas dataframe containing an interpolation table for lambda (eigenvalues of LTE - TAR)
-        df = pandas.read_csv(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/mamsie_py/lambda.csv'), sep=',')
+        df = pandas.read_csv(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/lambda.csv'), sep=',')
         
         # will add extra functionality to calculate the bounds explicitly, making use of GYRE
 
@@ -127,14 +127,14 @@ def calculate_k(l,m,rossby):
       k = l - abs(m) # Lee & Saio (1997) (& GYRE source code --> see below)
       return k
     else:
-      raise Exception('l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({lval},{mval})'.format(lval=l,mval=m))
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
   else:
     # Rossby mode k
     if abs(l) >= abs(m):
       k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
       return k
     else:
-      raise Exception('l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({lval},{mval})'.format(lval=l,mval=m))   
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')   
 
 ################################################################################
 ################################################################################
