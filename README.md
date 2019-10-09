@@ -4,11 +4,14 @@ A custom-made python package compatible with anaconda, python 3.7 version.
 Contains useful functions to make figures, MESA/GYRE grids, and help with data analysis.
 
 This directory should be included in your anaconda installation in the following folder:
-$CONDA_PREFIX/lib/python3.7/site-packages/
-
+$CONDA_PREFIX/lib/python3.7/site-packages/  \
 Be sure that $CONDA_PREFIX is set to your conda installation, this should be the case if you ran conda init when installing conda.
 
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
+
+### Note for contributors
+Please submit pull requests to the developer branch instead of the master branch. 
+The master branch will be updated from time to time when possible conflicts between different pull requests have been resolved.
 
 ## contents
 
