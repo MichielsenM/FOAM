@@ -124,14 +124,14 @@ def calculate_k(l,m,rossby):
   if not rossby:
     # g-mode k
     if abs(l) >= abs(m):
-      k = l - abs(m) # Lee & Saio (1997)
+      k = l - abs(m) # Lee & Saio (1997) (& GYRE source code --> see below)
       return k
     else:
       raise Exception('l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({lval},{mval})'.format(lval=l,mval=m))
   else:
     # Rossby mode k
     if abs(l) >= abs(m):
-      k = (-1)*(l - abs(m) + 1) # Lee & Saio (1997) -------> DOUBLE CHECK/VERIFY THIS
+      k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
       return k
     else:
       raise Exception('l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({lval},{mval})'.format(lval=l,mval=m))   
