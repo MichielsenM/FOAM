@@ -106,7 +106,6 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
 ################################################################################
 # Function written by Jordan Van Beeck
 ################################################################################
-
 def calculate_k(l,m,rossby):
   """
     Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l). 
@@ -116,7 +115,6 @@ def calculate_k(l,m,rossby):
         parameter that needs to be set to True if Rossby mode k is calculated
     l, m: integer
         degree (l) and azimuthal order (m) of the modes
-
     ------- Returns -------
     k: integer 
         mode classification parameter of the pulsation mode
@@ -134,11 +132,11 @@ def calculate_k(l,m,rossby):
       k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
       return k
     else:
-      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')   
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
 
 ################################################################################
 ################################################################################
-# Function adapted from Cole Johnston
+# Functions adapted from Cole Johnston
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     """
@@ -282,3 +280,39 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
 
         series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
         return series_chi2,final_theoretical_periods,corresponding_orders
+
+################################################################################
+def generate_obs_series(periods,errors):
+    """
+    Generate the observed period spacing series (delta P = p_n - p_(n+1) )
+    ------- Parameters -------
+    periods, errors: list of floats
+        observational periods and their errors in units of days
+    ------- Returns -------
+    observed_spacings, observed_spacings_errors: list of floats
+        period spacing series (delta P values) and its errors in untits of seconds
+    """
+    observed_spacings        = []
+    observed_spacings_errors = []
+    for kk,prd_k in enumerate(periods[:-1]):
+        prd_k_p_1 = periods[kk+1]
+        observed_spacings.append( abs( prd_k - prd_k_p_1 )*86400. )
+        observed_spacings_errors.append(np.sqrt( errors[kk]**2 + errors[kk+1]**2  )*86400.)
+    return observed_spacings,observed_spacings_errors
+
+################################################################################
+def generate_thry_series(periods):
+    """
+    Generate the theoretical period spacing series (delta P = p_n - p_(n+1) )
+    ------- Parameters -------
+    periods: list of floats
+        theoretical periods in units of days
+    ------- Returns -------
+    theoretical_spacings: list of floats
+        period spacing series (delta P values) in units of seconds
+    """
+    theoretical_spacings = []
+    for kk,prd_k in enumerate(periods[:-1]):
+        prd_k_p_1 = periods[kk+1]
+        theoretical_spacings.append( abs(prd_k-prd_k_p_1)*86400. )
+    return theoretical_spacings
