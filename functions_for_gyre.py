@@ -87,6 +87,38 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
 
 ################################################################################
 ################################################################################
+# Function written by Jordan Van Beeck
+################################################################################
+def calculate_k(l,m,rossby):
+  """
+    Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l).
+    Raises an error when l is smaller than m.
+    ------- Parameters -------
+    rossby: boolean
+        parameter that needs to be set to True if Rossby mode k is calculated
+    l, m: integer
+        degree (l) and azimuthal order (m) of the modes
+    ------- Returns -------
+    k: integer
+        mode classification parameter of the pulsation mode
+  """
+  if not rossby:
+    # g-mode k
+    if abs(l) >= abs(m):
+      k = l - abs(m) # Lee & Saio (1997) (& GYRE source code --> see below)
+      return k
+    else:
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
+  else:
+    # Rossby mode k
+    if abs(l) >= abs(m):
+      k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
+      return k
+    else:
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
+
+################################################################################
+################################################################################
 # Functions adapted from Cole Johnston
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
