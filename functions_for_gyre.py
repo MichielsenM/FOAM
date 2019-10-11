@@ -4,35 +4,36 @@ import numpy as np
 import glob, os
 from . import read
 from . import my_python_functions as mypy
+import matplotlib.pyplot as plt
 import pandas
 ################################################################################
 def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
     """
-    Calculate rotationally shifted frequencies. Aerts 2010, eq 3.357
+    Calculate rotationally shifted frequencies in a perturbative way. (See Aerts et al. (2010), eq 3.357)
     ------- Parameters -------
     frequencies, betas: numpy array of floats
-        frequency values (cyc/day) en beta values (eq 3.357, Aerts 2010)
+        frequency values (c/d) and beta values (eq 3.357, Aerts et al. (2010))
     Mstar, Rstar, omega: float
-        stellar mass (g), radius (cm) and rotation frequency in units of critical velocity (omega_crit)
+        stellar mass (g), radius (cm) and rotation frequency in units of critical velocity (omega_crit^-1)
     m: int
         azimuthal order
 
     ------- Returns -------
     shifted_freqs: numpy array of floats
-        frequency values as shifted by the ledoux splitting
+        pulsation frequency values, shifted by the Ledoux splitting
     """
 
-    G = 6.67428E-8 # gravitational constant (g^-1 cm^3 s^-2)
-    omega_crit = (1/(2*np.pi))*(8*G*Mstar/(27*Rstar**3))**0.5
-    omega_cycday = omega*omega_crit*86400 # rotation frequency in units of cyc/day
+    G = 6.67428E-8 # gravitational constant (g^-1 cm^3 s^-2) 
+    omega_crit = (1/(2*np.pi))*(8*G*Mstar/(27*Rstar**3))**0.5 # Roche critical rotation frequency (s^-1)
+    omega_cycday = omega*omega_crit*86400 # rotation frequency in units of c/d
 
-    shifted_freqs = frequencies-m*omega_cycday*(1-betas)
+    shifted_freqs = frequencies-(m*omega_cycday*(1-betas)) # shifted frequencies in units of c/d
     return shifted_freqs
 
 ################################################################################
-def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega_rot=0.0):
+def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega_rot=0.0, frame='inertial'):
     """
-    Calculate the frequency range for the sought radial orders of the g modes. (for non-rotating case)
+    Calculate the frequency range for the sought radial orders of the g modes.
     ------- Parameters -------
     gyre_file_path: string
         absolute path to the gyre file that needs to be scanned
@@ -41,53 +42,101 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
     l, m: integer
         degree (l) and azimuthal order (m) of the modes
     omega_rot: float
-        rotation frequency of the model [c/d]
+        rotation frequency of the model (c/d) 
 
     ------- Returns -------
     f_min, f_max: float
         lower and upper bound of frequency range that needs to be scanned in oder
         to retrieve the required range of radial orders
     """
-    directory, gyre_file = mypy.split_line(gyre_file_path, 'gyre/')
-    Xc_file = float(mypy.substring(gyre_file, 'Xc', '.GYRE'))
-    hist_file = glob.glob(f'{directory}*.hist')[0]
-    dic_hist  = read.read_multiple_mesa_files([hist_file], is_hist=True, is_prof=False)[0]
-    data      = dic_hist['hist']
+    directory, gyre_file = mypy.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
+    Xc_file = float(mypy.substring(gyre_file, 'Xc', '.GYRE')) # get Xc
+    hist_file = glob.glob(f'{directory}*.hist')[0] # selects the first history file in the folder
+    dic_hist  = read.read_multiple_mesa_files([hist_file], is_hist=True, is_prof=False)[0] # read the MESA files into a dictionary
+    # Retrieve data
+    data      = dic_hist['hist'] 
     P0_values = data['Asymptotic_dP']
     Xc_values = data['center_h1']
 
-    # get the asymptotic period spacing value at the Xc value of the gyre file
+    # Obtain the asymptotic period spacing value/buoyancy radius at the Xc value closest to that of the gyre file
     diff = abs(Xc_file - Xc_values)
     xc_index = np.where(diff == np.min(diff))[0]
-    P0 = P0_values[xc_index][0]
+    P0 = P0_values[xc_index][0] # asymptotic period spacing value/buoyancy radius
 
-    # calculate the scanning range a bit broader than the purely asymptotic values, just to be safe.
+    # Calculate the scanning range a bit broader than the purely asymptotic values, just to be safe.
     n_max_used = abs(npg_min-3)
     n_min_used = abs(min(-1, npg_max+3))
 
     if omega_rot==0:
+        # If no rotation, use asymptotic values
         f_min = np.sqrt(l*(l+1)) / (n_max_used*P0)
         f_max = np.sqrt(l*(l+1)) / (n_min_used*P0)
     else:
-        # Make a pandas dataframe
+        # Make a pandas dataframe containing an interpolation table for lambda (eigenvalues of LTE - TAR)
         df = pandas.read_csv(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/lambda.csv'), sep=',')
-        # select nu (Spin parameter) and Lambda (eigenvalues) column when values in l and m column correspond to requested values
+        
+        # will add extra functionality to calculate the bounds explicitly, making use of GYRE
+
+        # Select nu (spin parameter) and lambda column when values in l and m column correspond to requested values
+        ###### SHOULD BE CHANGED TO PARAMETER 'K' ---> needs adjustment in lambda.csv - JVB.
         NuLambda = df.loc[(df['l'] == l) & (df['m'] == m)][['nu', 'Lambda']]
 
+        # Generate numpy array from pandas dataframe series
         nu = NuLambda['nu'].to_numpy()
         Lambda = NuLambda['Lambda'].to_numpy()
 
+        # Generate difference between pulsation frequency and asymptotic value (in co-rotating frame) in units of c/d
         diff_max = nu/(2.*omega_rot) - P0*n_max_used/np.sqrt(Lambda)
         diff_min = nu/(2.*omega_rot) - P0*n_min_used/np.sqrt(Lambda)
+        # Obtain index of minimal difference/distance
         index_max = np.where(abs(diff_max) == np.min(abs(diff_max)))[0]
         index_min = np.where(abs(diff_min) == np.min(abs(diff_min)))[0]
-        f_min = (np.sqrt(Lambda[index_max]) / (P0*n_max_used) + m*omega_rot)[0]
-        f_max = (np.sqrt(Lambda[index_min]) / (P0*n_min_used) + m*omega_rot)[0]
+        # Calculate the rotationally shifted frequency (TAR approximation)
+        ### in the inertial frame
+        if frame == 'inertial':
+            f_min = (np.sqrt(Lambda[index_max]) / (P0*n_max_used) + m*omega_rot)[0]
+            f_max = (np.sqrt(Lambda[index_min]) / (P0*n_min_used) + m*omega_rot)[0]
+        ### in the co-rotating frame
+        else:
+            f_min = (np.sqrt(Lambda[index_max]) / (P0*n_max_used))[0]
+            f_max = (np.sqrt(Lambda[index_min]) / (P0*n_min_used))[0]
     return f_min, f_max
 
 ################################################################################
 ################################################################################
-# Function adapted from Cole Johnston
+# Function written by Jordan Van Beeck
+################################################################################
+def calculate_k(l,m,rossby):
+  """
+    Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l). 
+    Raises an error when l is smaller than m.
+    ------- Parameters -------
+    rossby: boolean
+        parameter that needs to be set to True if Rossby mode k is calculated
+    l, m: integer
+        degree (l) and azimuthal order (m) of the modes
+    ------- Returns -------
+    k: integer 
+        mode classification parameter of the pulsation mode
+  """
+  if not rossby:
+    # g-mode k
+    if abs(l) >= abs(m):
+      k = l - abs(m) # Lee & Saio (1997) (& GYRE source code --> see below)
+      return k
+    else:
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
+  else:
+    # Rossby mode k
+    if abs(l) >= abs(m):
+      k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
+      return k
+    else:
+      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
+
+################################################################################
+################################################################################
+# Functions adapted from Cole Johnston
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     """
@@ -110,13 +159,14 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     if len(tperiods)<len(operiods):
         return 1e16, [-1. for i in range(len(operiods))], [-1 for i in range(len(operiods))]
     else:
-        # Generate two series
+        # Generate two series ---> where are the functions for this? - JVB.
         dP,e_dP = generate_obs_series(operiods,operiods_errors)
         deltaP  = generate_thry_series(tperiods)
 
         # Find the best matches per observed period
         pairs_orders = []
         for ii,period in enumerate(operiods):
+            ## Chi_squared array definition
             chisqs = np.array([ ( (period-tperiod)/operiods_errors[ii] )**2 for tperiod in tperiods  ])
 
             ## Locate the theoretical frequency (and accompanying order) with the best chi2
@@ -129,6 +179,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
 
         pairs_orders = np.array(pairs_orders)
 
+        # Plot the results
         plt.figure(1,figsize=(6.6957,6.6957))
         plt.subplot(211)
         plt.plot(pairs_orders[:,0],pairs_orders[:,1],'o')
@@ -142,8 +193,8 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
 
 
         sequences = []
-        ## Look through all pairs of obs and theoretical frequencies and
-        ## check if the next obs freqency has a corresponding theoretical frequency
+        ## Go through all pairs of obs and theoretical frequencies and
+        ## check if the next observed freqency has a corresponding theoretical frequency
         ## with the consecutive radial order
         current = []
         lp = len(pairs_orders[:-1])
@@ -229,3 +280,39 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
 
         series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
         return series_chi2,final_theoretical_periods,corresponding_orders
+
+################################################################################
+def generate_obs_series(periods,errors):
+    """
+    Generate the observed period spacing series (delta P = p_n - p_(n+1) )
+    ------- Parameters -------
+    periods, errors: list of floats
+        observational periods and their errors in units of days
+    ------- Returns -------
+    observed_spacings, observed_spacings_errors: list of floats
+        period spacing series (delta P values) and its errors in untits of seconds
+    """
+    observed_spacings        = []
+    observed_spacings_errors = []
+    for kk,prd_k in enumerate(periods[:-1]):
+        prd_k_p_1 = periods[kk+1]
+        observed_spacings.append( abs( prd_k - prd_k_p_1 )*86400. )
+        observed_spacings_errors.append(np.sqrt( errors[kk]**2 + errors[kk+1]**2  )*86400.)
+    return observed_spacings,observed_spacings_errors
+
+################################################################################
+def generate_thry_series(periods):
+    """
+    Generate the theoretical period spacing series (delta P = p_n - p_(n+1) )
+    ------- Parameters -------
+    periods: list of floats
+        theoretical periods in units of days
+    ------- Returns -------
+    theoretical_spacings: list of floats
+        period spacing series (delta P values) in units of seconds
+    """
+    theoretical_spacings = []
+    for kk,prd_k in enumerate(periods[:-1]):
+        prd_k_p_1 = periods[kk+1]
+        theoretical_spacings.append( abs(prd_k-prd_k_p_1)*86400. )
+    return theoretical_spacings
