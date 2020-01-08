@@ -3,9 +3,7 @@
   It supports reading a single history log file, a single profile, or a large number of
   files from a repository.
 
-  log history:
-  - 19 August 2014: published on bitbucket
-  - 25 July 2013: created.
+  Adapted from the bitbucket repository ivs_sse of Ehsan Moravveji
 
 """
 import sys,os
