@@ -8,7 +8,6 @@ from . import read
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('logger')
-# logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.DEBUG)
 
 ################################################################################
@@ -55,7 +54,7 @@ def substring(line, sep_first, sep_second) :
         return tail
     head, tail = split_line(tail, sep =sep_second)
     return head
- ################################################################################
+################################################################################
 def get_param_from_filename(file_path, parameters):
     """
     Get parameters from filename
@@ -72,18 +71,20 @@ def get_param_from_filename(file_path, parameters):
     """
 
     param_dict = {}
-    path, filename = file_path.rsplit('/',1)
+    if '/' in file_path:
+        path, filename = file_path.rsplit('/',1)
+    else:
+        filename = file_path
+
     filename = filename[:filename.rfind('.')] # remove file extension
 
     for parameter in parameters:
         try:
-            head, tail = split_line(filename, parameter)
-            # p, tail =  re.split('\\.|_', tail, 1) # alternative way
             p = substring(filename, parameter, '_')
             param_dict[parameter] = p
         except:
             param_dict[parameter] = '0'
-            logger.info(f'In get_param_from_filename: parameter "{parameter}" not found in filename, value set to zero')
+            logger.info(f'In get_param_from_filename: parameter "{parameter}" not found in \'{file_path}\', value set to zero')
 
     return param_dict
 
