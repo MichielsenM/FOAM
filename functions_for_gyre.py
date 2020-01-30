@@ -4,6 +4,7 @@ import numpy as np
 import glob, os
 from . import read
 from . import my_python_functions as mypy
+from . import functions_for_mesa as ffm
 import matplotlib.pyplot as plt
 import pandas
 ################################################################################
@@ -23,7 +24,7 @@ def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
         pulsation frequency values, shifted by the Ledoux splitting
     """
 
-    G = 6.67428E-8 # gravitational constant (g^-1 cm^3 s^-2) 
+    G = 6.67428E-8 # gravitational constant (g^-1 cm^3 s^-2)
     omega_crit = (1/(2*np.pi))*(8*G*Mstar/(27*Rstar**3))**0.5 # Roche critical rotation frequency (s^-1)
     omega_cycday = omega*omega_crit*86400 # rotation frequency in units of c/d
 
@@ -31,7 +32,7 @@ def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
     return shifted_freqs
 
 ################################################################################
-def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega_rot=0.0, frame='inertial'):
+def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL'):
     """
     Calculate the frequency range for the sought radial orders of the g modes.
     ------- Parameters -------
@@ -42,7 +43,11 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
     l, m: integer
         degree (l) and azimuthal order (m) of the modes
     omega_rot: float
-        rotation frequency of the model (c/d) 
+        rotation frequency of the model
+    unit_rot: string
+        unit of the rotation frequency, can be CYC_PER_DAY or CRITICAL (roche critical)
+    rotation_frame: string
+        rotational frame of reference for the pulsation freqencies
 
     ------- Returns -------
     f_min, f_max: float
@@ -54,14 +59,14 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
     hist_file = glob.glob(f'{directory}*.hist')[0] # selects the first history file in the folder
     dic_hist  = read.read_multiple_mesa_files([hist_file], is_hist=True, is_prof=False)[0] # read the MESA files into a dictionary
     # Retrieve data
-    data      = dic_hist['hist'] 
+    data      = dic_hist['hist']
     P0_values = data['Asymptotic_dP']
     Xc_values = data['center_h1']
 
     # Obtain the asymptotic period spacing value/buoyancy radius at the Xc value closest to that of the gyre file
     diff = abs(Xc_file - Xc_values)
     xc_index = np.where(diff == np.min(diff))[0]
-    P0 = P0_values[xc_index][0] # asymptotic period spacing value/buoyancy radius
+    P0 = P0_values[xc_index][0]/86400 # asymptotic period spacing value/buoyancy radius, /86400 to go from sec to day
 
     # Calculate the scanning range a bit broader than the purely asymptotic values, just to be safe.
     n_max_used = abs(npg_min-3)
@@ -72,9 +77,17 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         f_min = np.sqrt(l*(l+1)) / (n_max_used*P0)
         f_max = np.sqrt(l*(l+1)) / (n_min_used*P0)
     else:
+        if unit_rot == 'CRITICAL': # Roche critical
+            model_mass   = ffm.convert_units('mass',   data['star_mass'][xc_index], convertto='cgs')
+            model_radius = ffm.convert_units('radius', 10**data['log_R'][xc_index], convertto='cgs')
+            G = ffm.convert_units('cgrav', 1)
+            Roche_rate = (1/(2*np.pi))*np.sqrt((8*G*model_mass)/(27*model_radius**3)) # Roche crit rotation rate in cycles per second
+            Roche_rate = Roche_rate * 86400 # Roche crit rotation rate in cycles per day
+            omega_rot = omega_rot * Roche_rate # Multiply by fraction of the crit rate, to get final omega_rot in cycles per day
+
         # Make a pandas dataframe containing an interpolation table for lambda (eigenvalues of LTE - TAR)
         df = pandas.read_csv(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/lambda.csv'), sep=',')
-        
+
         # will add extra functionality to calculate the bounds explicitly, making use of GYRE
 
         # Select nu (spin parameter) and lambda column when values in l and m column correspond to requested values
@@ -93,7 +106,7 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         index_min = np.where(abs(diff_min) == np.min(abs(diff_min)))[0]
         # Calculate the rotationally shifted frequency (TAR approximation)
         ### in the inertial frame
-        if frame == 'inertial':
+        if rotation_frame == 'INERTIAL':
             f_min = (np.sqrt(Lambda[index_max]) / (P0*n_max_used) + m*omega_rot)[0]
             f_max = (np.sqrt(Lambda[index_min]) / (P0*n_min_used) + m*omega_rot)[0]
         ### in the co-rotating frame
@@ -108,7 +121,7 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
 ################################################################################
 def calculate_k(l,m,rossby):
   """
-    Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l). 
+    Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l).
     Raises an error when l is smaller than m.
     ------- Parameters -------
     rossby: boolean
@@ -116,7 +129,7 @@ def calculate_k(l,m,rossby):
     l, m: integer
         degree (l) and azimuthal order (m) of the modes
     ------- Returns -------
-    k: integer 
+    k: integer
         mode classification parameter of the pulsation mode
   """
   if not rossby:

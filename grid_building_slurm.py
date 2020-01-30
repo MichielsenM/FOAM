@@ -108,7 +108,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', output_dir=f'{o
 
 ################################################################################
 def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{os.getcwd()}/GYRE_out', mesa_dir=f'{os.getcwd()}/MESA_out',
-                    npg_min=-50, npg_max=-1, omega_rot=0.0, azimuthal_order=1, degree=1):
+                    npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL'):
     """
     Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
     GYRE inlists and jobs will be created for each pulsation file found in the MESA directory.
@@ -119,7 +119,11 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
     npg_min, npg_max, degree, azimuthal_order : int
         Quantum numbers of the modes to be calculated. Minimum and maximum radial order, degree (l) and azimuthal order (m)
     omega_rot: float
-        rotation frequency of the model [c/d]
+        rotation frequency of the model
+    unit_rot: string
+        unit of the rotation frequency, can be CYC_PER_DAY or CRITICAL (roche critical)
+    rotation_frame: string
+        rotational frame of reference for the pulsation freqencies
     """
     if not os.path.exists(mesa_dir):
         logger.error(f'Specified MESA output directory does not exist: {mesa_dir}')
@@ -142,9 +146,9 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
         param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
         output_dir_Z = f'{output_dir}/Zini{param_dict["Z"]}/{filename[:filename.rfind(".")]}'
 
-        f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=omega_rot)
+        f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=omega_rot, unit_rot=unit_rot, rotation_frame=rotation_frame)
         inlist_to_write = f'{setup_directory}/inlists/{filename[:-5]}.in'
-        write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min_inertial=f_min, freq_max_inertial=f_max, omega_rot=omega_rot)
+        write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=omega_rot, unit_rot=unit_rot, rotation_frame=rotation_frame)
         lines_to_run.append(f'{setup_directory}/run_GYRE.sh {param_dict["Z"]} {param_dict["M"]} {param_dict["logD"]} {param_dict["aov"]} {param_dict["fov"]} {param_dict["Xc"]} {inlist_to_write} {output_dir_Z} \n')
 
         if index%1000 == 0 or index==len(gyre_files):
@@ -168,8 +172,8 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
     return
 ################################################################################
 def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
-                       freq_min_inertial=0.01, freq_max_inertial=10, rotation_frame='INERTIAL',
-                       npg_min=-50,npg_max=-1, omega_rot=0.0, azimuthal_order=1, degree=1,
+                       freq_min=0.01, freq_max=10, rotation_frame='INERTIAL',
+                       npg_min=-50,npg_max=-1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', azimuthal_order=1, degree=1,
                        gyre_base_file = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')
                       ):
     """
@@ -189,13 +193,6 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
         azimuthal order and degree of the modes
     """
 
-    if rotation_frame is 'INERTIAL':
-        freq_min = freq_min_inertial
-        freq_max = freq_max_inertial
-    else:
-        freq_min = freq_min_inertial + azimuthal_order * omega_rot  # corotating frame
-        freq_max = freq_max_inertial + azimuthal_order * omega_rot  # corotating frame
-
     if gyre_summary_file == '':
         path, filename = gyre_in_file.rsplit('/',1)
         gyre_summary_file = f'{filename[:-3]}.HDF'
@@ -211,6 +208,7 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
                     'FREQ_MAX' : '{:8.6f}'.format(freq_max),
                     'GRIDFRAME': '{}'.format("'"+rotation_frame+"'"),
                     'OMEGAROT' : '{}'.format(float(omega_rot)),
+                    'OMEGAUNIT': '{}'.format("'"+unit_rot+"'"),
                     'ORDER'    : '{:1.0f}'.format(azimuthal_order),
                     'DEGREE'   : '{:1.0f}'.format(degree)
                     }
