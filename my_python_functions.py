@@ -67,7 +67,7 @@ def get_param_from_filename(file_path, parameters):
 
     ------- Returns -------
     param_dict: Dictionary
-        Strings specifying the given parameters
+        Keys are string describing the parameter, values are strings giving corresponding parameter values
     """
 
     param_dict = {}

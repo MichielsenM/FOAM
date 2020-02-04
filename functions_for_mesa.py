@@ -179,7 +179,37 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', Xc_
             if k >= len(Xc_marked):
                 return
 ################################################################################
-def convert_units(input, quantity, convertto='cgs'):
+def calculate_number_densities(hist_file):
+    '''
+    Calculate surface number densities for all isotopes in the MESA grid.
+    All isotopes in the used nuclear network need to be be written in the history file,
+    or this will function give wrong numbers.
+    ------- Parameters -------
+    hist_file: String
+        The path to the profile file to be used for the plot.
+    ------- Returns -------
+    number_densities: dictionary
+        keys specify the element (surf_X_per_N_tot), values are number densities of that element
+    ---
+    '''
+    dic_hist  = read.read_multiple_mesa_files([hist_file], is_hist=True, is_prof=False)[0] # read the MESA profiles
+    data = dic_hist['hist']
+
+    element_list = {}
+    number_densities = {}
+    inverse_average_atomic_mass = np.zeros(len(data['model_number']))
+    for column_name in data.dtype.names:
+        if '_per_Mass_tot' in column_name:
+            element_list.update({column_name: data[column_name]})
+            inverse_average_atomic_mass += data[column_name]
+
+    average_atomic_mass = inverse_average_atomic_mass**(-1)
+    for key in element_list.keys():
+        number_densities.update({ key.replace('_per_Mass_tot', '_per_N_tot') : element_list[key]*average_atomic_mass})
+
+    return number_densities
+################################################################################
+def convert_units(quantity, input, convertto='cgs'):
     '''
     Converts from solar units to cgs and vice versa.
     ------- Parameters -------
@@ -193,14 +223,15 @@ def convert_units(input, quantity, convertto='cgs'):
     out: list of float
         converted numbers
     '''
-    # conversion factors
+    # conversion factors used in MESA see $MESA_DIR/const/public/const_def.f90
     to_cgs = {'mass': 1.9892E33,
               'luminosity': 3.8418E33,
-              'radius': 6.9598E10}
+              'radius': 6.9598E10,
+              'cgrav': 6.67428E-8} # gravitational constant (g^-1 cm^3 s^-2)
 
     # convert to cgs
     if convertto == 'cgs':
-        return input * to_cgs(quantity)
+        return input * to_cgs[quantity]
     # convert to solar units
     elif convertto == 'solar':
-        return input / to_cgs(quantity)
+        return input / to_cgs[quantity]
