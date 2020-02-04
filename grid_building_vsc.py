@@ -88,7 +88,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     return
 
 ################################################################################
-def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
+def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
                     output_dir=os.path.expandvars('$VSC_SCRATCH/GYRE_out'), mesa_dir=os.path.expandvars('$VSC_SCRATCH/MESA_out')):
     """
     Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
@@ -99,7 +99,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
         paths to the directory where the bash setup is being made, to the directory where the GYRE output will be stored, and to the MESA output directory.
     npg_min, npg_max, degree, azimuthal_order : int
         Quantum numbers of the modes to be calculated. Minimum and maximum radial order, degree (l) and azimuthal order (m)
-    omega_rot: float
+    omega_rot: list of float
         rotation frequency of the model
     unit_rot: string
         unit of the rotation frequency, can be CYC_PER_DAY or CRITICAL (roche critical)
@@ -114,29 +114,27 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
 
     gyre_files = glob.glob(mesa_dir + '/*/gyre/*.GYRE' )
 
-    # index   = 0       #limit number of jobs per submission?
-
-    with open('GYRE_parameters.csv', 'w') as tsvfile:
+    with open(f'{setup_directory}/GYRE_parameters.csv', 'w') as tsvfile:
         writer = csv.writer(tsvfile)
         header = ['Zini', 'Mini', 'logD', 'aov', 'fov', 'Xc', 'GYRE_inlist', 'output_dir']
         writer.writerow(header)
 
         for file_path in gyre_files:
-            # index += 1
             path, filename = file_path.rsplit('/',1)
             param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
             # output_dir_Z = f'{output_dir}/Zini{param_dict["Z"]}/{filename[:filename.rfind(".")]}'
-            output_dir_Z = f'{output_dir}/Zini{param_dict["Z"]}'
+            for rotation in omega_rot:
+                output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}'
 
-            f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=omega_rot, unit_rot=unit_rot, rotation_frame=rotation_frame)
-            inlist_to_write = f'{setup_directory}/inlists/{filename[:-5]}.in'
-            write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=omega_rot, unit_rot=unit_rot, rotation_frame=rotation_frame)
+                f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
+                inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{filename[:-5]}.in'
+                write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
 
-            line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
-            writer.writerow(line_to_write)
+                line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
+                writer.writerow(line_to_write)
 
     copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_GYRE.pbs'), f'{os.getcwd()}/submit_GYRE.pbs')
+    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_GYRE.pbs'), f'{setup_directory}/submit_GYRE.pbs')
     return
 ################################################################################
 def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
