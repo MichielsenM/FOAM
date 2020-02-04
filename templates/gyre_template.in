@@ -7,7 +7,7 @@
 	file_format = 'MESA'
 	uniform_rot = true
 	Omega_rot = OMEGAROT
-	Omega_units = 'CYC_PER_DAY'
+	Omega_units = OMEGAUNIT
 /
 
 &mode

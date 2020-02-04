@@ -88,7 +88,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     return
 
 ################################################################################
-def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, omega_rot=0.0, azimuthal_order=1, degree=1,
+def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
                     output_dir=os.path.expandvars('$VSC_SCRATCH/GYRE_out'), mesa_dir=os.path.expandvars('$VSC_SCRATCH/MESA_out')):
     """
     Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
@@ -99,8 +99,12 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
         paths to the directory where the bash setup is being made, to the directory where the GYRE output will be stored, and to the MESA output directory.
     npg_min, npg_max, degree, azimuthal_order : int
         Quantum numbers of the modes to be calculated. Minimum and maximum radial order, degree (l) and azimuthal order (m)
-    omega_rot: float
-        rotation frequency of the model [c/d]
+    omega_rot: list of float
+        rotation frequency of the model
+    unit_rot: string
+        unit of the rotation frequency, can be CYC_PER_DAY or CRITICAL (roche critical)
+    rotation_frame: string
+        rotational frame of reference for the pulsation freqencies
     """
     if not os.path.exists(mesa_dir):
         logger.error(f'Specified MESA output directory does not exist: {mesa_dir}')
@@ -110,34 +114,32 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
 
     gyre_files = glob.glob(mesa_dir + '/*/gyre/*.GYRE' )
 
-    # index   = 0       #limit number of jobs per submission?
-
-    with open('GYRE_parameters.csv', 'w') as tsvfile:
+    with open(f'{setup_directory}/GYRE_parameters.csv', 'w') as tsvfile:
         writer = csv.writer(tsvfile)
         header = ['Zini', 'Mini', 'logD', 'aov', 'fov', 'Xc', 'GYRE_inlist', 'output_dir']
         writer.writerow(header)
 
         for file_path in gyre_files:
-            # index += 1
             path, filename = file_path.rsplit('/',1)
             param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
             # output_dir_Z = f'{output_dir}/Zini{param_dict["Z"]}/{filename[:filename.rfind(".")]}'
-            output_dir_Z = f'{output_dir}/Zini{param_dict["Z"]}'
+            for rotation in omega_rot:
+                output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}'
 
-            f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=omega_rot)
-            inlist_to_write = f'{setup_directory}/inlists/{filename[:-5]}.in'
-            write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min_inertial=f_min, freq_max_inertial=f_max, omega_rot=omega_rot)
+                f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
+                inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{filename[:-5]}.in'
+                write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
 
-            line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
-            writer.writerow(line_to_write)
+                line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
+                writer.writerow(line_to_write)
 
     copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_GYRE.pbs'), f'{os.getcwd()}/submit_GYRE.pbs')
+    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_GYRE.pbs'), f'{setup_directory}/submit_GYRE.pbs')
     return
 ################################################################################
 def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
-                       freq_min_inertial=0.01, freq_max_inertial=10, rotation_frame='INERTIAL',
-                       npg_min=-50,npg_max=-1, omega_rot=0.0, azimuthal_order=1, degree=1,
+                       freq_min=0.01, freq_max=10, rotation_frame='INERTIAL',
+                       npg_min=-50,npg_max=-1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', azimuthal_order=1, degree=1,
                        gyre_base_file = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')
                       ):
     """
@@ -157,13 +159,6 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
         azimuthal order and degree of the modes
     """
 
-    if rotation_frame is 'INERTIAL':
-        freq_min = freq_min_inertial
-        freq_max = freq_max_inertial
-    else:
-        freq_min = freq_min_inertial + azimuthal_order * omega_rot  # corotating frame
-        freq_max = freq_max_inertial + azimuthal_order * omega_rot  # corotating frame
-
     if gyre_summary_file == '':
         path, filename = gyre_in_file.rsplit('/',1)
         gyre_summary_file = f'{filename[:-3]}.HDF'
@@ -179,6 +174,7 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
                     'FREQ_MAX' : '{:8.6f}'.format(freq_max),
                     'GRIDFRAME': '{}'.format("'"+rotation_frame+"'"),
                     'OMEGAROT' : '{}'.format(float(omega_rot)),
+                    'OMEGAUNIT': '{}'.format("'"+unit_rot+"'"),
                     'ORDER'    : '{:1.0f}'.format(azimuthal_order),
                     'DEGREE'   : '{:1.0f}'.format(degree)
                     }
