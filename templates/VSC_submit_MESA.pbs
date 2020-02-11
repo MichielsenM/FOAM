@@ -1,11 +1,12 @@
 #!/bin/bash -l
 
 #PBS -A lp_mesa_modeling
-#PBS -l nodes=5:ppn=20:ivybridge
+#PBS -l nodes=5:ppn=36:cascadelake
 #PBS -l pmem=3gb
 #PBS -l walltime=72:00:00
 #PBS -N MESA
 #PBS -m abe
+#PBS -M mathias.michielsen@kuleuven.be
 
 
 cd $PBS_O_WORKDIR

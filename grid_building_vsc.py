@@ -27,7 +27,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
         setup_directory = setup_directory[setup_directory.rfind("site_scratch"):].replace('site_scratch', '/scratch')
     if 'site_scratch' in work_dir:
         work_dir = work_dir[work_dir.rfind("site_scratch"):].replace('site_scratch', '/scratch')
-    if 'site_scratch' in setup_directory:
+    if 'site_scratch' in output_dir:
         output_dir = output_dir[output_dir.rfind("site_scratch"):].replace('site_scratch', '/scratch')
 
     if not os.path.exists(work_dir):

@@ -16,8 +16,9 @@ export OUTPUT_DIR=$LOG_DIR/Zini"$1"/
 # Preparation:
 mkdir -p $OUTPUT_DIR/profiles/
 mkdir -p $OUTPUT_DIR/gyre/
+mkdir -p $OUTPUT_DIR/preMS/
 cd $LOG_DIR
-mkdir -p preMS
+
 
 mkdir -p job_logs job_errs
 log_file=$LOG_DIR/job_logs/Zini"$1"_Mini"$2"_logD"$3"_aov"$4"_fov"$5".log
