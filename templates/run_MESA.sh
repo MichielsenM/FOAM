@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+# export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # export Z_ini= $1
 # export M_ini= $2
 # export log_Dmix= $3
