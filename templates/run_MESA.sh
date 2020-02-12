@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+# export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 # export Z_ini= $1
 # export M_ini= $2
 # export log_Dmix= $3
@@ -16,8 +16,9 @@ export OUTPUT_DIR=$LOG_DIR/Zini"$1"/
 # Preparation:
 mkdir -p $OUTPUT_DIR/profiles/
 mkdir -p $OUTPUT_DIR/gyre/
+mkdir -p $OUTPUT_DIR/preMS/
 cd $LOG_DIR
-mkdir -p preMS
+
 
 mkdir -p job_logs job_errs
 log_file=$LOG_DIR/job_logs/Zini"$1"_Mini"$2"_logD"$3"_aov"$4"_fov"$5".log

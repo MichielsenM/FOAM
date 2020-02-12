@@ -1,12 +1,13 @@
 #!/bin/bash -l
 
 #PBS -A lp_mesa_modeling
-#PBS -l nodes=5:ppn=20:ivybridge
+#PBS -l nodes=5:ppn=36:cascadelake
 #PBS -l pmem=1gb
 #PBS -l walltime=24:00:00
 #PBS -N GYRE
 #PBS -o /dev/null
 #PBS -m abe
+#PBS -M mathias.michielsen@kuleuven.be
 
 cd $PBS_O_WORKDIR
 module purge

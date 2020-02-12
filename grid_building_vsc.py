@@ -12,44 +12,9 @@ logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
 
 ################################################################################
-def write_bash_submit( jobname, list, bash_submit_list, walltime=1440, memory=3000, cpu=1,
-                       bash_template = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/SLURM_submit_list_template.sh')
-                      ):
-    """
-    Write a bash script to sumbit a list of jobs to SLURM.
-    ------- Parameters -------
-    jobname, list, bash_submit_list: string
-        name of the job, path to the list to submit, name of the file for the bash script
-    bash_template: string
-        path to the template of the bash script to read and modify
-    walltime, memory, cpu: int
-        specifying walltime (minutes), memory (mb) and number of cpus per task
-    """
-    with open(bash_template, 'r') as f:
-            lines = f.readlines()
-    replacements = {'JOBNAME' : '{}'.format(jobname),
-                    'WALLTIME' : '{}'.format(walltime),
-                    'MEMORY' : '{}'.format(memory),
-                    'CPU' : '{}'.format(cpu),
-                    'LIST'   : '{}'.format(list) }
-
-    new_lines = []
-    for line in lines:
-        new_line = line
-        for key in replacements:
-                if (replacements[key] != ''):
-                        new_line = new_line.replace(key, replacements[key])
-        new_lines.append(new_line)
-    logger.info(f'write {bash_submit_list}')
-
-    with open(bash_submit_list, 'w') as f:
-        f.writelines(new_lines)
-    return
-
-################################################################################
 def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.getcwd()}/MESA_work_dir',
                     Z_ini_list=[0.014], M_ini_list=[1], log_Dmix_list=[1], aov_list=[0], fov_list=[0],
-                    output_dir= os.path.expandvars('$VSC_SCRATCH/MESA_out')):
+                    output_dir= os.path.expandvars(f'{os.getcwd()}/MESA_out')):
     """
     Construct a setup for a MESA grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
     ------- Parameters -------
@@ -58,6 +23,10 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     Z_ini_list, M_ini_list, log_Dmix_list, fov_list, aov_list: list of floats
         Lists of the parameter values to be computed in the grid.
     """
+    for directory_name in [setup_directory, work_dir, output_dir]
+        if 'site_scratch' in directory_name:
+            directory_name = directory_name[directory_name.rfind("site_scratch"):].replace('site_scratch', '/scratch')
+
     if not os.path.exists(work_dir):
         logger.error(f'Specified MESA work directory does not exist: {work_dir}')
         sys.exit()
@@ -89,7 +58,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
 
 ################################################################################
 def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
-                    output_dir=os.path.expandvars('$VSC_SCRATCH/GYRE_out'), mesa_dir=os.path.expandvars('$VSC_SCRATCH/MESA_out')):
+                    output_dir=os.path.expandvars(f'{os.getcwd()}/GYRE_out'), mesa_dir=os.path.expandvars(f'{os.getcwd()}/MESA_out')):
     """
     Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
     GYRE inlists and jobs will be created for each pulsation file found in the MESA directory.
@@ -106,6 +75,10 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     rotation_frame: string
         rotational frame of reference for the pulsation freqencies
     """
+    for directory_name in [setup_directory, mesa_dir, output_dir]
+        if 'site_scratch' in directory_name:
+            directory_name = directory_name[directory_name.rfind("site_scratch"):].replace('site_scratch', '/scratch')
+
     if not os.path.exists(mesa_dir):
         logger.error(f'Specified MESA output directory does not exist: {mesa_dir}')
         sys.exit()
