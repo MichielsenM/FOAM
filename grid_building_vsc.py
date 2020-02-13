@@ -23,7 +23,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     Z_ini_list, M_ini_list, log_Dmix_list, fov_list, aov_list: list of floats
         Lists of the parameter values to be computed in the grid.
     """
-    for directory_name in [setup_directory, work_dir, output_dir]
+    for directory_name in [setup_directory, work_dir, output_dir]:
         if 'site_scratch' in directory_name:
             directory_name = directory_name[directory_name.rfind("site_scratch"):].replace('site_scratch', '/scratch')
 
@@ -75,7 +75,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     rotation_frame: string
         rotational frame of reference for the pulsation freqencies
     """
-    for directory_name in [setup_directory, mesa_dir, output_dir]
+    for directory_name in [setup_directory, mesa_dir, output_dir]:
         if 'site_scratch' in directory_name:
             directory_name = directory_name[directory_name.rfind("site_scratch"):].replace('site_scratch', '/scratch')
 
