@@ -21,11 +21,9 @@ The master branch will be updated from time to time when possible conflicts betw
 3. `functions_for_mesa.py`: Helpful functions to process MESA output.
 4. `grid_building_slurm.py`: Functions for building MESA and GYRE grids on the SLURM framework.
 5. `grid_building_vsc.py`: Functions for building MESA and GYRE grids on the VSC framework.
-6. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
-7. `my_python_functions.py` : Helpful functions in general. Making figures, reading HDF5, processing strings.
-8. `read.py` : Tools to read in data from MESA consistently.
-
-
+6. `grid_building_vsc_multiprocess.py`: Same as `grid_building_vsc.py`, but utilising multiprocessing.
+7. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
+8. `my_python_functions.py` : Helpful functions in general. Making figures, reading HDF5, processing strings.
 
 ### Author
 Developed by Mathias Michielsen

@@ -17,7 +17,6 @@
 	n_pg_max = N_PG_MAX
 /
 
-
 &osc
 	nonadiabatic = false
 	rotation_method = 'TAR'
@@ -25,7 +24,7 @@
 /
 
 &num
-	diff_scheme = 'COLLOC_GL2'     ! 'COLLOC_GL4', 'MAGNUS_GL4'
+	diff_scheme = 'COLLOC_GL2'
 	n_iter_max = 50
 /
 
@@ -39,31 +38,22 @@
 	n_freq = 600
 /
 
-
 &grid
     n_inner = 5
-	alpha_osc = 10			! At least 5 points per oscillatory wavelength
-	alpha_exp = 2			! At least 1 point per exponential 'wavelength'
-
+	alpha_osc = 10
+	alpha_exp = 2
 /
 
 &ad_output
 	summary_file = OUTPUT
 	freq_units = 'CYC_PER_DAY'
 	summary_file_format = 'HDF'
-	summary_item_list = 'M_star,R_star,L_star,l,m,n_p,n_g,n_pg,omega,freq,E_norm' ! Items to appear in summary file
+	summary_item_list = 'M_star,R_star,L_star,l,m,n_p,n_g,n_pg,omega,freq,E_norm'
 
 	mode_template = 'ad_mode_l%L_n%N_j%J.HDF'
 	mode_item_list = 'M_star,R_star,L_star,l,m,n,n_p,n_g,n_pg,freq,xi_h,xi_r,x,dW_dx,Gamma_1,P,rho,T,dE_dx'
-
 /
 
 &nad_output
-!	summary_file = 'summary_nad.HDF'
-!	freq_units = 'CYC_PER_DAY'
-!	summary_file_format = 'HDF'
-!	summary_item_list = 'M_star,R_star,L_star,l,m,n_p,n_g,n_pg,omega,freq,E_norm,W' ! Items to appear in summary file
-!	mode_template = 'nad_mode_l%L_n%N_j%J.HDF'
-!	mode_item_list = 'M_star,R_star,L_star,l,m,n,n_p,n_g,n_pg,freq,xi_h,xi_r,x,dW_dx,W,Gamma_1,P,rho,T,dE_dx'
 /
 /
