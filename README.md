@@ -10,7 +10,7 @@ Be sure that $CONDA_PREFIX is set to your conda installation, this should be the
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 
 ### Note for contributors
-Please submit pull requests to the developer branch instead of the master branch. 
+Please submit pull requests to the developer branch instead of the master branch.
 The master branch will be updated from time to time when possible conflicts between different pull requests have been resolved.
 
 ## contents
@@ -21,16 +21,17 @@ The master branch will be updated from time to time when possible conflicts betw
 3. `functions_for_mesa.py`: Helpful functions to process MESA output.
 4. `grid_building_slurm.py`: Functions for building MESA and GYRE grids on the SLURM framework.
 5. `grid_building_vsc.py`: Functions for building MESA and GYRE grids on the VSC framework.
-6. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
-7. `my_python_functions.py` : Helpful functions in general. Making figures, reading HDF5, processing strings.
-8. `read.py` : Tools to read in data from MESA consistently.
-
-
+6. `grid_building_vsc_multiprocess.py`: Same as `grid_building_vsc.py`, but utilising multiprocessing.
+7. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
+8. `my_python_functions.py` : Helpful functions in general. Making figures, reading HDF5, processing strings.
 
 ### Author
-Written and developed by Mathias Michielsen
+Developed by Mathias Michielsen
 ```
 mathias.michielsen@kuleuven.be
 Instituut voor Sterrenkunde
 KU Leuven, Belgium
 ```
+
+### Contributors
+May Gade Pedersen, Cole C. Johnston, Jordan Van Beeck
