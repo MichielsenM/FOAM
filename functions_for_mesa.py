@@ -1,4 +1,4 @@
-# A few helpful functions to process MESA output.
+"""A few helpful functions to process MESA output."""
 # from PyPulse import functions_for_mesa as ffm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -159,7 +159,7 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', Xc_
     # Plot the x-axis in log scale
     if Teff_logscale:
         T = log_Teff
-        ax.set_xlabel(r'log(T$_{eff}$)') # grootheden onder een log kunnen geen eenheid hebben - JVB.
+        ax.set_xlabel(r'log(T$_{eff}$)')
     # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff

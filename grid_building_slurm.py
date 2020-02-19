@@ -1,12 +1,12 @@
-# Functions for building MESA and GYRE grids on the SLURM framework
+"""Functions for building MESA and GYRE grids on the SLURM framework."""
 # from PyPulse import grid_building_slurm as gbs
 import numpy as np
 import glob, os, sys
+from shutil import copyfile
+import logging
 from . import my_python_functions as mypy
 from . import functions_for_gyre as ffg
-from shutil import copyfile
 
-import logging
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)

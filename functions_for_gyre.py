@@ -1,12 +1,13 @@
-# A few helpful functions for GYRE input and output.
+"""A few helpful functions for GYRE input and output."""
 # from PyPulse import functions_for_gyre as ffg
 import numpy as np
 import glob, os
+import matplotlib.pyplot as plt
+import pandas
 from . import read
 from . import my_python_functions as mypy
 from . import functions_for_mesa as ffm
-import matplotlib.pyplot as plt
-import pandas
+
 ################################################################################
 def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
     """
@@ -153,7 +154,7 @@ def calculate_k(l,m,rossby):
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     """
-    Method made by Cole to extract the theoretical pattern that best matches the observed one
+    Method to extract the theoretical pattern that best matches the observed one
 
     ------- Parameters -------
     tperiods, orders : list of floats, integers

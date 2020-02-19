@@ -10,7 +10,7 @@ Be sure that $CONDA_PREFIX is set to your conda installation, this should be the
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 
 ### Note for contributors
-Please submit pull requests to the developer branch instead of the master branch. 
+Please submit pull requests to the developer branch instead of the master branch.
 The master branch will be updated from time to time when possible conflicts between different pull requests have been resolved.
 
 ## contents
@@ -28,9 +28,12 @@ The master branch will be updated from time to time when possible conflicts betw
 
 
 ### Author
-Written and developed by Mathias Michielsen
+Developed by Mathias Michielsen
 ```
 mathias.michielsen@kuleuven.be
 Instituut voor Sterrenkunde
 KU Leuven, Belgium
 ```
+
+### Contributors
+May Gade Pedersen, Cole C. Johnston, Jordan Van Beeck
