@@ -1,12 +1,12 @@
-# A few helpful functions for GYRE input and output.
+"""A few helpful functions for GYRE input and output."""
 # from PyPulse import functions_for_gyre as ffg
 import numpy as np
 import glob, os
-from . import read
-from . import my_python_functions as mypy
-from . import functions_for_mesa as ffm
 import matplotlib.pyplot as plt
 import pandas
+from . import my_python_functions as mypy
+from . import functions_for_mesa as ffm
+
 ################################################################################
 def ledoux_splitting(frequencies, betas, Mstar, Rstar, omega=0, m=1):
     """
@@ -55,13 +55,13 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         to retrieve the required range of radial orders
     """
     directory, gyre_file = mypy.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
-    Xc_file = float(mypy.substring(gyre_file, 'Xc', '.GYRE')) # get Xc
-    hist_file = glob.glob(f'{directory}*.hist')[0] # selects the first history file in the folder
-    dic_hist  = read.read_multiple_mesa_files([hist_file], is_hist=True, is_prof=False)[0] # read the MESA files into a dictionary
-    # Retrieve data
-    data      = dic_hist['hist']
-    P0_values = data['Asymptotic_dP']
-    Xc_values = data['center_h1']
+    Xc_file = float(mypy.substring(gyre_file, 'Xc', '.GYRE'))       # get Xc
+    MESA_hist_name, tail = mypy.split_line(gyre_file, '_Xc')        # Get the MESA history name form the GYRE filename
+    hist_file = glob.glob(f'{directory}{MESA_hist_name}.hist')[0]   # selects MESA history file corresponding to the GYRE file
+
+    header, data  = ffm.read_mesa_file(hist_file)
+    Xc_values = np.asarray(data['center_h1'])
+    P0_values = np.asarray(data['Asymptotic_dP'])
 
     # Obtain the asymptotic period spacing value/buoyancy radius at the Xc value closest to that of the gyre file
     diff = abs(Xc_file - Xc_values)
@@ -78,8 +78,8 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         f_max = np.sqrt(l*(l+1)) / (n_min_used*P0)
     else:
         if unit_rot == 'CRITICAL': # Roche critical
-            model_mass   = ffm.convert_units('mass',   data['star_mass'][xc_index], convertto='cgs')
-            model_radius = ffm.convert_units('radius', 10**data['log_R'][xc_index], convertto='cgs')
+            model_mass   = ffm.convert_units('mass',   np.asarray(data['star_mass'])[xc_index], convertto='cgs')
+            model_radius = ffm.convert_units('radius', 10**np.asarray(data['log_R'])[xc_index], convertto='cgs')
             G = ffm.convert_units('cgrav', 1)
             Roche_rate = (1/(2*np.pi))*np.sqrt((8*G*model_mass)/(27*model_radius**3)) # Roche crit rotation rate in cycles per second
             Roche_rate = Roche_rate * 86400 # Roche crit rotation rate in cycles per day
@@ -153,7 +153,7 @@ def calculate_k(l,m,rossby):
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     """
-    Method made by Cole to extract the theoretical pattern that best matches the observed one
+    Method to extract the theoretical pattern that best matches the observed one
 
     ------- Parameters -------
     tperiods, orders : list of floats, integers

@@ -1,11 +1,10 @@
-# Helpful functions in general. Making figures, reading HDF5, processing strings.
+"""Helpful functions in general. Making figures, reading HDF5, processing strings."""
 # from PyPulse import my_python_functions as mypy
 import h5py, re
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from . import read
 
-import logging
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
