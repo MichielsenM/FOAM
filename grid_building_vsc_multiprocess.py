@@ -59,15 +59,18 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     return
 
 ################################################################################
-def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1, omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
-                    output_dir=os.path.expandvars(f'{os.getcwd()}/GYRE_out'), mesa_dir=os.path.expandvars(f'{os.getcwd()}/MESA_out'),gyre_base_inlist = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')):
+def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1,
+                    omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
+                    output_dir=os.path.expandvars(f'{os.getcwd()}/GYRE_out'), mesa_dir=os.path.expandvars(f'{os.getcwd()}/MESA_out'),
+                    gyre_base_inlist = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')):
     """
     Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
     GYRE inlists and jobs will be created for each pulsation file found in the MESA directory.
     Scanning ranges in GYRE inlists will be set based on desired n_pg range and Asymptotic_dP in the MESA hist file.
     ------- Parameters -------
     setup_directory, output_dir, mesa_dir: string
-        paths to the directory where the bash setup is being made, to the directory where the GYRE output will be stored, and to the MESA output directory.
+        paths to the directory where the bash setup is being made,
+        to the directory where the GYRE output will be stored, and to the MESA output directory.
     npg_min, npg_max, degree, azimuthal_order : int
         Quantum numbers of the modes to be calculated. Minimum and maximum radial order, degree (l) and azimuthal order (m)
     omega_rot: list of float
@@ -99,9 +102,11 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
         header = ['Zini', 'Mini', 'logD', 'aov', 'fov', 'Xc', 'GYRE_inlist', 'output_dir']
         writer.writerow(header)
 
-        p = multiprocessing.Pool(8)	# Multiprocessing pool, uses #processes = #CPUs
+        p = multiprocessing.Pool()	# Multiprocessing pool, uses #processes = #CPUs
         for rotation in omega_rot:
-            func = partial(gyre_process, output_dir=output_dir, setup_directory=setup_directory, npg_min=npg_min, npg_max=npg_max, degree=degree, azimuthal_order=azimuthal_order, rotation=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
+            # set part of the input parameters already in 'func', and only iterate over 'gyre_files' in the 'p.imap'
+            func = partial(gyre_process, output_dir=output_dir, setup_directory=setup_directory, npg_min=npg_min, npg_max=npg_max, degree=degree,
+                           azimuthal_order=azimuthal_order, rotation=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
             for result in p.imap(func, gyre_files):
                 writer.writerow(result)
 
@@ -110,14 +115,38 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     return
 
 ################################################################################
-def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_max=-1, degree=1, azimuthal_order=1, rotation=0, unit_rot='CYC_PER_DAY', rotation_frame='INERTIAL', gyre_base_inlist_lines=None):
+def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_max=-1, degree=1, azimuthal_order=1,
+                 rotation=0, unit_rot='CYC_PER_DAY', rotation_frame='INERTIAL', gyre_base_inlist_lines=None):
+    """
+    ------- Parameters -------
+    file_path: String
+        path to the .GYRE file to construct an inlist for
+    setup_directory, output_dir: string
+        paths to the directory where the bash setup is being made, and the directory where the GYRE output will be stored.
+    npg_min, npg_max, degree, azimuthal_order : int
+        Quantum numbers of the modes to be calculated. Minimum and maximum radial order, degree (l) and azimuthal order (m)
+    rotation: float
+        rotation frequency of the model
+    unit_rot: string
+        unit of the rotation frequency, can be CYC_PER_DAY or CRITICAL (roche critical)
+    rotation_frame: string
+        rotational frame of reference for the pulsation freqencies
+    gyre_base_inlist_lines: string
+        lines of te template gyre inlist to modify
+
+    ------- Returns -------
+    line_to_write: string
+        line to write in the CSV file containing al run parameters for submitting to the VSC
+    """
     path, filename = file_path.rsplit('/',1)
     param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
     output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}'
 
-    f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
+    f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation,
+                                           unit_rot=unit_rot, rotation_frame=rotation_frame)
     inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{filename[:-5]}.in'
-    write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
+    write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation,
+                      unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
 
     line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
 
