@@ -110,7 +110,8 @@ def read_hdf5(filename):
 
     return data
 ################################################################################
-def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8], label_size=22, xlim=[]):
+def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', label_size=22, xlim=[],
+                        left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8]):
     """
     Make a plot
 

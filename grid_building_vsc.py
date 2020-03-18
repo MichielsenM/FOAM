@@ -139,17 +139,17 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
     with open(gyre_base_inlist, 'r') as f:
             gyre_base_inlist_lines = f.readlines()
     replacements = {
-                    'FILENAME' : '{}'.format("'"+mesa_pulsation_file+"'"),
-                    'OUTPUT'   : '{}'.format("'"+gyre_summary_file+"'"),
-                    'N_PG_MIN' : '{:1.0f}'.format(npg_min),
-                    'N_PG_MAX' : '{:1.0f}'.format(npg_max),
-                    'FREQ_MIN' : '{:8.6f}'.format(max(freq_min,0.01)),
-                    'FREQ_MAX' : '{:8.6f}'.format(freq_max),
-                    'GRIDFRAME': '{}'.format("'"+rotation_frame+"'"),
-                    'OMEGAROT' : '{}'.format(float(omega_rot)),
-                    'OMEGAUNIT': '{}'.format("'"+unit_rot+"'"),
-                    'ORDER'    : '{:1.0f}'.format(azimuthal_order),
-                    'DEGREE'   : '{:1.0f}'.format(degree)
+                    'FILENAME' : f'\'{mesa_pulsation_file}\'',
+                    'OUTPUT'   : f'\'{gyre_summary_file}\'',
+                    'N_PG_MIN' : f'{npg_min}',
+                    'N_PG_MAX' : f'{npg_max}',
+                    'FREQ_MIN' : f'{round(max(freq_min,0.01), 6)}',
+                    'FREQ_MAX' : f'{round(freq_max, 6)}',
+                    'GRIDFRAME': f'\'{rotation_frame}\'',
+                    'OMEGAROT' : f'{omega_rot}',
+                    'OMEGAUNIT': f'\'{unit_rot}\'',
+                    'ORDER'    : f'{azimuthal_order}',
+                    'DEGREE'   : f'{degree}'
                     }
 
     new_lines = []
