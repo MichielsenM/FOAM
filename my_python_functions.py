@@ -1,6 +1,7 @@
 """Helpful functions in general. Making figures, reading HDF5, processing strings."""
 # from PyPulse import my_python_functions as mypy
 import h5py, re
+from pathlib import Path
 import logging
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -70,16 +71,9 @@ def get_param_from_filename(file_path, parameters):
     """
 
     param_dict = {}
-    if '/' in file_path:
-        path, filename = file_path.rsplit('/',1)
-    else:
-        filename = file_path
-
-    filename = filename[:filename.rfind('.')] # remove file extension
-
     for parameter in parameters:
         try:
-            p = substring(filename, parameter, '_')
+            p = substring(Path(file_path).stem, parameter, '_')
             param_dict[parameter] = p
         except:
             param_dict[parameter] = '0'

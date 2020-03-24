@@ -30,8 +30,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
     if not os.path.exists(work_dir):
         logger.error(f'Specified MESA work directory does not exist: {work_dir}')
         sys.exit()
-    if not os.path.exists(f'{setup_directory}'):
-        os.makedirs(f'{setup_directory}')
+    Path(f'{setup_directory}').mkdir(parents=True, exist_ok=True)
 
     with open(f'{setup_directory}/MESA_parameters.csv', 'w') as tsvfile:
         writer = csv.writer(tsvfile)
@@ -39,15 +38,15 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
         writer.writerow(header)
 
         for Z_ini in Z_ini_list:
-            Z_ini = '{:5.3f}'.format(Z_ini)
+            Z_ini = f'{Z_ini:.3f}'
             for M_ini in M_ini_list:
-                M_ini = '{:4.2f}'.format(M_ini)
+                M_ini = f'{M_ini:.2f}'
                 for log_Dmix in log_Dmix_list:
-                    log_Dmix ='{:4.2f}'.format(log_Dmix)
+                    log_Dmix = f'{log_Dmix:.2f}'
                     for a_ov in aov_list:
-                        a_ov = '{:5.3f}'.format(a_ov)
+                        a_ov = f'{a_ov:.3f}'
                         for f_ov in fov_list:
-                            f_ov = '{:5.3f}'.format(f_ov)
+                            f_ov = f'{f_ov:.3f}'
 
                             line_to_write = [Z_ini, M_ini, log_Dmix, a_ov, f_ov, output_dir, work_dir]
                             writer.writerow(line_to_write)
@@ -82,8 +81,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     if not os.path.exists(mesa_dir):
         logger.error(f'Specified MESA output directory does not exist: {mesa_dir}')
         sys.exit()
-    if not os.path.exists(f'{setup_directory}'):
-        os.makedirs(f'{setup_directory}/inlists')
+    Path(f'{setup_directory}/inlists').mkdir(parents=True, exist_ok=True)
 
     gyre_files = glob.glob(mesa_dir + '/*/gyre/*.GYRE' )
 

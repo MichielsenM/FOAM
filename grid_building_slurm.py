@@ -2,6 +2,7 @@
 # from PyPulse import grid_building_slurm as gbs
 import numpy as np
 import glob, os, sys
+from pathlib import Path
 from shutil import copyfile
 import logging
 from . import my_python_functions as mypy
@@ -60,9 +61,8 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', output_dir=f'{o
     if not os.path.exists(work_dir):
         logger.error(f'Specified MESA work directory does not exist: {work_dir}')
         sys.exit()
-    if not os.path.exists(f'{setup_directory}'):
-        os.makedirs(f'{setup_directory}/submit-lists-scripts')
-        os.makedirs(f'{setup_directory}/lists')
+    Path(f'{setup_directory}/submit-lists-scripts').mkdir(parents=True, exist_ok=True)
+    Path(f'{setup_directory}/lists').mkdir(parents=True, exist_ok=True)
 
     params_to_run = []
     lines_run_all_bash = []
@@ -72,15 +72,15 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', output_dir=f'{o
     parameter_combinations = len(Z_ini_list)*len(M_ini_list)*len(log_Dmix_list)*len(aov_list)*len(fov_list)
 
     for Z_ini in Z_ini_list:
-        Z_ini = '{:5.3f}'.format(Z_ini)
+        Z_ini = f'{Z_ini:.3f}'
         for M_ini in M_ini_list:
-            M_ini = '{:4.2f}'.format(M_ini)
+            M_ini = f'{M_ini:.2f}'
             for log_Dmix in log_Dmix_list:
-                log_Dmix ='{:4.2f}'.format(log_Dmix)
+                log_Dmix = f'{log_Dmix:.2f}'
                 for a_ov in aov_list:
-                    a_ov = '{:5.3f}'.format(a_ov)
+                    a_ov = f'{a_ov:.3f}'
                     for f_ov in fov_list:
-                        f_ov = '{:5.3f}'.format(f_ov)
+                        f_ov = f'{f_ov:.3f}'
 
                         params_to_run.append(f'{setup_directory}/run_MESA.sh {Z_ini} {M_ini} {log_Dmix} {a_ov} {f_ov} {output_dir} {work_dir} \n')
                         index += 1
@@ -128,12 +128,10 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
     if not os.path.exists(mesa_dir):
         logger.error(f'Specified MESA output directory does not exist: {mesa_dir}')
         sys.exit()
-    if not os.path.exists(f'{setup_directory}'):
-        os.makedirs(f'{setup_directory}/submit-lists-scripts')
-        os.makedirs(f'{setup_directory}/lists')
-        os.makedirs(f'{setup_directory}/inlists')
-    if not os.path.exists(f'{output_dir}'):
-        os.makedirs(f'{output_dir}')
+    Path(f'{setup_directory}/submit-lists-scripts').mkdir(parents=True, exist_ok=True)
+    Path(f'{setup_directory}/lists').mkdir(parents=True, exist_ok=True)
+    Path(f'{setup_directory}/inlists').mkdir(parents=True, exist_ok=True)
+    Path(f'{output_dir}').mkdir(parents=True, exist_ok=True)    
 
     lines_run_all_bash = []
     lines_run_all_bash.append('#!/bin/bash \n')
