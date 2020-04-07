@@ -11,20 +11,21 @@ from . import functions_for_gyre as ffg
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
-
-def plot_correlations(MLE_values_file, MESA_grid_dir = '/lhome/mathiasm/MESA_grid_ECP-DE', fig_title=None, label_size=18, fig_outputDir='figures/',
-                      percentile_to_show=0.1, logTeff_obs=[np.log10(11650), [0.00790, 0.00776]], logg_obs=[3.97, 0.08]):
+################################################################################
+def plot_correlations(MLE_values_file, grid_spectroscopy, fig_title=None, label_size=18, fig_outputDir='figures/',
+                      percentile_to_show=0.1, logTeff_obs=None, logg_obs=None, logL_obs=None):
     """
-    Make a plot of all variables vs each other variable (and also a Kiel/HRD diagram), showing the MLE values as colorscale.
+    Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
+    A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
     The subplots on the diagonal show the distribution of that variable.
     The list of variables is retrieved from columns of the MLE_values_file,
     where the first column is 'distance', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
-    MLE_values_file, MESA_grid_dir: string
-        path to the file with the MLE values and to the MESA profiles directory
+    MLE_values_file, grid_spectroscopy: string
+        path to the files with the MLE values and and the spectroscopic info of the models in the grid
     fig_title: string
-        Title of the figure
+        Title of the figure and name of the saved png.
     label_size: int
         size of the axis labels
     fig_outputDir: string
@@ -33,8 +34,8 @@ def plot_correlations(MLE_values_file, MESA_grid_dir = '/lhome/mathiasm/MESA_gri
         percentile of models to show in the plots
     logTeff_obs: list (length 2)
         log of the observed effective temperature (first entry) and its error (second entry, again a list for non-symmetric errors)
-    logg_obs: list (length 2) of float
-        log of the observed surface gravity (first entry) and its error (second entry)
+    logg_obs, logL_obs: list (length 2) of float
+        log of the observed surface gravity or Luminosity (first entry) and its error (second entry)
     """
     df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
     df = df.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
@@ -50,30 +51,19 @@ def plot_correlations(MLE_values_file, MESA_grid_dir = '/lhome/mathiasm/MESA_gri
 
     ax_hrd = fig.add_subplot(gs[0:3,nr_params-3:nr_params], sharex=None, sharey=None)   # add subplot in top right for Kiel or HRD
     ax_hrd.set_xlabel('log Teff')
-    ax_hrd.set_ylabel('log g')
 
-    Teff = []
-    # logL = []
-    logg = []
-    color  = []
-    if 'ECP_' in MLE_values_file:
-        CBM = 'extended_convective_penetration'
-    elif 'DO_' in MLE_values_file:
-        CBM = 'diffusive_overshoot'
+    # get the spectroscopic info and merge the dataFrames into a new one containing all the info of the models they have in common
+    spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
+    df_merged = pd.merge(df, spectro_df, how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
 
-    for i in range(0, df.shape[0]):
-        prof =  f'{MESA_grid_dir}/{CBM}/MESA_out/Zini{df.iloc[i]["Z"]}/profiles/'    \
-                +f'Z{df.iloc[i]["Z"]}_M{df.iloc[i]["M"]:.2f}_logD{df.iloc[i]["logD"]:.2f}_'    \
-                +f'aov{df.iloc[i]["aov"]:.3f}_fov{df.iloc[i]["fov"]:.3f}_Xc{df.iloc[i]["Xc"]:.2f}.h5_prof'
-
-        prof_data = mypy.read_hdf5(prof)
-        Teff.append(np.log10(float(prof_data['Teff'])))
-        logg.append(prof_data['log_g'][0])
-        color.append(np.log10(df.iloc[i,0]))
-        # logL.append(np.log10(float(prof_data['photosphere_L'])))
-
-    im = ax_hrd.scatter(Teff, logg, c=color, cmap='hot')
-    ax_hrd.errorbar(logTeff_obs[0], logg_obs[0], xerr=np.array([logTeff_obs[1]]).T, yerr=logg_obs[1])    # Spectroscopic error bar
+    if logg_obs != None:
+        ax_hrd.errorbar(logTeff_obs[0], logg_obs[0], xerr=np.array([logTeff_obs[1]]).T, yerr=logg_obs[1])    # Spectroscopic error bar
+        ax_hrd.set_ylabel('log g')
+        im = ax_hrd.scatter(df_merged['logTeff'], df_merged['logg'], c=np.log10(df_merged['distance']), cmap='hot')
+    elif logL_obs != None:
+        ax_hrd.errorbar(logTeff_obs[0], logL_obs[0], xerr=np.array([logTeff_obs[1]]).T, yerr=logL_obs[1])    # Spectroscopic error bar
+        ax_hrd.set_ylabel('log L')
+        im = ax_hrd.scatter(df_merged['logTeff'], df_merged['logL'], c=np.log10(df_merged['distance']), cmap='hot')
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -123,7 +113,7 @@ def plot_correlations(MLE_values_file, MESA_grid_dir = '/lhome/mathiasm/MESA_gri
 
     cax = fig.add_axes([0.88, 0.3, 0.05, 0.6]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cbar.set_label('log(Mahalanobis distance)', rotation=90)
+    cbar.set_label('log(MLE value)', rotation=90)
     plt.subplots_adjust(left=0.11, right=0.87, bottom=0.1, top=0.95)
 
     fig.suptitle(fig_title)
