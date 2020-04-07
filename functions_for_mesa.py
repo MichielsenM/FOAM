@@ -3,6 +3,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import multiprocessing, glob, csv
+from pathlib import Path
+from functools import partial
+from . import my_python_functions as mypy
 
 ################################################################################
 def read_mesa_file(file_path):
@@ -246,3 +250,67 @@ def convert_units(quantity, input, convertto='cgs'):
     # convert to solar units
     elif convertto == 'solar':
         return input / to_cgs[quantity]
+
+################################################################################
+def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+    """
+    Extract spectroscopic info for each MESA profile in the given directory and write them to 1 large file.
+    ------- Parameters -------
+    mesa_profiles: string
+        String to glob to find all the relevant MESA profiles.
+    output_file: string
+        Name (can include a path) for the file containing all the pulsation frequencies of the grid.
+    parameters: list of strings
+        List of parameters varied in the computed grid, so these are taken from the
+        name of the summary files, and included in the 1 file containing all the info of the whole grid.
+    """
+
+    extract_func = partial(spectro_from_profiles, parameters=parameters)
+    # Glob all the files, then iteratively send them to a pool of processors
+    profiles = glob.iglob(mesa_profiles)
+    p = multiprocessing.Pool()
+    freqs = p.imap(extract_func, profiles)
+
+    # Generate the directory for the output file and write the file afterwards
+    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
+    with open(output_file, 'w') as tsvfile:
+        writer = csv.writer(tsvfile, delimiter='\t')
+        # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
+        header_parameters = list(parameters)
+        header_parameters.extend(['logTeff', 'logL', 'logg'])
+        writer.writerow(header_parameters)
+        for line in freqs:
+            if line != None:
+                writer.writerow(line)
+
+################################################################################
+def spectro_from_profiles(mesa_profile, parameters):
+    """
+    Extract model parameters and spectroscopic info from a MESA profile
+    ------- Parameters -------
+    mesa_profile: string
+        path to the MESA profile
+    parameters: list of strings
+        List of input parameters varied in the computed grid, so these are included in returned line.
+    expected_nr_orders: int
+        The expexted number of computed orders, to check if no orders are missing.
+
+    ------- Returns -------
+    line: string
+        Line containing all the model- and spectroscopic parameters
+        of the MESA profile.
+    """
+    param_dict = mypy.get_param_from_filename(mesa_profile, parameters)
+    prof_data = mypy.read_hdf5(mesa_profile)
+
+    if (float(param_dict['Xc'])<0.3 ) or (float(param_dict['Xc'])>0.6):
+        return None
+    logL = np.log10(float(prof_data['photosphere_L']))
+    logTeff = np.log10(float(prof_data['Teff']))
+    logg = prof_data['log_g'][0]
+
+    line=[]
+    for p in parameters:
+        line.append(param_dict[p])
+    line.extend([logTeff, logL, logg])
+    return line
