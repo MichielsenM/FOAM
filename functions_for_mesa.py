@@ -155,13 +155,13 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     colour, linestyle, label: strings
-        Specify the colour, linestyle and label of the plotted data
+        Specify the colour, linestyle and label of the plotted data.
     label_size: float
-        The size of the labels in the figure
+        The size of the labels in the figure.
     Xc_marked: list of floats
-        Models with these Xc values are marked with red dots on the plot
+        Models with these Xc values are marked with red dots on the plot (listed in increasing value).
     Teff_logscale: boolean
-        Plot effective temperature in logscale (True), or not (False)
+        Plot effective temperature in logscale (True), or not (False).
     """
     if ax is None:
         fig=plt.figure()
@@ -254,7 +254,7 @@ def convert_units(quantity, input, convertto='cgs'):
 ################################################################################
 def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Extract spectroscopic info for each MESA profile in the given directory and write them to 1 large file.
+    Extract spectroscopic info for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -262,9 +262,8 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         Name (can include a path) for the file containing all the pulsation frequencies of the grid.
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
-        name of the summary files, and included in the 1 file containing all the info of the whole grid.
+        name of the profile files, and included in the ouput file containing the info of the whole grid.
     """
-
     extract_func = partial(spectro_from_profiles, parameters=parameters)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
@@ -277,7 +276,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         writer = csv.writer(tsvfile, delimiter='\t')
         # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
         header_parameters = list(parameters)
-        header_parameters.extend(['logTeff', 'logL', 'logg'])
+        header_parameters.extend(['Teff', 'logL', 'logg'])
         writer.writerow(header_parameters)
         for line in freqs:
             if line != None:
@@ -291,26 +290,45 @@ def spectro_from_profiles(mesa_profile, parameters):
     mesa_profile: string
         path to the MESA profile
     parameters: list of strings
-        List of input parameters varied in the computed grid, so these are included in returned line.
-    expected_nr_orders: int
-        The expexted number of computed orders, to check if no orders are missing.
+        List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
 
     ------- Returns -------
     line: string
-        Line containing all the model- and spectroscopic parameters
-        of the MESA profile.
+        Line containing all the model- and spectroscopic parameters of the MESA profile.
     """
     param_dict = mypy.get_param_from_filename(mesa_profile, parameters)
     prof_data = mypy.read_hdf5(mesa_profile)
 
-    if (float(param_dict['Xc'])<0.3 ) or (float(param_dict['Xc'])>0.6):
-        return None
     logL = np.log10(float(prof_data['photosphere_L']))
-    logTeff = np.log10(float(prof_data['Teff']))
+    Teff = float(prof_data['Teff'])
     logg = prof_data['log_g'][0]
 
     line=[]
     for p in parameters:
         line.append(param_dict[p])
-    line.extend([logTeff, logL, logg])
+    line.extend([Teff, logL, logg])
     return line
+
+################################################################################
+def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.tsv', model_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+    """
+    Combine the output files with the frequencies and spectroscopy of the grid in one new tsv file,
+    only keeping models that have entries in both the frequency and specto files.
+    ------- Parameters -------
+    grid_frequencies, grid_spectroscopy: string
+        Paths to the tsv files containing the model input parameters and corresponding frequency/spectroscopy of the model.
+    output_name: string
+        Name of the generated tsv file containing the combined info.
+    model_parameters: list of string
+        List of the model parameters to use for matching the entries in the freq/spectro file.
+    """
+    freq_df    = pd.read_csv(grid_frequencies, delim_whitespace=True, header=0)
+    spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
+    # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
+    df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
+
+    # take the column with rotation and place it as the first column
+    col = df_merged.pop("rot")
+    df_merged.insert(0, col.name, col)
+    # write the merged dataFrame to a new tsv file
+    df_merged.to_csv(output_name, sep='\t',index=False)

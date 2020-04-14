@@ -12,8 +12,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%
 logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
 ################################################################################
-def plot_correlations(MLE_values_file, grid_spectroscopy, fig_title=None, label_size=18, fig_outputDir='figures/',
-                      percentile_to_show=0.1, logTeff_obs=None, logg_obs=None, logL_obs=None):
+def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig_title=None, label_size=18, fig_outputDir='figures/',
+                      percentile_to_show=0.1, logg_or_logL='logL'):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -23,20 +23,22 @@ def plot_correlations(MLE_values_file, grid_spectroscopy, fig_title=None, label_
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
     MLE_values_file, grid_spectroscopy: string
-        path to the files with the MLE values and and the spectroscopic info of the models in the grid
+        Path to the tsv files with the MLE values / the spectroscopic info of the models in the grid.
+    observations_file: string
+        Path to the tsv file with observations, with a column for each observable and each set of errors.
+        Column names specify the observable, and "_err" suffix denotes that it's the error.
     fig_title: string
         Title of the figure and name of the saved png.
     label_size: int
-        size of the axis labels
+        Size of the axis labels.
     fig_outputDir: string
-        output directory for the figures
+        Output directory for the figures.
     percentile_to_show: float
-        percentile of models to show in the plots
-    logTeff_obs: list (length 2)
-        log of the observed effective temperature (first entry) and its error (second entry, again a list for non-symmetric errors)
-    logg_obs, logL_obs: list (length 2) of float
-        log of the observed surface gravity or Luminosity (first entry) and its error (second entry)
+        Percentile of models to show in the plots.
+    logg_or_logL: string
+        String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
     """
+    # theoretical models
     df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
     df = df.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
     df = df.iloc[int(df.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest distances
@@ -50,20 +52,21 @@ def plot_correlations(MLE_values_file, grid_spectroscopy, fig_title=None, label_
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
 
     ax_hrd = fig.add_subplot(gs[0:3,nr_params-3:nr_params], sharex=None, sharey=None)   # add subplot in top right for Kiel or HRD
-    ax_hrd.set_xlabel('log Teff')
+    ax_hrd.set_xlabel('Teff')
+    ax_hrd.invert_xaxis()
+    # ax_hrd.set_xscale("log")
 
     # get the spectroscopic info and merge the dataFrames into a new one containing all the info of the models they have in common
     spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
     df_merged = pd.merge(df, spectro_df, how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
 
-    if logg_obs != None:
-        ax_hrd.errorbar(logTeff_obs[0], logg_obs[0], xerr=np.array([logTeff_obs[1]]).T, yerr=logg_obs[1])    # Spectroscopic error bar
-        ax_hrd.set_ylabel('log g')
-        im = ax_hrd.scatter(df_merged['logTeff'], df_merged['logg'], c=np.log10(df_merged['distance']), cmap='hot')
-    elif logL_obs != None:
-        ax_hrd.errorbar(logTeff_obs[0], logL_obs[0], xerr=np.array([logTeff_obs[1]]).T, yerr=logL_obs[1])    # Spectroscopic error bar
-        ax_hrd.set_ylabel('log L')
-        im = ax_hrd.scatter(df_merged['logTeff'], df_merged['logL'], c=np.log10(df_merged['distance']), cmap='hot')
+    # observations
+    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+
+     # Observed pectroscopic error bar
+    ax_hrd.errorbar(Obs_dFrame['Teff'][0], Obs_dFrame[logg_or_logL][0], xerr=Obs_dFrame['Teff_err'][0], yerr=Obs_dFrame[f'{logg_or_logL}_err'][0])
+    im = ax_hrd.scatter(df_merged['Teff'], df_merged[logg_or_logL], c=np.log10(df_merged['distance']), cmap='hot')
+    ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -123,88 +126,62 @@ def plot_correlations(MLE_values_file, grid_spectroscopy, fig_title=None, label_
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def estimate_max_likelihood(Obs_path, Theo_file, which_observable='', estimator_type ='', dP_in_Vmatrix=False):
+def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type =''):
     """
-    Perform a maximum likelihood estimation using the provided specifications (type of estimator, observables ...)
+    Perform a maximum likelihood estimation using the provided type of estimator on the list of  observables.
     Writes a data file with the MLE values and input parameters of each model.
     ------- Parameters -------
     Obs_path: string
-        Path to the tsv file with observations, which has the following format: row 1 header,
-        row 2 and 3 observed frequencies and their errors, row 4 and 5 observed periods and their errors.
+        Path to the tsv file with observations, with a column for each observable and each set of errors.
+        Column names specify the observable, and "_err" suffix denotes that it's the error.
     Theo_file: string
-        Path to the tsv file with the theoretical frequency or period values and model input parameters.
-    which_observable: string
-        Which observables are used in the analysis, options are 'frequencies' or 'periods'.
+        Path to the tsv file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
+        and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
+    observables: list of strings
+        Which observables are used in the analysis, must contain 'frequencies' or 'periods'.
+        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     estimator_type: string
-        The type of maximum likelihood estimation to use. Currently supports "chi2", "mahalanobis" and "rope_length"
-    dP_in_Vmatrix: boolean
-        If False, make the V matrix (for mahalanobis distances) with only frequency or period values
-        if True, (observable should be periods) include both periods and period spacing values in the V matrix
+        The type of maximum likelihood estimation to use. Currently supports "chi2", "mahalanobis" and "rope_length".
     """
-    if dP_in_Vmatrix is True and (which_observable != 'periods' or estimator_type != 'mahalanobis'):
-        logger.warning('Skipped this function call, period spacing in variance matrix must use periods and mahalanobis distances.'\
-                        +f' However which_observable={which_observable} and estimator_type={estimator_type}')
-        return
+    if estimator_type == 'rope_length' and observables!=['period']:
+        sys.exit(logger.error('Can currently only use period as observables when using the rope length as estimator.'))
 
-    # Read in the desired observables
-    ObsVal = pd.read_table(Obs_path, delim_whitespace=True, header=0)
-    if which_observable == 'frequencies':
-        Obs = np.asarray(ObsVal.iloc[0])
-        ObsErr = np.asarray(ObsVal.iloc[1]*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
-    elif which_observable == 'periods':
-        Obs = np.asarray(ObsVal.iloc[2])
-        ObsErr = np.asarray(ObsVal.iloc[3]*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
-    else:
-        sys.exit(logger.error(f'Observable \"{which_observable}\" not recognised, should be \"periods\" or \"frequencies\"' ))
+    # Read in the observed data and make an array of the observed obervables
+    Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
+    Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
-    # Grid data
-    TheoFile = pd.read_table(Theo_file, delim_whitespace=True, header=0)
-    Thetas =  np.asarray(TheoFile.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
-    Theo =  np.asarray(TheoFile.loc[:,'f1':])   # corresponding theoretical values to the observed ones
-    Path_theo = Path(Theo_file)
-
-    # Make new list of theoretical models without entries with value -1
-    newTheo = []
-    newThetas = []
-    for i in range(len(Theo)):
-        if (Theo[i][0] !=-1) and (Theo[i][-1] !=-1):     # ignore models where one of the freqs is -1
-            if dP_in_Vmatrix is True:
-                spacing = ffg.generate_thry_series(Theo[i])
-                spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-                aux = np.append(Theo[i], spacing)   # Include both P and dP as observables
-            else:
-                aux = Theo[i]
-
-            newTheo.append(aux)
-            newThetas.append(Thetas[i])
-    neg_value = np.unique(np.where(Theo==-1)[0])
-
-    logger.debug(f'ignored -1 freqs : {len(neg_value)}')
-    logger.debug(f'original #models : {len(Theo)}')
-    logger.debug(f'remaining #models: {len(newTheo)}')
-
-    Theo = np.asarray(newTheo)
-    Thetas = np.asarray(newThetas)
-
+    Path_theo   = Path(Theo_file)
     #suffix for filename to indicate the MLE method used
     suffix = {'chi2'       : 'CS',
               'mahalanobis': 'MD',
               'rope_length': 'RL'}
 
-    # Add period spacing to the list of observables
-    if dP_in_Vmatrix is True:
-        observed_spacings,observed_spacings_errors = ffg.generate_obs_series(Obs, ObsErr)
+    # set the name of the output file
+    head, tail = mypy.split_line(Path_theo.stem, 'KIC')
+    DataOut = f'{Path_theo.parent}/KIC{tail}_{suffix[estimator_type]}_{file_suffix_observables}.dat'
 
-        observed_spacings = np.asarray(observed_spacings)/86400 # switch back from seconds to days (so both P and dP are in days)
-        observed_spacings_errors = np.asarray(observed_spacings_errors)/86400   # switch back from seconds to days (so both P and dP are in days)
+    # Theoretical grid data
+    Theo_dFrame = pd.read_table(Theo_file, delim_whitespace=True, header=0)
+    Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
+    Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
-        Obs = np.append(Obs, observed_spacings) # Include both P and dP as observables
-        ObsErr = np.append(ObsErr, observed_spacings_errors)
+    # Make new list of theoretical models without entries with value -1
+    newTheo = []
+    newThetas = []
+    for i in range(len(Theo_puls)):
+        if (Theo_puls[i][0] !=-1) and (Theo_puls[i][-1] !=-1):     # ignore models where one of the freqs is -1
+            theo_observables = create_theo_observables_array(Theo_dFrame, i, observables)   # make an array of the theoretical observables for each model
 
-        head, tail = mypy.split_line(Path_theo.stem, '_')
-        DataOut = f'{Path_theo.parent}/PdP_{tail}_{suffix[estimator_type]}.dat'
-    else:
-        DataOut = f'{Path_theo.parent}/{Path_theo.stem}_{suffix[estimator_type]}.dat'
+            newTheo.append(theo_observables)
+            newThetas.append(Thetas[i])
+    neg_value = np.unique(np.where(Theo_puls==-1)[0])
+    logger.debug(f'ignored -1 freqs : {len(neg_value)}')
+    logger.debug(f'original #models : {len(Theo_puls)}')
+    logger.debug(f'remaining #models: {len(newTheo)}')
+
+    Theo_observables = np.asarray(newTheo)
+    Thetas           = np.asarray(newThetas)
 
     # Dictionary containing different functions for MLE
     switcher={ 'chi2': mle_chi2,
@@ -213,13 +190,13 @@ def estimate_max_likelihood(Obs_path, Theo_file, which_observable='', estimator_
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     mle_function = switcher.get(estimator_type, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    mle_values = mle_function(Obs, ObsErr, Theo)
+    mle_values = mle_function(Obs, ObsErr, Theo_observables)
 
     # Print smallest and highest values
     idx2 = np.argsort(mle_values)
-    Parameters = TheoFile.loc[:,:'Xc'].columns  # Parameter names
-    logger.info(f'Smallest {estimator_type} distance: {mle_values[np.argsort(mle_values)][0]}')
-    logger.info(f'Highest {estimator_type} distance : {mle_values[np.argsort(mle_values)][-1]}')
+    Parameters = Theo_dFrame.loc[:,:'Xc'].columns  # Parameter names
+    logger.info(f'Smallest {estimator_type} : {mle_values[np.argsort(mle_values)][0]}')
+    logger.info(f'Highest {estimator_type}  : {mle_values[np.argsort(mle_values)][-1]}')
     logger.info(f'distance & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
     logger.info('-------------------------------------------------------')
     # Print the ten models with the smallest values
@@ -236,6 +213,125 @@ def estimate_max_likelihood(Obs_path, Theo_file, which_observable='', estimator_
     df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
     df.to_csv(DataOut, sep='\t',index=False)             # write the dataframe to a tsv file
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+def create_theo_observables_array(Theo_dFrame, index, observables):
+    """
+    Create an array of theoretical observables.
+    ------- Parameters -------
+    Theo_dFrame: pandas dataFrame
+        DataFrame containing the theoretical periods or frequencies (as the last columns), along with any additional
+        columns containing extra observables.
+    index: int
+        Row index in the dataFrame of the theoretical model to make the array for.
+    observables: list of strings
+        Which observables are included in the returned array, must contain 'frequencies' or 'periods'.
+        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
+
+    ------- Returns -------
+    observables_out: numpy array of floats
+        The values of the specified observables for the model.
+    """
+    observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
+    observables_out  = np.asarray(Theo_dFrame.loc[index,'f1':])
+
+    if 'period' in observables:
+        periods = np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
+        observables.remove('period')
+
+    elif 'frequency' in observables:
+        periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
+        observables.remove('frequency')
+    else:
+        sys.exit(logger.error(f'\"period\" or \"frequency\" should be one of the observables' ))
+
+    if 'period_spacing' in observables:
+        spacing = ffg.generate_thry_series(periods)
+        spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+        observables_out = np.append(observables_out, spacing)   # Include dP as observables
+        observables.remove('period_spacing')
+
+    if 'rope_length' in observables:
+        RL, error = PdP_pattern_rope_length(periods)
+        observables_out = np.append(observables_out, RL)        # Include pattern rope length as observable
+        observables.remove('rope_length')
+
+    # Add all other observables in the list from the dataFrame
+    for observable in observables:
+        observables_out = np.append(observables_out, np.asarray(Theo_dFrame.loc[index,observable]))
+
+    return observables_out
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+def create_obs_observables_array(Obs_dFrame, observables):
+    """
+    Create an array of the observed observables.
+    ------- Parameters -------
+    Obs_dFrame: pandas dataFrame
+        DataFrame containing the theoretical frequencies, periods, and any additional observables as columns, as well as columns with their errors.
+        Column names specify the observable, and "_err" suffix denotes that it's the error.
+    observables: list of strings
+        Which observables are included in the returned array, must contain 'frequency' or 'period'.
+        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
+
+    ------- Returns -------
+    observables_out, observablesErr_out: numpy array of floats
+        The values of the specified observables (or their errors).
+    filename_suffix: string
+        suffix for the filename, containing all the included observables, separated by '-'
+    """
+    observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
+    periods = np.asarray(Obs_dFrame['period'])
+    periodsErr = np.asarray(Obs_dFrame['period_err']*4)
+    filename_suffix = ''
+
+    if 'period' in observables:
+        observables_out = np.asarray(Obs_dFrame['period'])
+        observablesErr_out = np.asarray(Obs_dFrame['period_err']*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
+        filename_suffix = 'P'
+        observables.remove('period')
+
+    elif 'frequency' in observables:
+        observables_out = np.asarray(Obs_dFrame['frequency'])
+        observablesErr_out = np.asarray(Obs_dFrame['frequency_err']*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
+        filename_suffix = 'f'
+        observables.remove('frequency')
+    else:
+        sys.exit(logger.error(f'\"period\" or \"frequency\" should be one of the observables' ))
+
+    if 'period_spacing' in observables:
+        spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
+        spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+        spacing_errs = np.asarray(spacing_errs)/86400
+
+        observables_out = np.append(observables_out, spacing)   # Include dP as observables
+        observablesErr_out = np.append(observablesErr_out, spacing_errs)
+        filename_suffix+='-dP'
+        observables.remove('period_spacing')
+
+    if 'rope_length' in observables:
+        RL, error = PdP_pattern_rope_length(periods, P_error=periodsErr)
+        observables_out = np.append(observables_out, RL)      # Include pattern rope length as observable
+        observablesErr_out = np.append(observablesErr_out, error)
+        filename_suffix+='-rl'
+        observables.remove('rope_length')
+
+    # Add all other observables in the list from the dataFrame
+    for observable in observables:
+        Obs = np.asarray(Obs_dFrame[observable]) # since these columns have less entries, the dataFrame has NaNs in the empty rows
+        Obs = Obs[~np.isnan(Obs)]                # remove all entries that are NaN in the numpy array
+        ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
+        ObsErr = ObsErr[~np.isnan(ObsErr)]
+
+        observables_out = np.append(observables_out, Obs)
+        observablesErr_out = np.append(observablesErr_out, ObsErr)
+        filename_suffix+=f'-{observable}'
+
+    return observables_out, observablesErr_out, filename_suffix
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def mle_chi2(YObs, ObsErr, YTheo):
     """
@@ -373,3 +469,45 @@ def distance_point_errorBox(obs_P, obs_dP, obs_P_error, obs_dP_error, theo_P, th
     dx = np.max([box_x_min - theo_P,  0, theo_P - box_x_max])
     dy = np.max([box_y_min - theo_dP, 0, theo_dP - box_y_max])
     return np.sqrt(dx**2+dy**2)
+
+################################################################################
+def PdP_pattern_rope_length(P, P_error=[-1]):
+    """
+    Calculate the rope length of the period spacing pattern (total eucledian distance between each consecutive point in P-dP space).
+    ------- Parameters -------
+    P, P_error: numpy array of float
+        Periods (P) their errors.
+
+    ------- Returns -------
+    total_length, total_error: float
+        The sum of the eucledian distance between each consecutive point in P-dP space (P in days, dP in seconds)
+        and the error on this total length.
+    """
+    if P_error[0] != -1:
+        dP, dP_error = ffg.generate_obs_series(P, P_error)
+    else:
+        dP = ffg.generate_thry_series(P)
+
+    total_length=0
+    deltas_lengths = []
+    for i in range(len(dP)-1):
+        dx = P[i]-P[i+1]
+        dy = dP[i]-dP[i+1]
+        total_length += np.sqrt(dx**2+dy**2)
+
+        # calculate the error on the length between each of the P-dP points
+        if P_error[0] != -1:
+            delta_dx = np.sqrt( P_error[i]**2 + P_error[i+1]**2  )
+            delta_dy = np.sqrt( dP_error[i]**2 + dP_error[i+1]**2  )
+
+            delta_length = np.sqrt( ((dx*delta_dx)**2 + (dy*delta_dy)**2) /(dx**2 + dy**2) )
+            deltas_lengths.append(delta_length)
+
+    # calculate the total resulting error on the length of the whole pattern
+    total_error = 0
+    if P_error[0] != -1:
+        for delta in deltas_lengths:
+            total_error+= delta**2
+        total_error = np.sqrt(total_error)
+
+    return total_length, total_error
