@@ -284,18 +284,18 @@ def create_obs_observables_array(Obs_dFrame, observables):
     """
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
     periods = np.asarray(Obs_dFrame['period'])
-    periodsErr = np.asarray(Obs_dFrame['period_err']*4)
+    periodsErr = np.asarray(Obs_dFrame['period_err'])
     filename_suffix = ''
 
     if 'period' in observables:
         observables_out = np.asarray(Obs_dFrame['period'])
-        observablesErr_out = np.asarray(Obs_dFrame['period_err']*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
+        observablesErr_out = np.asarray(Obs_dFrame['period_err'])
         filename_suffix = 'P'
         observables.remove('period')
 
     elif 'frequency' in observables:
         observables_out = np.asarray(Obs_dFrame['frequency'])
-        observablesErr_out = np.asarray(Obs_dFrame['frequency_err']*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
+        observablesErr_out = np.asarray(Obs_dFrame['frequency_err'])
         filename_suffix = 'f'
         observables.remove('frequency')
     else:
@@ -428,11 +428,11 @@ def mle_rope_length(obs_P, obs_P_error, theo_P):
     """
     rope_length = []
     obs_dP, obs_dP_error = ffg.generate_obs_series(obs_P, obs_P_error)  # observed period spacing in seconds
-    obs_dP = np.asarray(obs_dP)#/86400     TODO     # switch back from seconds to days (so both P and dP are in days)
+    obs_dP = np.asarray(obs_dP)/86400         # switch back from seconds to days (so both P and dP are in days)
 
     for i in range(len(theo_P)):
         theo_dP = ffg.generate_thry_series(theo_P[i])   # theoretical period spacing in seconds
-        theo_dP = np.asarray(theo_dP)#/86400  TODO  # switch back from seconds to days (so both P and dP are in days)
+        theo_dP = np.asarray(theo_dP)/86400   # switch back from seconds to days (so both P and dP are in days)
 
         total_length = 0
         for j in range(len(obs_dP)):
