@@ -116,7 +116,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
     Theo_dFrame = pd.read_table(pulsationGrid_file, delim_whitespace=True, header=0)
 
     Obs    = np.asarray(Obs_dFrame[which_observable])
-    ObsErr = np.asarray(Obs_dFrame[f'{which_observable}_err']*4)   # times 4 to take correlation structure of the data into account (see Moravveji et al. 2016)
+    ObsErr = np.asarray(Obs_dFrame[f'{which_observable}_err'])
 
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
     theo_pattern_func = partial(theoretical_pattern_from_dfrow, method_build_series=method_build_series,  Obs=Obs, ObsErr=ObsErr,
