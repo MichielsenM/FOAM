@@ -116,7 +116,7 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
 
     cax = fig.add_axes([0.88, 0.3, 0.05, 0.6]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cbar.set_label('log(MLE value)', rotation=90)
+    cbar.set_label('log(merit function value)', rotation=90)
     plt.subplots_adjust(left=0.11, right=0.87, bottom=0.1, top=0.95)
 
     fig.suptitle(fig_title)
@@ -129,7 +129,7 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
 def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type =''):
     """
     Perform a maximum likelihood estimation using the provided type of estimator on the list of  observables.
-    Writes a data file with the MLE values and input parameters of each model.
+    Writes a data file with the values of the merit funtion and input parameters of each model.
     ------- Parameters -------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
@@ -152,7 +152,7 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
     Path_theo   = Path(Theo_file)
-    #suffix for filename to indicate the MLE method used
+    #suffix for filename to indicate the merit funtion used
     suffix = {'chi2'       : 'CS',
               'mahalanobis': 'MD',
               'rope_length': 'RL'}
@@ -183,14 +183,14 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Theo_observables = np.asarray(newTheo)
     Thetas           = np.asarray(newThetas)
 
-    # Dictionary containing different functions for MLE
+    # Dictionary containing different merit functions
     switcher={ 'chi2': mle_chi2,
                 'mahalanobis' : mle_mahalanobis,
                 'rope_length': mle_rope_length }
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
-    mle_function = switcher.get(estimator_type, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    mle_values = mle_function(Obs, ObsErr, Theo_observables)
+    merit_function = switcher.get(estimator_type, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
+    mle_values = merit_function(Obs, ObsErr, Theo_observables)
 
     # Print smallest and highest values
     idx2 = np.argsort(mle_values)
