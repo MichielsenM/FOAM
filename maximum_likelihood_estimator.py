@@ -68,6 +68,9 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
     im = ax_hrd.scatter(df_merged['Teff'], df_merged[logg_or_logL], c=np.log10(df_merged['distance']), cmap='hot')
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
 
+    min_index = df_merged['distance'].idxmin(axis='index', skipna=True)
+    ax_hrd.scatter(df_merged['Teff'][min_index], df_merged[logg_or_logL][min_index], marker='x', color='white')
+
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
             if iy==0:
@@ -99,15 +102,22 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
             if (iy+ix == nr_params-1):  # make distribution plots on the diagonal subplots
                 values = sorted(np.unique(df.iloc[:,nr_params-ix]))
                 # determine edges of the bins for the histogram distribution plots
-                bin_edges = [values[0]-1E-3]
+                if len(values) > 1:
+                    bin_half_width = (values[0]+values[1])/2-values[0]
+                else:
+                    bin_half_width = 1E-3
+                bin_edges = [values[0]-bin_half_width]
+
+                # bin_edges = [values[0]-1E-3]
                 for i in range(len(values)-1):
                     bin_edges.extend([(values[i]+values[i+1])/2])
-                bin_edges.extend([values[-1]+1E-3])
+                bin_edges.extend([values[-1]+bin_half_width])
 
                 ax.hist( df.iloc[:,nr_params-ix], bins=bin_edges, density=True, cumulative=False, histtype='step' )
                 continue
 
             im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot') # gist_rainbow as alternative cmap
+            ax.scatter(df.iloc[min_index,nr_params-ix], df.iloc[min_index,iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
             ax.set_ylim( max(ax.get_ylim()[0], min(df.iloc[:,iy+1])-0.01 ) ,  min(ax.get_ylim()[1], max(df.iloc[:,iy+1])+0.01 ) )
             ax.set_xlim( max(ax.get_xlim()[0], min(df.iloc[:,nr_params-ix])-0.01 ) ,  min(ax.get_xlim()[1], max(df.iloc[:,nr_params-ix])+0.01 ) )
