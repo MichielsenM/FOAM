@@ -12,8 +12,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%
 logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
 ################################################################################
-def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig_title=None, label_size=18, fig_outputDir='figures/',
-                      percentile_to_show=0.1, logg_or_logL='logL'):
+def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_size=18, fig_outputDir='figures/',
+                      percentile_to_show=0.5, logg_or_logL='logL'):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -22,8 +22,8 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
     where the first column is 'distance', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
-    MLE_values_file, grid_spectroscopy: string
-        Path to the tsv files with the MLE values / the spectroscopic info of the models in the grid.
+    MLE_values_file: string
+        Path to the tsv files with the MLE values and parameters of the models in the grid.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
@@ -39,9 +39,11 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
         String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
     """
     # theoretical models
-    df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
-    df = df.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
-    df = df.iloc[int(df.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest distances
+    df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+    df_Theo = df_Theo.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
+    df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest distances
+
+    df = df_Theo.drop(columns=['Teff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
 
     ax_dict={}
     nr_params = len(df.columns)-1
@@ -54,22 +56,18 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
     ax_hrd = fig.add_subplot(gs[0:3,nr_params-3:nr_params], sharex=None, sharey=None)   # add subplot in top right for Kiel or HRD
     ax_hrd.set_xlabel('Teff')
     ax_hrd.invert_xaxis()
-    # ax_hrd.set_xscale("log")
-
-    # get the spectroscopic info and merge the dataFrames into a new one containing all the info of the models they have in common
-    spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
-    df_merged = pd.merge(df, spectro_df, how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
 
     # observations
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
 
      # Observed pectroscopic error bar
     ax_hrd.errorbar(Obs_dFrame['Teff'][0], Obs_dFrame[logg_or_logL][0], xerr=Obs_dFrame['Teff_err'][0], yerr=Obs_dFrame[f'{logg_or_logL}_err'][0])
-    im = ax_hrd.scatter(df_merged['Teff'], df_merged[logg_or_logL], c=np.log10(df_merged['distance']), cmap='hot')
+    im = ax_hrd.scatter(df_Theo['Teff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['distance']), cmap='hot')
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
 
-    min_index = df_merged['distance'].idxmin(axis='index', skipna=True)
-    ax_hrd.scatter(df_merged['Teff'][min_index], df_merged[logg_or_logL][min_index], marker='x', color='white')
+    min_index = df['distance'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
+
+    ax_hrd.scatter(df_Theo['Teff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white') # mark the best model on the HRD
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -117,7 +115,7 @@ def plot_correlations(MLE_values_file, observations_file, grid_spectroscopy, fig
                 continue
 
             im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot') # gist_rainbow as alternative cmap
-            ax.scatter(df.iloc[min_index,nr_params-ix], df.iloc[min_index,iy+1], color='white', marker = 'x')
+            ax.scatter(df.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
             ax.set_ylim( max(ax.get_ylim()[0], min(df.iloc[:,iy+1])-0.01 ) ,  min(ax.get_ylim()[1], max(df.iloc[:,iy+1])+0.01 ) )
             ax.set_xlim( max(ax.get_xlim()[0], min(df.iloc[:,nr_params-ix])-0.01 ) ,  min(ax.get_xlim()[1], max(df.iloc[:,nr_params-ix])+0.01 ) )
@@ -221,6 +219,10 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Parameters= Parameters.insert(0, 'distance') # add an additional parameter name
 
     df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
+
+    for spectro in ['Teff', 'logL', 'logg']:
+        if spectro in Theo_dFrame.columns:
+            df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
     df.to_csv(DataOut, sep='\t',index=False)             # write the dataframe to a tsv file
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -521,3 +523,31 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
         total_error = np.sqrt(total_error)
 
     return total_length, total_error
+
+################################################################################
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+################################################################################
+def spectro_cutoff(MLE_values_file, observations_file, nsigma=1):
+    """
+    Make an n-sigma cutoff of the models based on the spectoscopic observations.
+    Save this as a file with prefix "clipped".
+    ------- Parameters -------
+    MLE_values_file: string
+        Path to the tsv files with the MLE values / the spectroscopic info of the models in the grid.
+    observations_file: string
+        Path to the tsv file with observations, with a column for each observable and each set of errors.
+        Column names specify the observable, and "_err" suffix denotes that it's the error.
+    nsigma: int
+        How many sigmas you want to make the interval to accept models.
+    """
+    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+
+    df_Theo = df_Theo[df_Theo.Teff < Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0]]
+    df_Theo = df_Theo[df_Theo.Teff > Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0]]
+    df_Theo = df_Theo[df_Theo.logg < Obs_dFrame['logg'][0]+nsigma*Obs_dFrame['logg_err'][0]]
+    df_Theo = df_Theo[df_Theo.logg > Obs_dFrame['logg'][0]-nsigma*Obs_dFrame['logg_err'][0]]
+    df_Theo = df_Theo[df_Theo.logL < Obs_dFrame['logL'][0]+nsigma*Obs_dFrame['logL_err'][0]]
+    df_Theo = df_Theo[df_Theo.logL > Obs_dFrame['logL'][0]-nsigma*Obs_dFrame['logL_err'][0]]
+
+    df_Theo.to_csv(f'clipped{nsigma}sigma_{MLE_values_file}', sep='\t',index=False)
