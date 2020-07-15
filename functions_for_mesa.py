@@ -276,7 +276,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         writer = csv.writer(tsvfile, delimiter='\t')
         # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
         header_parameters = list(parameters)
-        header_parameters.extend(['Teff', 'logL', 'logg'])
+        header_parameters.extend(['logTeff', 'logL', 'logg'])
         writer.writerow(header_parameters)
         for line in freqs:
             if line != None:
@@ -285,7 +285,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
     """
-    Extract model parameters and spectroscopic info from a MESA profile
+    Extract spectroscopic info from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
@@ -300,13 +300,13 @@ def spectro_from_profiles(mesa_profile, parameters):
     prof_data = mypy.read_hdf5(mesa_profile)
 
     logL = np.log10(float(prof_data['photosphere_L']))
-    Teff = float(prof_data['Teff'])
+    logTeff = np.log10(float(prof_data['Teff']))
     logg = prof_data['log_g'][0]
 
     line=[]
     for p in parameters:
         line.append(param_dict[p])
-    line.extend([Teff, logL, logg])
+    line.extend([logTeff, logL, logg])
     return line
 
 ################################################################################

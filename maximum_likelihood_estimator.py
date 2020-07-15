@@ -1,8 +1,10 @@
-""" Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots."""
+""" Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
+Note: The file with observations needs to hold temperature as Teff, although the analysis is done using the logTeff values."""
 import numpy as np
 import pandas as pd
-import sys, logging
+import sys, logging, os
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from pathlib import Path
 from . import my_python_functions as mypy
@@ -43,9 +45,9 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     df_Theo = df_Theo.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest distances
 
-    df = df_Theo.drop(columns=['Teff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+    df = df_Theo.drop(columns=['rot', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
 
-    ax_dict={}
+    ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
     for i in range(nr_params):
         ax_dict.update({i:{}})
@@ -53,21 +55,8 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
 
-    ax_hrd = fig.add_subplot(gs[0:3,nr_params-3:nr_params], sharex=None, sharey=None)   # add subplot in top right for Kiel or HRD
-    ax_hrd.set_xlabel('Teff')
-    ax_hrd.invert_xaxis()
-
-    # observations
-    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-
-     # Observed pectroscopic error bar
-    ax_hrd.errorbar(Obs_dFrame['Teff'][0], Obs_dFrame[logg_or_logL][0], xerr=Obs_dFrame['Teff_err'][0], yerr=Obs_dFrame[f'{logg_or_logL}_err'][0])
-    im = ax_hrd.scatter(df_Theo['Teff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['distance']), cmap='hot')
-    ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
-
+    # mark the best model on the HRD
     min_index = df['distance'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
-
-    ax_hrd.scatter(df_Theo['Teff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white') # mark the best model on the HRD
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -88,12 +77,13 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
             ax.tick_params(labelsize=label_size-4)
             if ix == 0:
                 ax.set_ylabel(df.columns[iy+1], size=label_size)
-                if (iy+ix == nr_params-1):
-                    ax.set_yticklabels(['']*10)
+                if (iy == nr_params-1):
+                    ax.set_yticklabels(['']*10) # remove ticklabels for just the histogram
             else:
                 plt.setp(ax.get_yticklabels(), visible=False)
             if iy == 0:
                 ax.set_xlabel(df.columns[nr_params-ix], size=label_size)
+                ax.tick_params(axis='x', rotation=45)
             else:
                 plt.setp(ax.get_xticklabels(), visible=False)
 
@@ -105,8 +95,6 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
                 else:
                     bin_half_width = 1E-3
                 bin_edges = [values[0]-bin_half_width]
-
-                # bin_edges = [values[0]-1E-3]
                 for i in range(len(values)-1):
                     bin_edges.extend([(values[i]+values[i+1])/2])
                 bin_edges.extend([values[-1]+bin_half_width])
@@ -114,20 +102,54 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
                 ax.hist( df.iloc[:,nr_params-ix], bins=bin_edges, density=True, cumulative=False, histtype='step' )
                 continue
 
-            im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot') # gist_rainbow as alternative cmap
+            im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot')
             ax.scatter(df.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
-            ax.set_ylim( max(ax.get_ylim()[0], min(df.iloc[:,iy+1])-0.01 ) ,  min(ax.get_ylim()[1], max(df.iloc[:,iy+1])+0.01 ) )
-            ax.set_xlim( max(ax.get_xlim()[0], min(df.iloc[:,nr_params-ix])-0.01 ) ,  min(ax.get_xlim()[1], max(df.iloc[:,nr_params-ix])+0.01 ) )
+            limit_adjust = (max(df.iloc[:,iy+1]) - min(df.iloc[:,iy+1]))*0.08
+            ax.set_ylim( min(df.iloc[:,iy+1])-limit_adjust,  max(df.iloc[:,iy+1])+limit_adjust  )
+            limit_adjust = (max(df.iloc[:,nr_params-ix]) - min(df.iloc[:,nr_params-ix])) *0.08
+            ax.set_xlim( min(df.iloc[:,nr_params-ix])-limit_adjust, max(df.iloc[:,nr_params-ix])+limit_adjust )
 
     fig.align_labels()
 
-    cax = fig.add_axes([0.88, 0.3, 0.05, 0.6]) # X, Y, widht, height
-    cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cbar.set_label('log(merit function value)', rotation=90)
-    plt.subplots_adjust(left=0.11, right=0.87, bottom=0.1, top=0.95)
+    # add subplot in top right for Kiel or HRD
+    ax_hrd = fig.add_axes([0.52, 0.64, 0.34, 0.34]) # X, Y, widht, height
 
-    fig.suptitle(fig_title)
+    ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
+    ax_hrd.tick_params(labelsize=label_size-4)
+    ax_hrd.invert_xaxis()
+
+    im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['distance']), cmap='hot')
+    ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
+    if logg_or_logL == 'logL':
+        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+    elif logg_or_logL == 'logg':
+        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+
+    # observations
+    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+    # Observed spectroscopic error bar
+    # To add the 1 and 3 sigma spectro error boxes, calculate their width (so 2 and 6 sigmas wide)
+    width_logTeff_2sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+    width_logTeff_6sigma= np.log10(Obs_dFrame['Teff'][0]+3*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0])
+    errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_2sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+    errorbox_3s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-3*Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_6sigma, 6*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+    ax_hrd.add_patch(errorbox_1s)
+    ax_hrd.add_patch(errorbox_3s)
+    ax_hrd.scatter(df_Theo['logTeff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white')
+
+    # Add color bar
+    cax = fig.add_axes([0.865, 0.268, 0.05, 0.6]) # X, Y, widht, height
+    cbar= fig.colorbar(im, cax=cax, orientation='vertical')
+    if '_MD_' in fig_title:
+        cbar.set_label('log(MD)', rotation=90, size=label_size)
+    elif '_CS_' in fig_title:
+        cbar.set_label(r'log($\chi^2$)', rotation=90, size=label_size)
+    else:
+        cbar.set_label('log(merit function value)', rotation=90)
+    fig.subplots_adjust(left=0.1, right=0.86, bottom=0.12, top=0.98)
+
+    # fig.suptitle(fig_title)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
     fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=300)
     plt.close('all')
@@ -198,7 +220,7 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     merit_function = switcher.get(estimator_type, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    mle_values = merit_function(Obs, ObsErr, Theo_observables)
+    mle_values = merit_function(Obs, ObsErr, Theo_observables, fig_title=f'KIC{tail}_{suffix[estimator_type]}_{file_suffix_observables}')
 
     # Print smallest and highest values
     idx2 = np.argsort(mle_values)
@@ -220,7 +242,7 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
 
     df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
 
-    for spectro in ['Teff', 'logL', 'logg']:
+    for spectro in ['logTeff', 'logL', 'logg']:
         if spectro in Theo_dFrame.columns:
             df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
     df.to_csv(DataOut, sep='\t',index=False)             # write the dataframe to a tsv file
@@ -246,7 +268,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         The values of the specified observables for the model.
     """
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
-    observables_out  = np.asarray(Theo_dFrame.loc[index,'f1':])
+    observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])
 
     if 'period' in observables:
         periods = np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
@@ -332,11 +354,13 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:
+        if observable == 'logTeff': observable = 'Teff' # To read it as Teff from the observations datafile
         Obs = np.asarray(Obs_dFrame[observable]) # since these columns have less entries, the dataFrame has NaNs in the empty rows
         Obs = Obs[~np.isnan(Obs)]                # remove all entries that are NaN in the numpy array
         ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
         ObsErr = ObsErr[~np.isnan(ObsErr)]
 
+        if observable == 'Teff': observable = 'logTeff' # To write it as logTeff in the filename
         observables_out = np.append(observables_out, Obs)
         observablesErr_out = np.append(observablesErr_out, ObsErr)
         filename_suffix+=f'-{observable}'
@@ -345,7 +369,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_chi2(YObs, ObsErr, YTheo):
+def mle_chi2(YObs, ObsErr, YTheo, fig_title=None):
     """
     Calculate chi squared values for the given theoretial patterns
     ------- Parameters -------
@@ -362,7 +386,7 @@ def mle_chi2(YObs, ObsErr, YTheo):
     return chi2
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_mahalanobis(YObs, ObsErr, YTheo):
+def mle_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
     """
     Calculate mahalanobis distance values for the given theoretial patterns
     ------- Parameters -------
@@ -394,7 +418,7 @@ def mle_mahalanobis(YObs, ObsErr, YTheo):
 
     # Include observational errors in the variance-covariance matrix
     V = V + np.diag(ObsErr**2.)
-    check_matrix(V)     # check if positive definite
+    check_matrix(V, fig_title=fig_title)     # check if positive definite and make figure
     # Calculate Mahalanobis distances
     MD = np.zeros(q)
     Vinv = np.linalg.inv(V)
@@ -405,26 +429,45 @@ def mle_mahalanobis(YObs, ObsErr, YTheo):
     return MD
 
 ################################################################################
-def check_matrix(V, plot=False):
+def check_matrix(V, plot=True, fig_title='Vmatrix'):
     """
-    Check the if the the eigenvalues of the Variance matrix are all positive,
-    since this means the matrix is positive definite.
+    Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
+    since this means the matrix is positive definite. Compute its determinant and condition number.
+    Create and save a figure of the variance-covariance matrix.
     ------- Parameters -------
     V: 2D np array
-        Variance matrix
+        Variance-covariance matrix
     plot: boolean
-        Flag to show a plot of the variance matrix
+        Flag to make a plot of the variance-covariance matrix
+    fig_title: string
+        The name of the figure to be created.
     """
     if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigencalues are >0, it is positive definite
         sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
 
+    condnr = np.linalg.cond(V)
     if plot is True:
-        im = plt.imshow(V, aspect='auto')
-        plt.colorbar(im)
-        plt.show()
+        im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
+
+        plt.ylabel(rf'$f_{ {V.shape[0]} } \leftarrow f_{1}$')
+        plt.xlabel(rf'$f_{1} \rightarrow f_{ {V.shape[0]} }$')
+        Path(f'{os.getcwd()}/figures_V_matrix/').mkdir(parents=True, exist_ok=True)
+        with open (f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.txt', 'a') as det_file:
+            kk=10 # multiply the matrix by the exponent of this, otherwise the determinant is too small for the numerics
+            det_file.write(f'{fig_title} ln(det(exp({kk})*V)) = {np.log(np.linalg.det(np.exp(kk)*V))} \n')
+            det_file.write(f'{fig_title} condition number = {condnr:.2f} \n')
+
+        cbar = plt.colorbar(im)
+        cbar.ax.set_ylabel(r'[d$^{-2} 10^{-4}$]', rotation=270, labelpad=15)
+        plt.title('Variance covariance matrix')
+        plt.tight_layout()
+        plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.png')
+        plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.pdf')
+        plt.close('all')
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_rope_length(obs_P, obs_P_error, theo_P):
+def mle_rope_length(obs_P, obs_P_error, theo_P, fig_title=None):
     """
     Calculate rope length values for the given theoretial patterns. So for each pattern
     the total sum of distances between the theoretical points and their observed error boxes in the P-dP plane.
@@ -543,8 +586,8 @@ def spectro_cutoff(MLE_values_file, observations_file, nsigma=1):
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
     df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
 
-    df_Theo = df_Theo[df_Theo.Teff < Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0]]
-    df_Theo = df_Theo[df_Theo.Teff > Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0]]
+    df_Theo = df_Theo[df_Theo.logTeff < np.log10(Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0])]
+    df_Theo = df_Theo[df_Theo.logTeff > np.log10(Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0])]
     df_Theo = df_Theo[df_Theo.logg < Obs_dFrame['logg'][0]+nsigma*Obs_dFrame['logg_err'][0]]
     df_Theo = df_Theo[df_Theo.logg > Obs_dFrame['logg'][0]-nsigma*Obs_dFrame['logg_err'][0]]
     df_Theo = df_Theo[df_Theo.logL < Obs_dFrame['logL'][0]+nsigma*Obs_dFrame['logL_err'][0]]
