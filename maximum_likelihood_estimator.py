@@ -21,7 +21,7 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
     The subplots on the diagonal show the distribution of that variable.
     The list of variables is retrieved from columns of the MLE_values_file,
-    where the first column is 'distance', which are the MLE values.
+    where the first column is 'meritValue', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
     MLE_values_file: string
@@ -42,8 +42,8 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     """
     # theoretical models
     df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
-    df_Theo = df_Theo.sort_values('distance', ascending=False)    # Order from high to low, to plot lowest values last
-    df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest distances
+    df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
+    df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
     df = df_Theo.drop(columns=['rot', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
 
@@ -56,7 +56,7 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
 
     # mark the best model on the HRD
-    min_index = df['distance'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
+    min_index = df['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -119,7 +119,7 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     ax_hrd.tick_params(labelsize=label_size-4)
     ax_hrd.invert_xaxis()
 
-    im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['distance']), cmap='hot')
+    im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='hot')
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
         ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
@@ -227,7 +227,7 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Parameters = Theo_dFrame.loc[:,:'Xc'].columns  # Parameter names
     logger.info(f'Smallest {estimator_type} : {mle_values[np.argsort(mle_values)][0]}')
     logger.info(f'Highest {estimator_type}  : {mle_values[np.argsort(mle_values)][-1]}')
-    logger.info(f'distance & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
+    logger.info(f'meritValue & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
     logger.info('-------------------------------------------------------')
     # Print the ten models with the smallest values
     for i in range(10):
@@ -237,8 +237,8 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
         logger.info(row)
 
     # Save the results
-    CombData = np.concatenate((np.matrix(mle_values).T,Thetas),axis=1)  # add an additional column for MLE 'distances'
-    Parameters= Parameters.insert(0, 'distance') # add an additional parameter name
+    CombData = np.concatenate((np.matrix(mle_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
+    Parameters= Parameters.insert(0, 'meritValue') # add an additional parameter name
 
     df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
 
@@ -278,7 +278,8 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
         observables.remove('frequency')
     else:
-        sys.exit(logger.error(f'\"period\" or \"frequency\" should be one of the observables' ))
+        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the csv file was in periods if nothing was specified
+        observables_out = np.asarray([])                    # Don't use period or freq as observables
 
     if 'period_spacing' in observables:
         spacing = ffg.generate_thry_series(periods)
@@ -333,7 +334,8 @@ def create_obs_observables_array(Obs_dFrame, observables):
         filename_suffix = 'f'
         observables.remove('frequency')
     else:
-        sys.exit(logger.error(f'\"period\" or \"frequency\" should be one of the observables' ))
+        observables_out = np.asarray([])
+        observablesErr_out = np.asarray([])
 
     if 'period_spacing' in observables:
         spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
@@ -342,7 +344,8 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
         observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observablesErr_out = np.append(observablesErr_out, spacing_errs)
-        filename_suffix+='-dP'
+        if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
+        filename_suffix+='dP'
         observables.remove('period_spacing')
 
     if 'rope_length' in observables:
