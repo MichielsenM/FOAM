@@ -278,7 +278,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
         observables.remove('frequency')
     else:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the csv file was in periods if nothing was specified
+        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the tsv file was in periods if nothing was specified
         observables_out = np.asarray([])                    # Don't use period or freq as observables
 
     if 'period_spacing' in observables:
@@ -436,7 +436,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
     """
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
     since this means the matrix is positive definite. Compute its determinant and condition number,
-    and write them to a csv file. Create and save a figure of the variance-covariance matrix.
+    and write them to a tsv file. Create and save a figure of the variance-covariance matrix.
     ------- Parameters -------
     V: 2D np array
         Variance-covariance matrix
@@ -454,7 +454,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
         plt.xlabel(rf'$f_{1} \rightarrow f_{ {V.shape[0]} }$')
 
         kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
-        file_Path = Path(f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.csv')
+        file_Path = Path(f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.tsv')
         file_Path.parent.mkdir(parents=True, exist_ok=True)
         if not file_Path.is_file():
             file_Path.touch()
