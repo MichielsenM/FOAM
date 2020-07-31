@@ -435,8 +435,8 @@ def mle_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
 def check_matrix(V, plot=True, fig_title='Vmatrix'):
     """
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
-    since this means the matrix is positive definite. Compute its determinant and condition number.
-    Create and save a figure of the variance-covariance matrix.
+    since this means the matrix is positive definite. Compute its determinant and condition number,
+    and write them to a csv file. Create and save a figure of the variance-covariance matrix.
     ------- Parameters -------
     V: 2D np array
         Variance-covariance matrix
@@ -448,17 +448,20 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
     if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigencalues are >0, it is positive definite
         sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
 
-    condnr = np.linalg.cond(V)
     if plot is True:
         im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
-
         plt.ylabel(rf'$f_{ {V.shape[0]} } \leftarrow f_{1}$')
         plt.xlabel(rf'$f_{1} \rightarrow f_{ {V.shape[0]} }$')
-        Path(f'{os.getcwd()}/figures_V_matrix/').mkdir(parents=True, exist_ok=True)
-        with open (f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.txt', 'a') as det_file:
-            kk=10 # multiply the matrix by the exponent of this, otherwise the determinant is too small for the numerics
-            det_file.write(f'{fig_title} ln(det(exp({kk})*V)) = {np.log(np.linalg.det(np.exp(kk)*V))} \n')
-            det_file.write(f'{fig_title} condition number = {condnr:.2f} \n')
+
+        kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
+        file_Path = Path(f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.csv')
+        file_Path.parent.mkdir(parents=True, exist_ok=True)
+        if not file_Path.is_file():
+            file_Path.touch()
+            with file_Path.open("w") as file:
+                file.write(f'method \t ln(det(V)) \t condition_number \n')
+        with file_Path.open("a") as file:
+            file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
 
         cbar = plt.colorbar(im)
         cbar.ax.set_ylabel(r'[d$^{-2} 10^{-4}$]', rotation=270, labelpad=15)
@@ -467,7 +470,6 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
         plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.png')
         plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.pdf')
         plt.close('all')
-
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def mle_rope_length(obs_P, obs_P_error, theo_P, fig_title=None):
