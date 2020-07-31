@@ -17,7 +17,7 @@ logger = logging.getLogger('logger')
 logger.setLevel(logging.DEBUG)
 
 ################################################################################
-def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', expected_nr_orders=60, parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', radial_order_range=[1, 70], parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
     Extract frequencies from each globbed GYRE file and write them to 1 large file.
     ------- Parameters -------
@@ -25,34 +25,38 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', expected
         String to glob to find all the relevant GYRE summary files.
     output_file: string
         Name (can include a path) for the file containing all the pulsation frequencies of the grid.
-    expected_nr_orders: int
-        The expexted number of computed orders, to check if no orders are missing.
+    radial_order_range: list of 2 int
+        Two integers giving the range of radial orders of the computed g modes (as positive values)
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
         name of the summary files, and included in the 1 file containing all the info of the whole grid.
     """
-    extract_func = partial(all_freqs_from_summary, parameters=parameters, expected_nr_orders=expected_nr_orders)
+    # make a copy of the list, so parameters is not extended with all the orders before passing it on to 'all_freqs_from_summary'
+    header_parameters = list(parameters)
+    for i in range(radial_order_range[0], radial_order_range[1]+1):
+        f = 'n_pg-'+str(i)
+        f.strip()
+        header_parameters.append(f)
+
+    df = pd.DataFrame(columns=header_parameters)  # dataframe for all the pulations, with the columns ordered
+    MP_list = multiprocessing.Manager().list()    # make empty MultiProcessing listProxy
+
     # Glob all the files, then iteratively send them to a pool of processors
     summary_files = glob.iglob(gyre_files)
     p = multiprocessing.Pool()
-    freqs = p.imap(extract_func, summary_files)
+    extract_func = partial(all_freqs_from_summary, parameters=parameters)
+    dictionaries = p.imap(extract_func, summary_files)
+    for new_row in dictionaries:
+        MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
+
+    df = df.append(MP_list[:], ignore_index=True) # Combine the dictionaries into one dataframe
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as tsvfile:
-        writer = csv.writer(tsvfile, delimiter='\t')
-        # make a new list, so parameters is not extended with all the orders before passing it on to 'all_freqs_from_summary'
-        header_parameters = list(parameters)
-        for i in range(1, expected_nr_orders+1):
-            f = 'n_pg'+str(-1*(expected_nr_orders+1-i))
-            f.strip()
-            header_parameters.append(f)
-        writer.writerow(header_parameters)
-        for line in freqs:
-            writer.writerow(line)
+    df.to_csv(output_file, sep='\t',index=False)             # write the dataframe to a tsv file
 
 ################################################################################
-def all_freqs_from_summary(GYRE_summary_file, parameters, expected_nr_orders):
+def all_freqs_from_summary(GYRE_summary_file, parameters):
     """
     Extract model parameters and pulsation frequencies from a GYRE summary file
     ------- Parameters -------
@@ -60,30 +64,18 @@ def all_freqs_from_summary(GYRE_summary_file, parameters, expected_nr_orders):
         path to the GYRE summary file
     parameters: list of strings
         List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
-    expected_nr_orders: int
-        The expexted number of computed orders, to check if no orders are missing.
 
     ------- Returns -------
-    line: string
-        Line containing all the model parameters and pulsation frequencies of the GYRE summary file.
+    param_dict: dictionary
+        Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
     data = mypy.read_hdf5(GYRE_summary_file)
     param_dict = mypy.get_param_from_filename(GYRE_summary_file, parameters)
 
-    freqs = []
     for j in range(0, len(data['freq'])):
-        freqs.append(data['freq'][j][0])
+        param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
-    freqs  = np.asarray(freqs)
-    if len(freqs) != expected_nr_orders:
-        sys.exit(logger.error(f'Missing frequencies in {GYRE_summary_file}'))
-
-    line=[]
-    for p in parameters:
-        line.append(param_dict[p])
-    line.extend(freqs)
-    return line
-
+    return param_dict
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
 def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=None,
@@ -167,8 +159,12 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
     line: string
         Line containing the input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
     """
-    orders = np.arange(-60, 0)
-    freqs = np.asarray(summary_grid_row[1][f'n_pg{orders[0]}':])
+    # Radial orders are only handled correctly if they are computed up to -1 for each model. Otherwise they are mislabeled, although this will not
+    # be important here, since we don't use the radial orders in the analysis.
+    freqs = np.asarray(summary_grid_row[1][f'n_pg-1':]) # all keys from n_pg-1 onwards (these are all the radial orders)
+    freqs = freqs[~np.isnan(freqs)]     # remove NaNs (~ is the logical-not operator)
+    freqs = np.flip(freqs)              # Reverse the order of the frequencies, to get them in ascending npg order
+    orders = np.arange(-len(freqs), 0)  # ascending from the highest order to -1
     periods= 1/freqs
 
     if which_observable=='frequency':

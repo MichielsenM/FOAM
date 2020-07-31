@@ -17,7 +17,7 @@ The master branch will be updated from time to time when possible conflicts betw
 
 1. `templates`: a number of template files; GYRE inlists, bash scripts, VSC submit files.
 1. `LICENSE`: GNU general public license
-2. `functions_for_gyre.py`: Helpful functions for GYRE input and output .
+2. `functions_for_gyre.py`: Helpful functions for GYRE input and output.
 3. `functions_for_mesa.py`: Helpful functions to process MESA output.
 4. `grid_building_slurm.py`: Functions for building MESA and GYRE grids on the SLURM framework.
 5. `grid_building_vsc.py`: Functions for building MESA and GYRE grids on the VSC framework.
