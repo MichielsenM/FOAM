@@ -6,10 +6,7 @@ import logging
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger('logger')
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger('logger.mypy')
 ################################################################################
 def split_line(line, sep) :
     """

@@ -12,9 +12,7 @@ from functools import partial
 from . import my_python_functions as mypy
 from . import functions_for_mesa as ffm
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger('logger')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger('logger.ffg')
 
 ################################################################################
 def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', radial_order_range=[1, 70], parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
@@ -545,7 +543,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
 ################################################################################
 def generate_obs_series(periods,errors):
     """
-    Generate the observed period spacing series (delta P = p_n - p_(n+1) )
+    Generate the observed period spacing series (delta P = p_(n+1) - p_n )
     ------- Parameters -------
     periods, errors: list of floats
         observational periods and their errors in units of days
@@ -564,7 +562,7 @@ def generate_obs_series(periods,errors):
 ################################################################################
 def generate_thry_series(periods):
     """
-    Generate the theoretical period spacing series (delta P = p_n - p_(n+1) )
+    Generate the theoretical period spacing series (delta P = p_(n+1) - p_n )
     ------- Parameters -------
     periods: list of floats
         theoretical periods in units of days

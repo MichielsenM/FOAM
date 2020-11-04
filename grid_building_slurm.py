@@ -8,10 +8,7 @@ import logging
 from . import my_python_functions as mypy
 from . import functions_for_gyre as ffg
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger('logger')
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger('logger.gbs')
 ################################################################################
 def write_bash_submit( jobname, list, bash_submit_list, walltime=1440, memory=3000, cpu=1,
                        bash_template = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/SLURM_submit_list_template.sh')
@@ -131,7 +128,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
     Path(f'{setup_directory}/submit-lists-scripts').mkdir(parents=True, exist_ok=True)
     Path(f'{setup_directory}/lists').mkdir(parents=True, exist_ok=True)
     Path(f'{setup_directory}/inlists').mkdir(parents=True, exist_ok=True)
-    Path(f'{output_dir}').mkdir(parents=True, exist_ok=True)    
+    Path(f'{output_dir}').mkdir(parents=True, exist_ok=True)
 
     lines_run_all_bash = []
     lines_run_all_bash.append('#!/bin/bash \n')
