@@ -7,10 +7,7 @@ import logging
 from . import my_python_functions as mypy
 from . import functions_for_gyre as ffg
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger('logger')
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger('logger.gbv')
 ################################################################################
 def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.getcwd()}/MESA_work_dir',
                     Z_ini_list=[0.014], M_ini_list=[1], log_Dmix_list=[1], aov_list=[0], fov_list=[0],

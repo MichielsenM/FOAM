@@ -10,22 +10,20 @@ from pathlib import Path
 from . import my_python_functions as mypy
 from . import functions_for_gyre as ffg
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger('logger')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 ################################################################################
-def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_size=18, fig_outputDir='figures/',
-                      percentile_to_show=0.5, logg_or_logL='logL'):
+def plot_correlations(merit_values_file, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
     The subplots on the diagonal show the distribution of that variable.
-    The list of variables is retrieved from columns of the MLE_values_file,
+    The list of variables is retrieved from columns of the merit_values_file,
     where the first column is 'meritValue', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
-    MLE_values_file: string
-        Path to the tsv files with the MLE values and parameters of the models in the grid.
+    merit_values_file: string
+        Path to the tsv files with the merit function values and parameters of the models in the grid.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
@@ -39,9 +37,11 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
         Percentile of models to show in the plots.
     logg_or_logL: string
         String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
+    mark_best_model: boolean
+        Indicate the best model with a marker
     """
     # theoretical models
-    df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
@@ -54,9 +54,10 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
 
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
+    # proper label format on figures
+    axis_labels_dict = {'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
 
-    # mark the best model on the HRD
-    min_index = df['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
+    if mark_best_model: min_index = df['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
@@ -76,13 +77,13 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
             # manage visibility and size of the labels and ticks
             ax.tick_params(labelsize=label_size-4)
             if ix == 0:
-                ax.set_ylabel(df.columns[iy+1], size=label_size)
+                ax.set_ylabel(axis_labels_dict[df.columns[iy+1]], size=label_size)
                 if (iy == nr_params-1):
                     ax.set_yticklabels(['']*10) # remove ticklabels for just the histogram
             else:
                 plt.setp(ax.get_yticklabels(), visible=False)
             if iy == 0:
-                ax.set_xlabel(df.columns[nr_params-ix], size=label_size)
+                ax.set_xlabel(axis_labels_dict[df.columns[nr_params-ix]], size=label_size)
                 ax.tick_params(axis='x', rotation=45)
             else:
                 plt.setp(ax.get_xticklabels(), visible=False)
@@ -100,10 +101,11 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
                 bin_edges.extend([values[-1]+bin_half_width])
 
                 ax.hist( df.iloc[:,nr_params-ix], bins=bin_edges, density=True, cumulative=False, histtype='step' )
+                ax.tick_params(axis='y',left=False)
                 continue
 
             im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot')
-            ax.scatter(df.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
+            if mark_best_model: ax.scatter(df.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
             limit_adjust = (max(df.iloc[:,iy+1]) - min(df.iloc[:,iy+1]))*0.08
             ax.set_ylim( min(df.iloc[:,iy+1])-limit_adjust,  max(df.iloc[:,iy+1])+limit_adjust  )
@@ -113,7 +115,7 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     fig.align_labels()
 
     # add subplot in top right for Kiel or HRD
-    ax_hrd = fig.add_axes([0.52, 0.64, 0.34, 0.34]) # X, Y, widht, height
+    ax_hrd = fig.add_axes([0.508, 0.65, 0.33, 0.33]) # X, Y, widht, height
 
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
@@ -136,10 +138,10 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
     errorbox_3s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-3*Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_6sigma, 6*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
     ax_hrd.add_patch(errorbox_1s)
     ax_hrd.add_patch(errorbox_3s)
-    ax_hrd.scatter(df_Theo['logTeff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white')
+    if mark_best_model: ax_hrd.scatter(df_Theo['logTeff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
-    cax = fig.add_axes([0.865, 0.268, 0.05, 0.6]) # X, Y, widht, height
+    cax = fig.add_axes([0.841, 0.266, 0.05, 0.6]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
     if '_MD_' in fig_title:
         cbar.set_label('log(MD)', rotation=90, size=label_size)
@@ -147,18 +149,19 @@ def plot_correlations(MLE_values_file, observations_file, fig_title=None, label_
         cbar.set_label(r'log($\chi^2$)', rotation=90, size=label_size)
     else:
         cbar.set_label('log(merit function value)', rotation=90)
-    fig.subplots_adjust(left=0.1, right=0.86, bottom=0.12, top=0.98)
+    cbar.ax.tick_params(labelsize=label_size-4)
+    fig.subplots_adjust(left=0.109, right=0.835, bottom=0.13, top=0.99)
 
     # fig.suptitle(fig_title)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
-    fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=300)
+    fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
     plt.close('all')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type =''):
+def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''):
     """
-    Perform a maximum likelihood estimation using the provided type of estimator on the list of  observables.
+    Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
     ------- Parameters -------
     Obs_path: string
@@ -168,14 +171,11 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
         Path to the tsv file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Which observables are used in the analysis, must contain 'frequencies' or 'periods'.
-        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Can contain 'frequencies' or 'periods', 'period_spacing', and 'rope_length', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
-    estimator_type: string
-        The type of maximum likelihood estimation to use. Currently supports "chi2", "mahalanobis" and "rope_length".
+    merit_function: string
+        The type of merit function to use. Currently supports "chi2" and "mahalanobis".
     """
-    if estimator_type == 'rope_length' and observables!=['period']:
-        sys.exit(logger.error('Can currently only use period as observables when using the rope length as estimator.'))
 
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
@@ -184,12 +184,11 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Path_theo   = Path(Theo_file)
     #suffix for filename to indicate the merit funtion used
     suffix = {'chi2'       : 'CS',
-              'mahalanobis': 'MD',
-              'rope_length': 'RL'}
+              'mahalanobis': 'MD'}
 
     # set the name of the output file
     head, tail = mypy.split_line(Path_theo.stem, 'KIC')
-    DataOut = f'{Path_theo.parent}/KIC{tail}_{suffix[estimator_type]}_{file_suffix_observables}.dat'
+    DataOut = f'{Path_theo.parent}/KIC{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
     Theo_dFrame = pd.read_table(Theo_file, delim_whitespace=True, header=0)
@@ -214,30 +213,29 @@ def estimate_max_likelihood(Obs_path, Theo_file, observables=[], estimator_type 
     Thetas           = np.asarray(newThetas)
 
     # Dictionary containing different merit functions
-    switcher={ 'chi2': mle_chi2,
-                'mahalanobis' : mle_mahalanobis,
-                'rope_length': mle_rope_length }
+    switcher={ 'chi2': merit_chi2,
+                'mahalanobis' : merit_mahalanobis}
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
-    merit_function = switcher.get(estimator_type, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    mle_values = merit_function(Obs, ObsErr, Theo_observables, fig_title=f'KIC{tail}_{suffix[estimator_type]}_{file_suffix_observables}')
+    selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'KIC{tail}_{suffix[merit_function]}_{file_suffix_observables}')
 
     # Print smallest and highest values
-    idx2 = np.argsort(mle_values)
+    idx2 = np.argsort(merit_values)
     Parameters = Theo_dFrame.loc[:,:'Xc'].columns  # Parameter names
-    logger.info(f'Smallest {estimator_type} : {mle_values[np.argsort(mle_values)][0]}')
-    logger.info(f'Highest {estimator_type}  : {mle_values[np.argsort(mle_values)][-1]}')
+    logger.info(f'Smallest {merit_function} : {merit_values[np.argsort(merit_values)][0]}')
+    logger.info(f'Highest {merit_function}  : {merit_values[np.argsort(merit_values)][-1]}')
     logger.info(f'meritValue & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
     logger.info('-------------------------------------------------------')
     # Print the ten models with the smallest values
     for i in range(10):
-        row = f'{mle_values[np.argsort(mle_values)][i]:.4f}'
+        row = f'{merit_values[np.argsort(merit_values)][i]:.4f}'
         for k in range(np.shape(Thetas[idx2,:])[1]):
             row += f' & {Thetas[idx2,:][i,k]:.3f}'
         logger.info(row)
 
     # Save the results
-    CombData = np.concatenate((np.matrix(mle_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
+    CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
     Parameters= Parameters.insert(0, 'meritValue') # add an additional parameter name
 
     df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
@@ -372,7 +370,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_chi2(YObs, ObsErr, YTheo, fig_title=None):
+def merit_chi2(YObs, ObsErr, YTheo, fig_title=None):
     """
     Calculate chi squared values for the given theoretial patterns
     ------- Parameters -------
@@ -389,7 +387,7 @@ def mle_chi2(YObs, ObsErr, YTheo, fig_title=None):
     return chi2
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
+def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
     """
     Calculate mahalanobis distance values for the given theoretial patterns
     ------- Parameters -------
@@ -448,87 +446,37 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
     if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigencalues are >0, it is positive definite
         sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
 
+    logger.info(f'max(V) = {np.max(V)}')
+    kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
+    file_Path = Path(f'{os.getcwd()}/V_matrix/determinant_conditionNr.tsv')
+    file_Path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not file_Path.is_file():
+        with file_Path.open("w") as file:
+            file.write(f'method \t ln(det(V)) \t condition_number \n')
+    with file_Path.open("a") as file:
+        file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
+
     if plot is True:
         im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
-        plt.ylabel(rf'$f_{ {V.shape[0]} } \leftarrow f_{1}$')
-        plt.xlabel(rf'$f_{1} \rightarrow f_{ {V.shape[0]} }$')
-
-        kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
-        file_Path = Path(f'{os.getcwd()}/figures_V_matrix/determinant_conditionNr.tsv')
-        file_Path.parent.mkdir(parents=True, exist_ok=True)
-        if not file_Path.is_file():
-            file_Path.touch()
-            with file_Path.open("w") as file:
-                file.write(f'method \t ln(det(V)) \t condition_number \n')
-        with file_Path.open("a") as file:
-            file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
+        plt.ylabel(rf'Obs {V.shape[0]}  $\leftarrow$ Obs 1', size=14)
+        plt.xlabel(rf'Obs 1 $\rightarrow$ Obs {V.shape[0]} ', size=14)
+        # if (V.shape[0]==36):
+        #     plt.ylabel(rf'Mode Period {V.shape[0]}  $\leftarrow$ Mode Period 1', size=14)
+        #     plt.xlabel(rf'Mode Period 1 $\rightarrow$ Mode Period {V.shape[0]} ', size=14)
+        # else:
+        #     plt.ylabel(rf'$\Delta P_{ {V.shape[0]} }  \leftarrow \Delta P_{1}$', size=14)
+        #     plt.xlabel(rf'$\Delta P_{1} \rightarrow \Delta P_{ {V.shape[0]} }$', size=14)
 
         cbar = plt.colorbar(im)
-        cbar.ax.set_ylabel(r'[d$^{-2} 10^{-4}$]', rotation=270, labelpad=15)
+        cbar.ax.set_ylabel(r'[d$^{2} 10^{-4}$]', rotation=90, labelpad=15, size=14)
+        cbar.ax.tick_params(labelsize=14)
         plt.title('Variance covariance matrix')
+        plt.tick_params(labelsize=14)
         plt.tight_layout()
-        plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.png')
-        plt.savefig(f'{os.getcwd()}/figures_V_matrix/{fig_title}.pdf')
+        plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.png')
+        plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
         plt.close('all')
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def mle_rope_length(obs_P, obs_P_error, theo_P, fig_title=None):
-    """
-    Calculate rope length values for the given theoretial patterns. So for each pattern
-    the total sum of distances between the theoretical points and their observed error boxes in the P-dP plane.
-    ------- Parameters -------
-    YObs, ObsErr: numpy array of floats
-        Observed values and their errors (period or frequency in units of day or 1/day )
-    YTheo: numpy array of arrays of floats
-        Array of all theoretical patterns to calculate the chi squared value for.
-
-    ------- Returns -------
-    rope length: numpy array of floats
-        rope length values for the given theoretical values
-    """
-    rope_length = []
-    obs_dP, obs_dP_error = ffg.generate_obs_series(obs_P, obs_P_error)  # observed period spacing in seconds
-    obs_dP = np.asarray(obs_dP)/86400         # switch back from seconds to days (so both P and dP are in days)
-
-    for i in range(len(theo_P)):
-        theo_dP = ffg.generate_thry_series(theo_P[i])   # theoretical period spacing in seconds
-        theo_dP = np.asarray(theo_dP)/86400   # switch back from seconds to days (so both P and dP are in days)
-
-        total_length = 0
-        for j in range(len(obs_dP)):
-            total_length += distance_point_errorBox( obs_P[j], obs_dP[j], obs_P_error[j], obs_dP_error[j], theo_P[i][j], theo_dP[j])
-
-        rope_length.append(total_length)
-    rope_length = np.asarray(rope_length)
-
-    return rope_length
-################################################################################
-def distance_point_errorBox(obs_P, obs_dP, obs_P_error, obs_dP_error, theo_P, theo_dP):
-    """
-    Calculate the shortest distance from a theoretical point to the observed error box. Distance 0 if it is in the error box.
-    ------- Parameters -------
-    obs_P, obs_dP, theo_P, theo_dP: float
-        Observed (obs) and theoretical (theo) periods (P) and period spacing (dP)
-    obs_P_error, obs_dP_error: float
-        Error on the observed period and period spacing
-
-    ------- Returns -------
-    float
-        The distance between the theoretical point and the observed error box.
-    """
-    # calculate edges fo the error box
-    box_x_min = obs_P - obs_P_error
-    box_x_max = obs_P + obs_P_error
-    box_y_min = obs_dP - obs_dP_error
-    box_y_max = obs_dP + obs_dP_error
-
-    # Look at the tuple being provided to the max function: (min-p, 0, p-max). Let's designate this tuple (a,b,c).
-    # If p is left of min, then we have p < min < max, which means the tuple will evaluate to (+,0,-), and so the max function will correctly return a = min - p.
-    # If p is between min and max, then we have min < p < max, which means the tuple will evaluate to (-,0,-). So again, the max function will correctly return b = 0.
-    # Lastly, if p is to the right of max, then we have, min < max < p, and the tuple evaluates to (-,0,+). Once again, max correctly returns c = p - max.
-    dx = np.max([box_x_min - theo_P,  0, theo_P - box_x_max])
-    dy = np.max([box_y_min - theo_dP, 0, theo_dP - box_y_max])
-    return np.sqrt(dx**2+dy**2)
 
 ################################################################################
 def PdP_pattern_rope_length(P, P_error=[-1]):
@@ -575,21 +523,21 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_cutoff(MLE_values_file, observations_file, nsigma=1):
+def spectro_cutoff(merit_values_file, observations_file, nsigma=2):
     """
     Make an n-sigma cutoff of the models based on the spectoscopic observations.
     Save this as a file with prefix "clipped".
     ------- Parameters -------
-    MLE_values_file: string
-        Path to the tsv files with the MLE values / the spectroscopic info of the models in the grid.
+    merit_values_file: string
+        Path to the tsv files with the merit funtion values and the spectroscopic info of the models in the grid.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     nsigma: int
         How many sigmas you want to make the interval to accept models.
     """
-    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    df_Theo = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+    Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
 
     df_Theo = df_Theo[df_Theo.logTeff < np.log10(Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0])]
     df_Theo = df_Theo[df_Theo.logTeff > np.log10(Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0])]
@@ -598,4 +546,6 @@ def spectro_cutoff(MLE_values_file, observations_file, nsigma=1):
     df_Theo = df_Theo[df_Theo.logL < Obs_dFrame['logL'][0]+nsigma*Obs_dFrame['logL_err'][0]]
     df_Theo = df_Theo[df_Theo.logL > Obs_dFrame['logL'][0]-nsigma*Obs_dFrame['logL_err'][0]]
 
-    df_Theo.to_csv(f'clipped{nsigma}sigma_{MLE_values_file}', sep='\t',index=False)
+    outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
+    Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
+    df_Theo.to_csv(outputFile, sep='\t',index=False)
