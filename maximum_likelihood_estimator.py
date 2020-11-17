@@ -101,6 +101,7 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
                 bin_edges.extend([values[-1]+bin_half_width])
 
                 ax.hist( df.iloc[:,nr_params-ix], bins=bin_edges, density=True, cumulative=False, histtype='step' )
+                ax.tick_params(axis='y',left=False)
                 continue
 
             im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='hot')

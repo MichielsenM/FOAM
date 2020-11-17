@@ -14,4 +14,4 @@ observations = config.observations
 for file in files:
     star_name, title = mypy.split_line(Path(file).stem, '_')
     config.logger.info(f'file: {file}')
-    mle.plot_correlations(file, observations, fig_title=title, percentile_to_show=0.5, fig_outputDir = f'figures/', logg_or_logL='logL')
+    mle.plot_correlations(file, observations, fig_title=title, percentile_to_show=0.5, logg_or_logL='logL')
