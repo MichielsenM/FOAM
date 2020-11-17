@@ -15,7 +15,8 @@ The master branch will be updated from time to time when possible conflicts betw
 
 ## contents
 
-1. `templates`: a number of template files; GYRE inlists, bash scripts, VSC submit files.
+1. `pipeline`: Pipeline for the asteroseismic modelling of a star, using the functions within the files in this directory.
+1. `templates`: A number of template files; GYRE inlists, bash scripts, VSC submit files.
 1. `LICENSE`: GNU general public license
 2. `functions_for_gyre.py`: Helpful functions for GYRE input and output.
 3. `functions_for_mesa.py`: Helpful functions to process MESA output.
