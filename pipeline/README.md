@@ -9,6 +9,7 @@ The setup allows the modelling of a star with the following features:
 Make a folder where you want to have all the output files, and copy `pipeline.py` to it. This script will run all the others, but can also be modified to rerun later parts when the earlier ones have been run at least once.
 Copy `example_config.py` to the folder from where you run the `pipeline.py` script and rename to 'config.py'. Adjust this file to configure the different aspects of the pipeline.
 Add a file with the observations in a .tsv format. Its columns are the observables and their errors (suffix '\_err' for the error corresponding to a column). Note that effective temperature should be added as Teff, but will be processed as logTeff (since L and g are normally used in log as well).
+Frequencies should be increasing in value (so decreasing in period). Missing frequencies in the pattern can be indicated by 'f_missing' as index and 0 values for the frequency, period, and their errors.
 
 ## contents
 
