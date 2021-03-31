@@ -64,7 +64,8 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     data = mypy.read_hdf5(GYRE_summary_file)
     param_dict = mypy.get_param_from_filename(GYRE_summary_file, parameters)
 
-    for j in range(0, len(data['freq'])):
+    # for j in range(0, len(data['freq'])):
+    for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
         param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
     return param_dict
@@ -150,10 +151,10 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
         Only needed if you set method_build_series=highest_amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
-        
+
     ------- Returns -------
-    line: string
-        Line containing the input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
+    list_out: list
+        The input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
     """
     freqs = np.asarray(summary_grid_row[1].filter(like='n_pg')) # all keys containing n_pg (these are all the radial orders)
     orders = np.asarray([int(o.replace('n_pg', '')) for o in summary_grid_row[1].filter(like='n_pg').index])    # array with radial orders
@@ -169,32 +170,49 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
 
     if len(Obs_pattern_parts) != len (highest_amp_puls):   # Check if highest_amp_puls has enough entries to not truncate other parts in the zip function.
         if method_build_series == 'highest_amplitude':
-            sys.exit(logger.error('Fewer pulsations specified to build patterns from than amount of split-off parts in the pattern.'))
-        else:
-            highest_amp_puls = [None]*len(Obs_pattern_parts) #Only care about the length if the method doesn't use specified pulsations.
+            sys.exit(logger.error('Amount of pulsations specified to build patterns from is not equal to the amount of split-off parts in the pattern.'))
+        else:   # Content of highest_amp_puls doesn't matter if it's not used to build the pattern.
+            highest_amp_puls = [None]*len(Obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
 
-    line=[]
+    list_out=[]
     for parameter in summary_grid_row[1][:'Xc'].index:
-        line.append(summary_grid_row[1][parameter])
+        list_out.append(summary_grid_row[1][parameter])
+    ouput_pulsations = []
 
     for Obs_part, ObsErr_part, highest_amp_puls_part in zip(Obs_pattern_parts, ObsErr_pattern_parts, highest_amp_puls):
-        if len(line)>len(summary_grid_row[1][:'Xc'].index): line.append(0)  # To indicate interruptions in the pattern
+        if len(ouput_pulsations)>0: ouput_pulsations.append(0)  # To indicate interruptions in the pattern
 
         if which_observable=='frequency':
+            # remove frequencies that were already chosen in a different, split-off part of the pattern
+            if len(ouput_pulsations)>0:
+                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+                    freqs=np.delete(freqs, np.where(freqs>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero freq
+                else:                       # If input is in decreasing radial order
+                    freqs=np.delete(freqs, np.where(freqs<=max(ouput_pulsations)))
+
             Theo_value = freqs
             ObsPeriod = 1/Obs_part
             ObsErr_P = ObsErr_part/Obs_part**2
+            highest_obs_freq = max(Obs_part)
+
         elif which_observable=='period':
+            # remove periods that were already chosen in a different, split-off part of the pattern
+            if len(ouput_pulsations)>0:
+                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+                    periods=np.delete(periods, np.where(periods<=max(ouput_pulsations)))
+                else:                       # If input is in decreasing radial order
+                    periods=np.delete(periods, np.where(periods>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero period
             Theo_value = periods
             ObsPeriod = Obs_part
             ObsErr_P = ObsErr_part
+            highest_obs_freq = min(Obs_part)  # highest frequency is lowest period
         else:
-            sys.exit(logger.error('Incorrect observable to fit'))
+            sys.exit(logger.error('Unknown observable to fit'))
 
         if method_build_series == 'highest_amplitude':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_amp_puls_part)
         elif method_build_series == 'highest_frequency':
-            selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, Obs_part[-1])
+            selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_obs_freq)
         elif method_build_series == 'chisq_longest_sequence':
             series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
             if which_observable=='frequency':
@@ -204,8 +222,9 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
         else:
             sys.exit(logger.error('Incorrect method to build pulsational series.'))
 
-        line.extend(selected_theoretical_pulsations)
-    return line
+        ouput_pulsations.extend(selected_theoretical_pulsations)
+    list_out.extend(ouput_pulsations)
+    return list_out
 
 ################################################################################
 def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
@@ -223,7 +242,7 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
         Make a period spacing diagram for the constructed series.
 
     ------- Returns -------
-    freq_sequence: list of float
+    Theo_sequence: list of float
         The constructed theoretical frequency pattern
     """
 
@@ -232,29 +251,28 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     index = np.where(diff==min(diff))[0][0]   # get index of this theoretical frequency
 
     # Insert a value of -1 if observations miss a theoretical counterpart in the begining
-    Theo = []
+    Theo_sequence = []
     if (index-nth_obs)<0:
         for i in range(abs((index-nth_obs))):
-            Theo.append(-1)
-        Theo.extend(TheoIn[0:index+(len(Obs)-nth_obs)])
+            Theo_sequence.append(-1)
+        Theo_sequence.extend(TheoIn[0:index+(len(Obs)-nth_obs)])
     else:
-        Theo.extend(TheoIn[index-nth_obs:index+(len(Obs)-nth_obs)])
+        Theo_sequence.extend(TheoIn[index-nth_obs:index+(len(Obs)-nth_obs)])
 
     # Insert a value of -1 if observations miss a theoretical counterpart at the end
     if( index+(len(Obs)-nth_obs) > len(TheoIn)):
         for i in range((index+(len(Obs)-nth_obs)) - len(TheoIn)):
-            Theo.append(-1)
+            Theo_sequence.append(-1)
 
     if plot is True:
         fig=plt.figure()
         ax = fig.add_subplot(111)
-        Theo = np.asarray(Theo)
+        Theo = np.asarray(Theo_sequence)
         ax.plot((1/Obs)[::-1][:-1],np.diff((1/Obs)[::-1])*86400,'ko',lw=1.5,linestyle='-')
         ax.plot((1./Theo)[::-1][:-1], -np.diff(1./Theo)[::-1]*86400, 'ko', color='blue', lw=1.5,linestyle='--', markersize=6, markeredgewidth=0.,)
         plt.show()
 
-    return Theo
-
+    return Theo_sequence
 
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -423,9 +441,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
     if len(tperiods)<len(operiods):
         return 1e16, [-1. for i in range(len(operiods))], [-1 for i in range(len(operiods))]
     else:
-        dP,e_dP = generate_obs_series(operiods,operiods_errors)
-        deltaP  = generate_thry_series(tperiods)
-
         # Find the best matches per observed period
         pairs_orders = []
         for ii,period in enumerate(operiods):
@@ -441,7 +456,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             pairs_orders.append([period,best_match,int(best_order),chisqs[min_ind][0]])
 
         pairs_orders = np.array(pairs_orders)
-
         if plot is True:
             # Plot the results
             plt.figure(1,figsize=(6.6957,6.6957))
@@ -453,19 +467,21 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             plt.ylabel('$\\mathrm{Radial \\, Order}$',fontsize=20)
             plt.xlabel('$\\mathrm{Period \\,[d]}$',fontsize=20)
 
-            # plt.show()
-
+        if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+            increase_or_decrease=-1
+        else:                       # If input is in decreasing radial order
+            increase_or_decrease=1
 
         sequences = []
         ## Go through all pairs of obs and theoretical frequencies and
         ## check if the next observed freqency has a corresponding theoretical frequency
-        ## with the consecutive radial order
+        ## with the consecutive radial order.
         current = []
         lp = len(pairs_orders[:-1])
         for ii,sett in enumerate(pairs_orders[:-1]):
-            if abs(sett[2]) == abs(pairs_orders[ii+1][2])+1:
+            if abs(sett[2]) == abs(pairs_orders[ii+1][2])+increase_or_decrease:
                 current.append(sett)
-            else:
+            else:   # If not consecutive radial order, save the current sequence and start a new one.
                	current.append(sett)
                 sequences.append(np.array(current).reshape(len(current),4))
                 current = []
@@ -474,7 +490,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
                 sequences.append(np.array(current).reshape(len(current),4))
                 current = []
         len_list = np.array([len(x) for x in sequences])
-        longest = np.where(len_list == max(len_list))[0] #[0]
+        longest = np.where(len_list == max(len_list))[0]
 
         ## Test if there really is one longest sequence
         if len(longest) == 1:
@@ -519,8 +535,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
         obs_series_errors = np.array(obs_series_errors)
         thr_series        = np.array(thr_series)
 
-        series_chi2 = np.sum( (obs_series-thr_series)**2 /obs_series_errors**2 ) / len(obs_series)
-        # print 'orders: %i - %i'%(corresponding_orders[0],corresponding_orders[-1])
+        series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
 
         if plot is True:
             fig = plt.figure(2,figsize=(6.6957,6.6957))
@@ -540,10 +555,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
 
             plt.show()
 
-        # for ii,oper in enumerate(operiods):
-        #     print((oper, final_theoretical_periods[ii], corresponding_orders[ii]))
-
-        series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
         return series_chi2,final_theoretical_periods,corresponding_orders
 
 ################################################################################

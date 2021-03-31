@@ -9,7 +9,7 @@ star = 'KIC7760680'                             # Name of the star
 observations = 'data_KIC7760680.tsv'            # File with all the observational data
 periods_or_frequencies_observed = 'period'      # # Use the observed periods or frequencies, be consistent in observable_list later
 # Pulsation with the highest amplitude to build pattern from in 'highest_amplitude' method. Array with highest amplitude per part of the split pattern
-highest_amplitude_pulsation = {'period': [1.158919], 'frequency': [None]} # ordered highest to lowest in period
+highest_amplitude_pulsation = {'period': [1.158919], 'frequency': [None]} # ordered the same as the file with the observations
 
 # Parent directory of the computed grid, and names of the directories of the different grids
 grid_parent_directory = '/lhome/mathiasm/MESA_grid_ECP-DE'
@@ -18,13 +18,13 @@ grids = ['ECP', 'DO']
 # String to select a subgrid of the original grid, fixing given parameters
 subgrid = '*'
 
-# Methods to construct the theoretical frequency pattern
+# Methods to construct the theoretical frequency pattern that are to be used
 pattern_methods = ['chisq_longest_sequence','highest_amplitude', 'highest_frequency']
 
-# Merit functions
+# List of merit functions used
 merit_functions = ['chi2', 'mahalanobis']
 
-# Observable to fit
+# Lists of observables to fit
 # observable_list = [['period'], ['period_spacing'], ['period', 'period_spacing', 'rope_length', 'logTeff', 'logL', 'logg'], ['period', 'period_spacing']]
 observable_list = [['period'], ['period_spacing'], ['period', 'period_spacing']]
 
@@ -32,11 +32,13 @@ observable_list = [['period'], ['period_spacing'], ['period', 'period_spacing']]
 observable_aic = ['P', 'dP', 'P-dP']
 
 
-k = 6               # number of free parameters
+k = 6               # Number of free parameters
 free_param=['M', 'Z', 'logD', 'aov', 'fov', 'Xc']
-N_periods = 36      # number of observables, calculated from the number of periods
-# Number of period spacings is number of periods minus amount of separated patterns. E.g. uninterrupted pattern: 36 periods, so 35 deltaP, so 71 observables
-N_pattern_parts = len(highest_amplitude_pulsation[periods_or_frequencies_observed])
+N_periods = 36      # Number of periods
+N_pattern_parts = 1
+# Number of observables, calculated from the number of periods
+# Number of period spacings is number of periods minus amount of separated patterns.
+# E.g. uninterrupted pattern: 36 periods, so 35 deltaP, so 71 observables
 N_dict = {'P' : N_periods,'dP': N_periods-N_pattern_parts, 'P-dP': N_periods+N_periods-N_pattern_parts}
 
 # ignore models outside of the n-sigma spectroscopic error box
