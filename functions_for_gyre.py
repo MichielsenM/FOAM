@@ -64,7 +64,6 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     data = mypy.read_hdf5(GYRE_summary_file)
     param_dict = mypy.get_param_from_filename(GYRE_summary_file, parameters)
 
-    # for j in range(0, len(data['freq'])):
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
         param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
@@ -422,8 +421,11 @@ def calculate_k(l,m,rossby):
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False):
     """
-    Method to extract the theoretical pattern that best matches the observed one
-
+    Method to extract the theoretical pattern that best matches the observed one.
+    Match each observed mode period to its best matching theoretical counterpart,
+    and adopt the longest sequence of consecutive modes found this way.
+    In case of multiple mode series with the same length, a final pattern selection
+    is made based on the best (chi-square) match between theory and observations.
     ------- Parameters -------
     tperiods, orders : list of floats, integers
         theroretical periods and their radial orders

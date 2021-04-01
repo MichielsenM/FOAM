@@ -268,10 +268,10 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
 
     missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
     missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
-    Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])    #remove columns of missing frequencies
-    missing=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Aobservablesjust indices for removed lines of missing frequencies
+    Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
+    missing=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
 
-    observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
+    observables=list(observables)  # Make a copy of the list, to not alter the one that was given to the function
     observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
 
     if 'period' in observables:
