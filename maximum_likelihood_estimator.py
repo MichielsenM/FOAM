@@ -265,8 +265,14 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
     observables_out: numpy array of floats
         The values of the specified observables for the model.
     """
-    observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
-    observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])
+
+    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
+    missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
+    missing=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
+
+    observables=list(observables)  # Make a copy of the list, to not alter the one that was given to the function
+    observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
 
     if 'period' in observables:
         periods = np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
@@ -277,17 +283,19 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         observables.remove('frequency')
     else:
         periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the tsv file was in periods if nothing was specified
-        observables_out = np.asarray([])                    # Don't use period or freq as observables
+        observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
 
     if 'period_spacing' in observables:
-        spacing = ffg.generate_thry_series(periods)
-        spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-        observables_out = np.append(observables_out, spacing)   # Include dP as observables
+        for periods_part in np.split(periods,missing):
+            spacing = ffg.generate_thry_series(periods_part)
+            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+            observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observables.remove('period_spacing')
 
     if 'rope_length' in observables:
-        RL, error = PdP_pattern_rope_length(periods)
-        observables_out = np.append(observables_out, RL)        # Include pattern rope length as observable
+        for periods_part in np.split(periods,missing):
+            RL, error = PdP_pattern_rope_length(periods_part)
+            observables_out = np.append(observables_out, RL)        # Include pattern rope length as observable
         observables.remove('rope_length')
 
     # Add all other observables in the list from the dataFrame
@@ -315,10 +323,17 @@ def create_obs_observables_array(Obs_dFrame, observables):
     filename_suffix: string
         suffix for the filename, containing all the included observables, separated by '-'
     """
+    missing = np.where(Obs_dFrame.index.isin(['f_missing']))[0] # get the interruptions in the pattern
+    missing=[ missing[i]-i for i in range(len(missing)) ]       # Aobservablesjust indices for removed lines of missing frequencies
+    if len(missing)!=0: Obs_dFrame = Obs_dFrame.drop(index='f_missing')  # remove lines indicating missing frequencies (if they are present)
+
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
-    periods = np.asarray(Obs_dFrame['period'])
-    periodsErr = np.asarray(Obs_dFrame['period_err'])
+    period = np.asarray(Obs_dFrame['period'])
+    periodErr = np.asarray(Obs_dFrame['period_err'])
     filename_suffix = ''
+
+    periods_parts = np.split(period,missing)
+    periodsErr_parts = np.split(periodErr,missing)
 
     if 'period' in observables:
         observables_out = np.asarray(Obs_dFrame['period'])
@@ -336,20 +351,24 @@ def create_obs_observables_array(Obs_dFrame, observables):
         observablesErr_out = np.asarray([])
 
     if 'period_spacing' in observables:
-        spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
-        spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-        spacing_errs = np.asarray(spacing_errs)/86400
+        for periods, periodsErr in zip(periods_parts, periodsErr_parts):
+            spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
+            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+            spacing_errs = np.asarray(spacing_errs)/86400
 
-        observables_out = np.append(observables_out, spacing)   # Include dP as observables
-        observablesErr_out = np.append(observablesErr_out, spacing_errs)
+            observables_out = np.append(observables_out, spacing)   # Include dP as observables
+            observablesErr_out = np.append(observablesErr_out, spacing_errs)
+
         if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
         filename_suffix+='dP'
         observables.remove('period_spacing')
 
     if 'rope_length' in observables:
-        RL, error = PdP_pattern_rope_length(periods, P_error=periodsErr)
-        observables_out = np.append(observables_out, RL)      # Include pattern rope length as observable
-        observablesErr_out = np.append(observablesErr_out, error)
+        for periods, periodsErr in zip(periods_parts, periodsErr_parts):
+            RL, error = PdP_pattern_rope_length(periods, P_error=periodsErr)
+            observables_out = np.append(observables_out, RL)      # Include pattern rope length as observable
+            observablesErr_out = np.append(observablesErr_out, error)
+
         filename_suffix+='-rl'
         observables.remove('rope_length')
 

@@ -11,7 +11,7 @@ p = multiprocessing.Pool()	# Multiprocessing pool, NR CORES = nr items in obeser
 for grid in config.grids:
     for method in config.pattern_methods:
         for merit_function in config.merit_functions:
-            Theo_path = f'extracted_freqs/spectro+period_{config.star}_{grid}_{method}.tsv'
+            Theo_path = f'extracted_freqs/spectro+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.tsv'
 
             func = partial(mle.calculate_likelihood, config.observations, Theo_path, merit_function = merit_function)
             for result in p.imap(func, config.observable_list):
