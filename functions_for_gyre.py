@@ -45,8 +45,8 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_file, sep='\t',index=False)             # write the dataframe to a tsv file
-
+    df.to_csv(output_file, sep='\t',index=False) # write the dataframe to a tsv file
+    p.close()
 ################################################################################
 def all_freqs_from_summary(GYRE_summary_file, parameters):
     """
@@ -125,7 +125,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         writer.writerow(header)
         for line in freqs:
             writer.writerow(line)
-
+    p.close()
 ################################################################################
 def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, ObsErr, which_observable, highest_amp_puls=[]):
     """

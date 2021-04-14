@@ -16,3 +16,4 @@ for grid in config.grids:
             func = partial(mle.calculate_likelihood, config.observations, Theo_path, merit_function = merit_function)
             for result in p.imap(func, config.observable_list):
                 item=result
+p.close()

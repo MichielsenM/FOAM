@@ -271,7 +271,6 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
     missing=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
 
-    observables=list(observables)  # Make a copy of the list, to not alter the one that was given to the function
     observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
 
     if 'period' in observables:
@@ -494,7 +493,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
         plt.tick_params(labelsize=14)
         plt.tight_layout()
         plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.png')
-        plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
+        # plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
         plt.close('all')
 
 ################################################################################
