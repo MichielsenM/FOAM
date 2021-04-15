@@ -157,6 +157,8 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
     """
     freqs = np.asarray(summary_grid_row[1].filter(like='n_pg')) # all keys containing n_pg (these are all the radial orders)
     orders = np.asarray([int(o.replace('n_pg', '')) for o in summary_grid_row[1].filter(like='n_pg').index])    # array with radial orders
+    orders=orders[~np.isnan(freqs)]
+    freqs=freqs[~np.isnan(freqs)]  # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
     periods= 1/freqs
 
     missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
@@ -185,10 +187,9 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
             # remove frequencies that were already chosen in a different, split-off part of the pattern
             if len(ouput_pulsations)>0:
                 if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
-                    freqs=np.delete(freqs, np.where(freqs>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero freq
+                    np.delete(freqs, np.where(freqs>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero freq
                 else:                       # If input is in decreasing radial order
-                    freqs=np.delete(freqs, np.where(freqs<=max(ouput_pulsations)))
-
+                    np.delete(freqs, np.where(freqs<=max(ouput_pulsations)))
             Theo_value = freqs
             ObsPeriod = 1/Obs_part
             ObsErr_P = ObsErr_part/Obs_part**2
@@ -198,9 +199,9 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
             # remove periods that were already chosen in a different, split-off part of the pattern
             if len(ouput_pulsations)>0:
                 if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
-                    periods=np.delete(periods, np.where(periods<=max(ouput_pulsations)))
+                    np.delete(periods, np.where(periods<=max(ouput_pulsations)))
                 else:                       # If input is in decreasing radial order
-                    periods=np.delete(periods, np.where(periods>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero period
+                    np.delete(periods, np.where(periods>=ouput_pulsations[-2])) #index -2 to get lowest, non-zero period
             Theo_value = periods
             ObsPeriod = Obs_part
             ObsErr_P = ObsErr_part
@@ -244,7 +245,6 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     Theo_sequence: list of float
         The constructed theoretical frequency pattern
     """
-
     nth_obs = np.where(Obs==Obs_to_build_from)[0][0]    # get index of observation to build the series from
     diff = abs(TheoIn - Obs_to_build_from)    # search theoretical freq closest to the given observed one
     index = np.where(diff==min(diff))[0][0]   # get index of this theoretical frequency

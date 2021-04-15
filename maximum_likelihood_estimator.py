@@ -176,7 +176,6 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
     merit_function: string
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
     """
-
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
@@ -195,12 +194,17 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
     Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
     Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
+    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
+    missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
+    missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
+
     # Make new list of theoretical models without entries with value -1
     newTheo = []
     newThetas = []
     for i in range(len(Theo_puls)):
         if (Theo_puls[i][0] !=-1) and (Theo_puls[i][-1] !=-1):     # ignore models where one of the freqs is -1
-            theo_observables = create_theo_observables_array(Theo_dFrame, i, observables)   # make an array of the theoretical observables for each model
+            theo_observables = create_theo_observables_array(Theo_dFrame, i, observables, missing_indices)   # make an array of the theoretical observables for each model
 
             newTheo.append(theo_observables)
             newThetas.append(Thetas[i])
@@ -244,10 +248,9 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
         if spectro in Theo_dFrame.columns:
             df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
     df.to_csv(DataOut, sep='\t',index=False)             # write the dataframe to a tsv file
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def create_theo_observables_array(Theo_dFrame, index, observables):
+def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_indices):
     """
     Create an array of theoretical observables.
     ------- Parameters -------
@@ -256,21 +259,17 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         columns containing extra observables.
     index: int
         Row index in the dataFrame of the theoretical model to make the array for.
-    observables: list of strings
+    observables_in: list of strings
         Which observables are included in the returned array, must contain 'frequencies' or 'periods'.
         Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
-
+    missing_indices: list of int
+        Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
     ------- Returns -------
     observables_out: numpy array of floats
         The values of the specified observables for the model.
     """
-
-    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
-    missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
-    Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
-    missing=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
-
+    observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
     observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
 
     if 'period' in observables:
@@ -285,14 +284,14 @@ def create_theo_observables_array(Theo_dFrame, index, observables):
         observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
 
     if 'period_spacing' in observables:
-        for periods_part in np.split(periods,missing):
+        for periods_part in np.split(periods,missing_indices):
             spacing = ffg.generate_thry_series(periods_part)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observables.remove('period_spacing')
 
     if 'rope_length' in observables:
-        for periods_part in np.split(periods,missing):
+        for periods_part in np.split(periods,missing_indices):
             RL, error = PdP_pattern_rope_length(periods_part)
             observables_out = np.append(observables_out, RL)        # Include pattern rope length as observable
         observables.remove('rope_length')
@@ -322,17 +321,17 @@ def create_obs_observables_array(Obs_dFrame, observables):
     filename_suffix: string
         suffix for the filename, containing all the included observables, separated by '-'
     """
-    missing = np.where(Obs_dFrame.index.isin(['f_missing']))[0] # get the interruptions in the pattern
-    missing=[ missing[i]-i for i in range(len(missing)) ]       # Aobservablesjust indices for removed lines of missing frequencies
-    if len(missing)!=0: Obs_dFrame = Obs_dFrame.drop(index='f_missing')  # remove lines indicating missing frequencies (if they are present)
+    missing_indices = np.where(Obs_dFrame.index.isin(['f_missing']))[0] # get the interruptions in the pattern
+    missing_indices=[ missing_indices[i]-i for i in range(len(missing_indices)) ]       # Adjust indices for removed lines of missing frequencies
+    if len(missing_indices)!=0: Obs_dFrame = Obs_dFrame.drop(index='f_missing')  # remove lines indicating missing frequencies (if they are present)
 
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
     period = np.asarray(Obs_dFrame['period'])
     periodErr = np.asarray(Obs_dFrame['period_err'])
     filename_suffix = ''
 
-    periods_parts = np.split(period,missing)
-    periodsErr_parts = np.split(periodErr,missing)
+    periods_parts = np.split(period,missing_indices)
+    periodsErr_parts = np.split(periodErr,missing_indices)
 
     if 'period' in observables:
         observables_out = np.asarray(Obs_dFrame['period'])
