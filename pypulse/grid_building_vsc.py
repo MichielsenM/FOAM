@@ -4,8 +4,8 @@ import numpy as np
 import glob, os, sys, csv
 from shutil import copyfile
 import logging
-from . import my_python_functions as mypy
-from . import functions_for_gyre as ffg
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.gbv')
 ################################################################################

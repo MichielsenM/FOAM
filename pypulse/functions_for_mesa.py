@@ -6,7 +6,7 @@ import pandas as pd
 import multiprocessing, glob, csv
 from pathlib import Path
 from functools import partial
-from . import my_python_functions as mypy
+from pypulse import my_python_functions as mypy
 
 ################################################################################
 def read_mesa_file(file_path):

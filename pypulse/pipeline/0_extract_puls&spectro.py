@@ -1,6 +1,6 @@
 """ From the grid location, extract all spectroscopic info from MESA profiles and all frequencies from GYRE models."""
-from PyPulse import functions_for_gyre as ffg
-from PyPulse import functions_for_mesa as ffm
+from pypulse import functions_for_gyre as ffg
+from pypulse import functions_for_mesa as ffm
 import config # imports the config file relative to the location of the main script
 ################################################################################
 for grid in config.grids:

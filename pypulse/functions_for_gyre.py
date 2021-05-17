@@ -9,8 +9,8 @@ import glob, os, csv, sys
 import logging
 import multiprocessing
 from functools import partial
-from . import my_python_functions as mypy
-from . import functions_for_mesa as ffm
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_mesa as ffm
 
 logger = logging.getLogger('logger.ffg')
 
