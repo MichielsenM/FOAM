@@ -7,6 +7,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 install_requires = [
+    "python_version>'3.7'",
     "matplotlib",
     "numpy",
     "pandas",
@@ -19,7 +20,7 @@ classifiers = [
     'Topic :: Scientific :: Astronomy']
 # Setting up
 setup(
-        name="PyPulse",
+        name="pypulse",
         version=VERSION,
         author="Mathias Michielsen",
         author_email="mathias.michielsen@kuleuven.be",
