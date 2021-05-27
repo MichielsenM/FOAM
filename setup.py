@@ -7,7 +7,6 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 install_requires = [
-    "python_version>'3.7'",
     "matplotlib",
     "numpy",
     "pandas",
@@ -28,6 +27,7 @@ setup(
         long_description=long_description,
         long_description_content_type='text/markdown',
         packages=find_packages(),
+        python_requires='>=3.7',
         install_requires=install_requires,
         keywords=['python'],
         classifiers= classifiers,
