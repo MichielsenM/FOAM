@@ -1,11 +1,9 @@
 # PyPulse
 
-A custom-made python package compatible with anaconda, python 3.7 version.
+A custom-made python package compatible with anaconda, python 3.7 version or newer.
 Contains useful functions to make figures, MESA/GYRE grids, and help with data analysis.
 
-This directory should be included in your anaconda installation in the following folder:
-$CONDA_PREFIX/lib/python3.7/site-packages/  \
-Be sure that $CONDA_PREFIX is set to your conda installation, this should be the case if you ran conda init when installing conda.
+Git clone this repository, and run `pip install -e .` in the folder with the `setup.py` file. This will install it as a package in your python environment.
 
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 

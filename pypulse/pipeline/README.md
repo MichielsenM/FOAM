@@ -6,9 +6,10 @@ The setup allows the modelling of a star with the following features:
 - For multiple sets of observables. Astroseismic (periods, period spacings, those 2 combined, frequencies) but also others (logg, logTeff, logL) can go in the merit function.
 - For multiple methods to construct the theoretical pulsation patterns.
 
+## How to use this pipeline
 Make a folder where you want to have all the output files, and copy `pipeline.py` to it. This script will run all the others, but can also be modified to rerun later parts when the earlier ones have been run at least once.
 Copy `example_config.py` to the folder from where you run the `pipeline.py` script and rename to 'config.py'. Adjust this file to configure the different aspects of the pipeline.
-Add a file with the observations in a .tsv format. Its columns are the observables and their errors (suffix '\_err' for the error corresponding to a column). Note that effective temperature should be added as Teff, but will be processed as logTeff (since L and g are normally used in log as well).
+Add a file with the observations in a .tsv format. Its columns are the observables and their errors (suffix '\_err' for the error corresponding to a column). Frequencies, periods, and their errors are required for the full functionality of the pipeline. Note that effective temperature should be added as Teff, but will be processed as logTeff (since L and g are normally used in log as well).
 Frequencies are preferred to be listed decreasing in value, so increasing in period. The scripts can handle the other way around if the theoretical grid is also extracted in that way. (If the frequencies are ordered decreasing in value, the highest frequency parts in an interrupted pattern will be matched first, which is preferred since those have a lower relative uncertainty). Missing frequencies in the observed pattern can be indicated by 'f_missing' as index and 0 values for the frequency, period, and their errors.
 
 ## contents

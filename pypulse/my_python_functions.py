@@ -1,5 +1,5 @@
 """Helpful functions in general. Making figures, reading HDF5, processing strings."""
-# from PyPulse import my_python_functions as mypy
+# from pypulse import my_python_functions as mypy
 import h5py, re
 from pathlib import Path
 import logging

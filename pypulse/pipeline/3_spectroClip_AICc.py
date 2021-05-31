@@ -5,8 +5,8 @@ import glob, sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from PyPulse import my_python_functions as mypy
-from PyPulse import maximum_likelihood_estimator as mle
+from pypulse import my_python_functions as mypy
+from pypulse import maximum_likelihood_estimator as mle
 import config # imports the config file relative to the location of the main script
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box

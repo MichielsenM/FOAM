@@ -1,6 +1,6 @@
 """Helpful functions for GYRE input and output, (e.g. extracting all frequencies in a grid to 1 file,
    constructing theoretical pulsation patterns, calculate GYRE scanning range to find desired radial orders...)"""
-# from PyPulse import functions_for_gyre as ffg
+# from pypulse import functions_for_gyre as ffg
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,8 +9,8 @@ import glob, os, csv, sys
 import logging
 import multiprocessing
 from functools import partial
-from . import my_python_functions as mypy
-from . import functions_for_mesa as ffm
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_mesa as ffm
 
 logger = logging.getLogger('logger.ffg')
 
