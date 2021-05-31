@@ -1,5 +1,6 @@
 """ Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
 Note: The file with observations needs to hold temperature as Teff, although the analysis is done using the logTeff values."""
+# from pypulse import maximum_likelihood_estimator as mle
 import numpy as np
 import pandas as pd
 import sys, logging, os
