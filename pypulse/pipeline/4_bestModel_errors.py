@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from PyPulse import my_python_functions as mypy
+from pypulse import my_python_functions as mypy
 import config # imports the config file relative to the location of the main script
 
 ################################################################################

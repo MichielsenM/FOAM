@@ -1,5 +1,6 @@
 """ Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
 Note: The file with observations needs to hold temperature as Teff, although the analysis is done using the logTeff values."""
+# from pypulse import maximum_likelihood_estimator as mle
 import numpy as np
 import pandas as pd
 import sys, logging, os
@@ -7,8 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from pathlib import Path
-from . import my_python_functions as mypy
-from . import functions_for_gyre as ffg
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 ################################################################################
@@ -209,6 +210,8 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
             newTheo.append(theo_observables)
             newThetas.append(Thetas[i])
     neg_value = np.unique(np.where(Theo_puls==-1)[0])
+    logger.debug(f'File: {Theo_file}')
+    logger.debug(f'Observables      : {observables}')
     logger.debug(f'ignored -1 freqs : {len(neg_value)}')
     logger.debug(f'original #models : {len(Theo_puls)}')
     logger.debug(f'remaining #models: {len(newTheo)}')
@@ -260,8 +263,8 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
     index: int
         Row index in the dataFrame of the theoretical model to make the array for.
     observables_in: list of strings
-        Which observables are included in the returned array, must contain 'frequencies' or 'periods'.
-        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Which observables are included in the returned array.
+        Can contain 'frequency', 'period', 'period_spacing', and/or 'rope_length', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.

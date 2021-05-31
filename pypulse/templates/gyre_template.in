@@ -5,9 +5,13 @@
 	model_type = 'EVOL'
 	file = FILENAME
 	file_format = 'MESA'
-	uniform_rot = true
-	Omega_rot = OMEGAROT
-	Omega_units = OMEGAUNIT
+/
+
+&rot
+    Omega_rot_source = 'UNIFORM'
+    Omega_rot = OMEGAROT
+    Omega_rot_units = OMEGAUNIT
+    coriolis_method = 'TAR'
 /
 
 &mode
@@ -19,12 +23,11 @@
 
 &osc
 	nonadiabatic = false
-	rotation_method = 'TAR'
 	outer_bound = 'UNNO'
 /
 
 &num
-	diff_scheme = 'COLLOC_GL2'
+	diff_scheme = 'MAGNUS_GL2'
 	n_iter_max = 50
 /
 
@@ -39,14 +42,15 @@
 /
 
 &grid
-    n_inner = 5
-	alpha_osc = 10
-	alpha_exp = 2
+    w_osc = 10
+    w_exp = 2
+    w_ctr = 10
 /
 
 &ad_output
 	summary_file = OUTPUT
 	freq_units = 'CYC_PER_DAY'
+    freq_frame = 'INERTIAL'
 	summary_file_format = 'HDF'
 	summary_item_list = 'M_star,R_star,L_star,l,m,n_p,n_g,n_pg,omega,freq,E_norm'
 

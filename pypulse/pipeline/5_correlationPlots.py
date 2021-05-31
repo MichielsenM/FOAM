@@ -1,8 +1,8 @@
 """Make the correlation plots of the grid for the different modelling methodologies."""
 from pathlib import Path
 import glob
-from PyPulse import maximum_likelihood_estimator as mle
-from PyPulse import my_python_functions as mypy
+from pypulse import maximum_likelihood_estimator as mle
+from pypulse import my_python_functions as mypy
 import config
 ################################################################################
 if config.spectroClippedPlots:

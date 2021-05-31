@@ -1,21 +1,21 @@
-"""Functions for building MESA and GYRE grids on the VSC framework."""
-# from PyPulse import grid_building_vsc_multiprocess as gbvm
+"""Functions for building MESA and GYRE grids on the VSC (Vlaams Supercomputer Centrum) framework."""
+# from pypulse import grid_building_vsc as gbv
 import numpy as np
 import glob, os, sys, csv
+import logging, pkgutil, multiprocessing
 from shutil import copyfile
-import logging
+from pathlib import Path
 from functools import partial
-import multiprocessing
-from . import my_python_functions as mypy
-from . import functions_for_gyre as ffg
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_gyre as ffg
 
-logger = logging.getLogger('logger.gbvm')
+logger = logging.getLogger('logger.gbv')
 ################################################################################
 def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.getcwd()}/MESA_work_dir',
                     Z_ini_list=[0.014], M_ini_list=[1], log_Dmix_list=[1], aov_list=[0], fov_list=[0],
                     output_dir= os.path.expandvars(f'{os.getcwd()}/MESA_out')):
     """
-    Construct a setup for a MESA grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
+    Construct a setup and job list to run a MESA grid on the VSC.
     ------- Parameters -------
     setup_directory, output_dir, work_dir: string
         paths to the directory with the MESA job submission files, the MESA output folder, and to the MESA work directory.
@@ -50,17 +50,17 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', work_dir=f'{os.
                             line_to_write = [Z_ini, M_ini, log_Dmix, a_ov, f_ov, output_dir, work_dir]
                             writer.writerow(line_to_write)
 
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_MESA.sh'), f'{setup_directory}/run_MESA.sh')
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_MESA.pbs'), f'{setup_directory}/submit_MESA.pbs')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/run_MESA.sh'), f'{setup_directory}/run_MESA.sh')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/VSC_submit_MESA.pbs'), f'{setup_directory}/submit_MESA.pbs')
     return
 
 ################################################################################
 def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, npg_max=-1, azimuthal_order=1, degree=1,
                     omega_rot=[0.0], unit_rot = 'CYC_PER_DAY', rotation_frame='INERTIAL',
                     output_dir=os.path.expandvars(f'{os.getcwd()}/GYRE_out'), mesa_dir=os.path.expandvars(f'{os.getcwd()}/MESA_out'),
-                    gyre_base_inlist = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')):
+                    gyre_base_inlist = None):
     """
-    Construct a setup for a GYRE grid with job lists to run on e.g. SLURM, and bash scripts to run each job list.
+    Construct a setup and job list to run a GYRE grid on the VSC.
     GYRE inlists and jobs will be created for each pulsation file found in the MESA directory.
     Scanning ranges in GYRE inlists will be set based on desired n_pg range and Asymptotic_dP in the MESA hist file.
     ------- Parameters -------
@@ -76,7 +76,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     rotation_frame: string
         rotational frame of reference for the pulsation freqencies
     gyre_base_inlist: string
-        path to the template of basis gyre inlist to read and later modify
+        path to the template of basis gyre inlist to read and later modify, uses the template in this package by default
     """
     for directory_name in [setup_directory, mesa_dir, output_dir]:
         if 'site_scratch' in directory_name:
@@ -89,7 +89,11 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
 
     gyre_files = glob.glob(mesa_dir + '/*/gyre/*.GYRE' )
 
-    with open(gyre_base_inlist, 'r') as f:
+    if gyre_base_inlist is None:
+        data = pkgutil.get_data(__name__, "templates/gyre_template.in")
+        gyre_base_inlist_lines = data.decode(sys.stdout.encoding)
+    else:
+        with open(gyre_base_inlist, 'r') as f:
             gyre_base_inlist_lines = f.readlines()
 
     with open(f'{setup_directory}/GYRE_parameters.csv', 'w') as tsvfile:
@@ -105,14 +109,15 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
             for result in p.imap(func, gyre_files):
                 writer.writerow(result)
 
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/VSC_submit_GYRE.pbs'), f'{setup_directory}/submit_GYRE.pbs')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/VSC_submit_GYRE.pbs'), f'{setup_directory}/submit_GYRE.pbs')
     return
 
 ################################################################################
 def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_max=-1, degree=1, azimuthal_order=1,
                  rotation=0, unit_rot='CYC_PER_DAY', rotation_frame='INERTIAL', gyre_base_inlist_lines=None):
     """
+    Write GYRE inlist and make a corresponding line for the CSV file with all the run parameters for submitting the jobs to the VSC
     ------- Parameters -------
     file_path: String
         path to the .GYRE file to construct an inlist for
@@ -127,19 +132,18 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
     rotation_frame: string
         rotational frame of reference for the pulsation freqencies
     gyre_base_inlist_lines: string
-        lines of te template gyre inlist to modify
+        lines of the template gyre inlist to modify
 
     ------- Returns -------
     line_to_write: string
-        line to write in the CSV file containing al run parameters for submitting to the VSC
+        line to write in the CSV file containing all run parameters for submitting to the VSC
     """
-    path, filename = file_path.rsplit('/',1)
     param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
     output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}'
 
     f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation,
                                            unit_rot=unit_rot, rotation_frame=rotation_frame)
-    inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{filename[:-5]}.in'
+    inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{Path(file_path).stem}.in'
     write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation,
                       unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
 
@@ -151,7 +155,7 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
 def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
                        freq_min=0.01, freq_max=10, rotation_frame='INERTIAL',
                        npg_min=-50,npg_max=-1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', azimuthal_order=1, degree=1, gyre_base_inlist_lines = None,
-                       gyre_base_inlist = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')
+                       gyre_base_inlist = None
                       ):
     """
     Write gyre inlists based upon a given template
@@ -165,20 +169,25 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
     npg_min, npg_max: int
         range in npg values to calculate modes
     gyre_base_inlist_lines: string
-        lines of te template gyre inlist to modify
+        lines of the template gyre inlist to modify
     gyre_base_inlist: string
-        path to the template of basis gyre inlist to read and modify, if gyre_base_inlist_lines was None
+        used if gyre_base_inlist_lines was None,
+        path to the template of basis gyre inlist to read and modify, uses the template in this package by default
     azimuthal_order, degree: int
         azimuthal order and degree of the modes
     """
 
     if gyre_summary_file == '':
-        path, filename = gyre_in_file.rsplit('/',1)
-        gyre_summary_file = f'{filename[:-3]}.HDF'
+        gyre_summary_file = f'{Path(gyre_in_file).stem}.HDF'
 
     if gyre_base_inlist_lines is None:
-        with open(gyre_base_inlist, 'r') as f:
+        if gyre_base_inlist is None:
+            data = pkgutil.get_data(__name__, "templates/gyre_template.in")
+            gyre_base_inlist_lines = data.decode(sys.stdout.encoding)
+        else:
+            with open(gyre_base_inlist, 'r') as f:
                 gyre_base_inlist_lines = f.readlines()
+
     replacements = {
                     'FILENAME' : f'\'{mesa_pulsation_file}\'',
                     'OUTPUT'   : f'\'{gyre_summary_file}\'',
@@ -193,14 +202,11 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
                     'DEGREE'   : f'{degree}'
                     }
 
-    new_lines = []
-    for line in gyre_base_inlist_lines:
-            new_line = line
-            for key in replacements:
-                    if (replacements[key] != ''):
-                            new_line = new_line.replace(key, replacements[key])
-            new_lines.append(new_line)
+    for key in replacements:
+        if (replacements[key] != ''):
+            gyre_base_inlist_lines = gyre_base_inlist_lines.replace(key, replacements[key])
 
     with open(gyre_in_file, 'w') as f:
-            f.writelines(new_lines)
+        f.writelines(gyre_base_inlist_lines)
+
     return

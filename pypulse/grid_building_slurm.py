@@ -1,17 +1,17 @@
 """Functions for building MESA and GYRE grids on the SLURM framework."""
-# from PyPulse import grid_building_slurm as gbs
+# from pypulse import grid_building_slurm as gbs
 import numpy as np
 import glob, os, sys
 from pathlib import Path
 from shutil import copyfile
 import logging
-from . import my_python_functions as mypy
-from . import functions_for_gyre as ffg
+from pypulse import my_python_functions as mypy
+from pypulse import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.gbs')
 ################################################################################
 def write_bash_submit( jobname, list, bash_submit_list, walltime=1440, memory=3000, cpu=1,
-                       bash_template = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/SLURM_submit_list_template.sh')
+                       bash_template = os.path.expandvars(f'{Path(__file__).parent}/templates/SLURM_submit_list_template.sh')
                       ):
     """
     Write a bash script to sumbit a list of jobs to SLURM.
@@ -100,7 +100,7 @@ def make_mesa_setup(setup_directory=f'{os.getcwd()}/MESA_setup', output_dir=f'{o
     with open(f'{setup_directory}/submit_all_bash.sh', 'w') as fobj:
         fobj.writelines(lines_run_all_bash)
 
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_MESA.sh'), f'{setup_directory}/run_MESA.sh')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/run_MESA.sh'), f'{setup_directory}/run_MESA.sh')
     return
 
 ################################################################################
@@ -164,13 +164,13 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
     with open(f'{setup_directory}/submit_all_bash.sh', 'w') as fobj:
         fobj.writelines(lines_run_all_bash)
 
-    copyfile(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
+    copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
     return
 ################################################################################
 def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
                        freq_min=0.01, freq_max=10, rotation_frame='INERTIAL',
                        npg_min=-50,npg_max=-1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', azimuthal_order=1, degree=1,
-                       gyre_base_file = os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/templates/gyre_template.in')
+                       gyre_base_file = os.path.expandvars(f'{Path(__file__).parent}/templates/gyre_template.in')
                       ):
     """
     Write gyre inlists based upon a given template
