@@ -19,7 +19,7 @@ for pattern in config.pattern_methods:
         merit = merit_abbrev[merit]
         for grid in config.grids:
             for obs in config.observable_aic:
-                MLE_values_file = f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/KIC7760680_{grid}_{pattern}_{merit}_{obs}.dat'
+                MLE_values_file = f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
                 df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
                 best_model = df.loc[df['meritValue'].idxmin()]
                 best_model_dict.update({f'{grid} {merit} {obs} {pattern}': best_model})
@@ -38,7 +38,7 @@ for merit in config.merit_functions:
     for grid in config.grids:
         for obs in config.observable_aic:
             for pattern in config.pattern_methods:
-                MLE_values_file = f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/KIC7760680_{grid}_{pattern}_{merit}_{obs}.dat'
+                MLE_values_file = f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
                 df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
                 best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
                 best_MD = best_model_dict[f'{grid} MD {obs} {pattern}']  # best model according to mahalanobis distance
