@@ -153,7 +153,7 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     cbar.ax.tick_params(labelsize=label_size-4)
     fig.subplots_adjust(left=0.109, right=0.835, bottom=0.13, top=0.99)
 
-    # fig.suptitle(fig_title)
+    # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
     fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
     plt.close('all')
