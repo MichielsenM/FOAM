@@ -179,7 +179,7 @@ def mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, colou
     ax.set_ylabel('Meshpoints', size=label_size)
 
 ################################################################################
-def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16, Xc_marked=[0.1, 0.4, 0.7], Teff_logscale=True):
+def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16, Xc_marked=None, Teff_logscale=True, start_track_from_Xc=None):
     """
     Makes an HRD plot from a provided history file
     ------- Parameters -------
@@ -195,6 +195,8 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
         Models with these Xc values are marked with red dots on the plot (listed in increasing value).
     Teff_logscale: boolean
         Plot effective temperature in logscale (True), or not (False).
+    start_track_from_Xc: float
+        Only start plotting the track if Xc drops below this value (e.g. to not plot the initial relaxation loop).
     """
     if ax is None:
         fig=plt.figure()
@@ -215,12 +217,21 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
         T = 10**log_Teff
         ax.set_xlabel(r'T$_{eff}$ [K]', size=label_size)
 
+    if start_track_from_Xc!= None:
+        for i in range(len(center_h1)):
+            if center_h1[i] < start_track_from_Xc:
+                T = T[i:]
+                log_L = log_L[i:]
+                break
+
     # Plot the HRD diagram (log_L vs. T)
     ax.plot( T, log_L, color = colour, linestyle = linestyle, label = label)
     ax.set_ylabel(r'log(L) [L$_{\odot}$]', size=label_size)
     ax.invert_xaxis()
 
     # Put specific marks on the HRD diagram
+    if Xc_marked is None:
+        return
     k = 0
     for i in range(len(center_h1)-1, -1, -1):
         if center_h1[i] > Xc_marked[k]:

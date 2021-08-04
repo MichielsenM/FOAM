@@ -153,14 +153,14 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     cbar.ax.tick_params(labelsize=label_size-4)
     fig.subplots_adjust(left=0.109, right=0.835, bottom=0.13, top=0.99)
 
-    # fig.suptitle(fig_title)
+    # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
     fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
     plt.close('all')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''):
+def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =None, star_name=None):
     """
     Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
@@ -176,6 +176,8 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
+    star_name: string
+        Name of the star, used in file naming.
     """
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
@@ -187,8 +189,8 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
               'mahalanobis': 'MD'}
 
     # set the name of the output file
-    head, tail = mypy.split_line(Path_theo.stem, 'KIC')
-    DataOut = f'{Path_theo.parent}/KIC{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
+    head, tail = mypy.split_line(Path_theo.stem, star_name)
+    DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
     Theo_dFrame = pd.read_table(Theo_file, delim_whitespace=True, header=0)
@@ -225,7 +227,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=[], merit_function =''
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'KIC{tail}_{suffix[merit_function]}_{file_suffix_observables}')
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}')
 
     # Print smallest and highest values
     idx2 = np.argsort(merit_values)
