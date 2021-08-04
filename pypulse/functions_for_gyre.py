@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-import glob, os, csv, sys
+import glob, os, csv, sys, pkgutil
 import logging
 import multiprocessing
+from io import StringIO
 from functools import partial
 from pypulse import my_python_functions as mypy
 from pypulse import functions_for_mesa as ffm
@@ -354,7 +355,9 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
             omega_rot = omega_rot * Roche_rate # Multiply by fraction of the crit rate, to get final omega_rot in cycles per day
 
         # Make a pandas dataframe containing an interpolation table for lambda (eigenvalues of LTE - TAR)
-        df = pd.read_csv(os.path.expandvars('$CONDA_PREFIX/lib/python3.7/site-packages/PyPulse/lambda.csv'), sep=',')
+        data = pkgutil.get_data(__name__, 'lambda.csv')
+        data_io = StringIO(data.decode(sys.stdout.encoding))
+        df = pd.read_csv(data_io, sep=",")
 
         # will add extra functionality to calculate the bounds explicitly, making use of GYRE
 
