@@ -13,7 +13,7 @@ for grid in config.grids:
         for merit_function in config.merit_functions:
             Theo_path = f'extracted_freqs/spectro+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.tsv'
 
-            func = partial(mle.calculate_likelihood, config.observations, Theo_path, merit_function = merit_function)
+            func = partial(mle.calculate_likelihood, config.observations, Theo_path, merit_function = merit_function, star_name=config.star)
             for result in p.imap(func, config.observable_list):
                 item=result
 p.close()

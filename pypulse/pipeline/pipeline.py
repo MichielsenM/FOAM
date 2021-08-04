@@ -5,8 +5,8 @@ import config
 # Check for sensible input, so that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.
 match_obsAndTheory = False
 for obs_list in config.observable_list:
-    for o in obs_list:
-        if (config.periods_or_frequencies_observed) in o:
+    for obs in obs_list:
+        if (config.periods_or_frequencies_observed) in obs:
             match_obsAndTheory = True
     if match_obsAndTheory is False:
         config.logger.error(f'The observables that are analysed {config.observable_list} do not all include the observational data that is used: {config.periods_or_frequencies_observed}')

@@ -127,7 +127,7 @@ for merit in config.merit_functions:
                 for column_name in config.free_param:
                     outfile.write(f'{error_region[column_name]} ')
                     f_ax[i].scatter(df.iloc[0][column_name], j, color=color_dict[j])
-                    f_ax[i].hlines(y=j, xmin=min(error_region[column_name]), xmax=max(error_region[column_name]))
+                    f_ax[i].hlines(y=j, xmin=min(error_region[column_name]), xmax=max(error_region[column_name]), color='black')
 
                     if len(error_region[column_name]) == 1:
                         f_ax[i].hlines(y=j, xmin=max(error_region[column_name][0]-grid_stepsize_dict[column_name], min(xticks_dict[column_name])), xmax=min(error_region[column_name][0]+grid_stepsize_dict[column_name], max(xticks_dict[column_name])), color='grey', alpha=0.7, ls='--')
