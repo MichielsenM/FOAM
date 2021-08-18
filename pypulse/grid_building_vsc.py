@@ -139,7 +139,7 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
         line to write in the CSV file containing all run parameters for submitting to the VSC
     """
     param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
-    output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}'
+    output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}_Mini{param_dict["M"]}'
 
     f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation,
                                            unit_rot=unit_rot, rotation_frame=rotation_frame)

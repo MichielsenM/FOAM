@@ -140,7 +140,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', output_dir=f'{o
         for index, file_path in enumerate(gyre_files, start=1): # Start the index count from 1 instead of from 0, but still loop through all files
             path, filename = file_path.rsplit('/',1)
             param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
-            output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}/{filename[:filename.rfind(".")]}'
+            output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}_Mini{param_dict["M"]}/{filename[:filename.rfind(".")]}'
 
             f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame)
             inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{filename[:-5]}.in'
