@@ -1,6 +1,6 @@
 """ Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
 Note: The file with observations needs to hold temperature as Teff, although the analysis is done using the logTeff values."""
-# from pypulse import maximum_likelihood_estimator as mle
+# from foam import maximum_likelihood_estimator as mle
 import numpy as np
 import pandas as pd
 import sys, logging, os
@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from pathlib import Path
-from pypulse import my_python_functions as mypy
-from pypulse import functions_for_gyre as ffg
+from foam import support_functions as sf
+from foam import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 ################################################################################
@@ -189,7 +189,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
               'mahalanobis': 'MD'}
 
     # set the name of the output file
-    head, tail = mypy.split_line(Path_theo.stem, star_name)
+    head, tail = sf.split_line(Path_theo.stem, star_name)
     DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data

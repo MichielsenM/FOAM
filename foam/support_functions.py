@@ -1,12 +1,12 @@
 """Helpful functions in general. Making figures, reading HDF5, processing strings."""
-# from pypulse import my_python_functions as mypy
+# from foam import support_functions as sf
 import h5py, re
 from pathlib import Path
 import logging
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-logger = logging.getLogger('logger.mypy')
+logger = logging.getLogger('logger.sf')
 ################################################################################
 def split_line(line, sep) :
     """

@@ -1,6 +1,6 @@
-# PyPulse
+# Foam
 
-A custom-made python package compatible with anaconda, python 3.7 version or newer.
+A custom-made python package for FOrward Asteroseismic Modelling.
 Contains useful functions to make figures, MESA/GYRE grids, and help with data analysis.
 
 Git clone this repository, and run `pip install -e .` in the folder with the `setup.py` file. This will install it as a package in your python environment.
@@ -13,7 +13,7 @@ The master branch will be updated from time to time when possible conflicts betw
 
 ## contents
 
-1. `pypulse`: The pypulse python package
+1. `foam`: The FOrward Asteroseismic Modelling python package
 2. `LICENSE`: GNU general public license
 3. `setup.py`: Setup script for the installation in a python environment.
 

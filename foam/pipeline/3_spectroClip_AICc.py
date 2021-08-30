@@ -5,8 +5,8 @@ import glob, sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from pypulse import my_python_functions as mypy
-from pypulse import maximum_likelihood_estimator as mle
+from foam import support_functions as sf
+from foam import maximum_likelihood_estimator as mle
 import config # imports the config file relative to the location of the main script
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
@@ -36,7 +36,7 @@ for merit in config.merit_functions:
         files = glob.glob(f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/*{merit}_{obs}.dat')
         for file in sorted(files):
             Path_file = Path(file)
-            star_name, analysis = mypy.split_line(Path_file.stem, '_')
+            star_name, analysis = sf.split_line(Path_file.stem, '_')
             df = pd.read_csv(file, delim_whitespace=True, header=0)
             df = df.sort_values('meritValue', ascending=True)
 

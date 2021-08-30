@@ -1,7 +1,7 @@
 """Construct the theoretical pulsation patterns and merge with spectroscopic info into one file."""
 from pathlib import Path
-from pypulse import functions_for_gyre as ffg
-from pypulse import functions_for_mesa as ffm
+from foam import functions_for_gyre as ffg
+from foam import functions_for_mesa as ffm
 import config # imports the config file relative to the location of the main script
 ################################################################################
 # Construct the pulsation patterns according to the different methods for the extracted theoretical grids

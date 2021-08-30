@@ -1,12 +1,12 @@
 """A few helpful functions to process MESA output."""
-# from pypulse import functions_for_mesa as ffm
+# from foam import functions_for_mesa as ffm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import multiprocessing, glob, csv, h5py
 from pathlib import Path
 from functools import partial
-from pypulse import my_python_functions as mypy
+from foam import support_functions as sf
 
 ################################################################################
 def read_mesa_file(file_path):
@@ -339,7 +339,7 @@ def spectro_from_profiles(mesa_profile, parameters):
     line: string
         Line containing all the model- and spectroscopic parameters of the MESA profile.
     """
-    param_dict = mypy.get_param_from_filename(mesa_profile, parameters)
+    param_dict = sf.get_param_from_filename(mesa_profile, parameters)
     prof_header, prof_data = read_mesa_file(mesa_profile)
 
     logL = np.log10(float(prof_header['photosphere_L']))

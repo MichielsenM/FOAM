@@ -1,13 +1,13 @@
 """Functions for building MESA and GYRE grids on the VSC (Vlaams Supercomputer Centrum) framework."""
-# from pypulse import grid_building_vsc as gbv
+# from foam import grid_building_vsc as gbv
 import numpy as np
 import glob, os, sys, csv
 import logging, pkgutil, multiprocessing
 from shutil import copyfile
 from pathlib import Path
 from functools import partial
-from pypulse import my_python_functions as mypy
-from pypulse import functions_for_gyre as ffg
+from foam import support_functions as sf
+from foam import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.gbv')
 ################################################################################
@@ -138,7 +138,7 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
     line_to_write: string
         line to write in the CSV file containing all run parameters for submitting to the VSC
     """
-    param_dict = mypy.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
+    param_dict = sf.get_param_from_filename(file_path, ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
     output_dir_Z = f'{output_dir}/rot{rotation}/Zini{param_dict["Z"]}_Mini{param_dict["M"]}'
 
     f_min, f_max = ffg.calc_scanning_range(file_path, npg_min=npg_min, npg_max=npg_max, l=degree, m=azimuthal_order, omega_rot=rotation,

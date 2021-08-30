@@ -1,4 +1,4 @@
-# pypulse
+# foam
 
 ## contents
 
@@ -10,7 +10,7 @@
 6. `grid_building_vsc.py`: Functions for building MESA and GYRE grids on the VSC framework.
 7. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
 8. `maximum_likelihood_estimator.py`: Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
-9. `my_python_functions.py` : Helpful functions in general. Making figures, reading HDF5, processing strings.
+9. `support_functions.py` : Helpful functions for making figures, reading HDF5, processing strings.
 
 ### Author
 Developed by Mathias Michielsen

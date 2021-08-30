@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.1'
-DESCRIPTION = 'Python package for modelling stellar pulsations'
+VERSION = '0.1.0'
+DESCRIPTION = 'Python package for forward asteroseismic modelling'
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -19,7 +19,7 @@ classifiers = [
     'Topic :: Scientific :: Astronomy']
 # Setting up
 setup(
-        name="pypulse",
+        name="foam",
         version=VERSION,
         author="Mathias Michielsen",
         author_email="mathias.michielsen@kuleuven.be",

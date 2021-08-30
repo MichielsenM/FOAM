@@ -1,5 +1,5 @@
 """Calculate the likelihood of all the theoretial patterns according to the specified merit functions."""
-from pypulse import maximum_likelihood_estimator as mle
+from foam import maximum_likelihood_estimator as mle
 from functools import partial
 import multiprocessing
 from pathlib import Path

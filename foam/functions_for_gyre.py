@@ -1,6 +1,6 @@
 """Helpful functions for GYRE input and output, (e.g. extracting all frequencies in a grid to 1 file,
    constructing theoretical pulsation patterns, calculate GYRE scanning range to find desired radial orders...)"""
-# from pypulse import functions_for_gyre as ffg
+# from foam import functions_for_gyre as ffg
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,8 +10,8 @@ import logging
 import multiprocessing
 from io import StringIO
 from functools import partial
-from pypulse import my_python_functions as mypy
-from pypulse import functions_for_mesa as ffm
+from foam import support_functions as sf
+from foam import functions_for_mesa as ffm
 
 logger = logging.getLogger('logger.ffg')
 
@@ -62,8 +62,8 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     param_dict: dictionary
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
-    data = mypy.read_hdf5(GYRE_summary_file)
-    param_dict = mypy.get_param_from_filename(GYRE_summary_file, parameters)
+    data = sf.read_hdf5(GYRE_summary_file)
+    param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
         param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
@@ -323,9 +323,9 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         lower and upper bound of frequency range that needs to be scanned in oder
         to retrieve the required range of radial orders
     """
-    directory, gyre_file = mypy.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
-    Xc_file = float(mypy.substring(gyre_file, 'Xc', '.GYRE'))       # get Xc
-    MESA_hist_name, tail = mypy.split_line(gyre_file, '_Xc')        # Get the MESA history name form the GYRE filename
+    directory, gyre_file = sf.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
+    Xc_file = float(sf.substring(gyre_file, 'Xc', '.GYRE'))       # get Xc
+    MESA_hist_name, tail = sf.split_line(gyre_file, '_Xc')        # Get the MESA history name form the GYRE filename
     hist_file = glob.glob(f'{directory}history/{MESA_hist_name}hist')[0]   # selects MESA history file corresponding to the GYRE file
 
     header, data  = ffm.read_mesa_file(hist_file)

@@ -13,11 +13,11 @@ for obs_list in config.observable_list:
         sys.exit()
     match_obsAndTheory = False
 
-importlib.import_module('pypulse.pipeline.0_extract_puls&spectro')
-importlib.import_module('pypulse.pipeline.1_constuct_pattern')
-importlib.import_module('pypulse.pipeline.2_calculate_likelihood')
-importlib.import_module('pypulse.pipeline.3_spectroClip_AICc')
-importlib.import_module('pypulse.pipeline.4_bestModel_errors')
-importlib.import_module('pypulse.pipeline.5_correlationPlots')
+importlib.import_module('foam.pipeline.0_extract_puls&spectro')
+importlib.import_module('foam.pipeline.1_constuct_pattern')
+importlib.import_module('foam.pipeline.2_calculate_likelihood')
+importlib.import_module('foam.pipeline.3_spectroClip_AICc')
+importlib.import_module('foam.pipeline.4_bestModel_errors')
+importlib.import_module('foam.pipeline.5_correlationPlots')
 
-importlib.import_module('pypulse.pipeline.table_bestModels')
+importlib.import_module('foam.pipeline.table_bestModels')
