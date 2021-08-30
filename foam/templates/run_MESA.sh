@@ -11,9 +11,10 @@
 
 export WORK_DIR="${7}"
 export LOG_DIR="${6}"
-export OUTPUT_DIR=$LOG_DIR/Zini"$1"/
+export OUTPUT_DIR=$LOG_DIR/Zini"$1"_Mini"$2"/
 
 # Preparation:
+mkdir -p $OUTPUT_DIR/history/
 mkdir -p $OUTPUT_DIR/profiles/
 mkdir -p $OUTPUT_DIR/gyre/
 mkdir -p $OUTPUT_DIR/preMS/

@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from pypulse import my_python_functions as mypy
+from foam import support_functions as sf
 import config # imports the config file relative to the location of the main script
 
 ################################################################################
@@ -69,7 +69,7 @@ for merit in config.merit_functions:
         j=0
         for file in sorted(files):
             Path_file = Path(file)
-            star_name, analysis = mypy.split_line(Path_file.stem, '_')
+            star_name, analysis = sf.split_line(Path_file.stem, '_')
             df = pd.read_csv(file, delim_whitespace=True, header=0)
             df = df.sort_values('meritValue', ascending=True)
 
