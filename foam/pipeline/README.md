@@ -3,7 +3,7 @@
 The setup allows the modelling of a star with the following features:
 - Modelling of the observations with multiple computed grids at once.
 - With different merit functions (chi-squared and Mahalanobis Distance).
-- For multiple sets of observables. Astroseismic (periods, period spacings, those 2 combined, frequencies) but also others (logg, logTeff, logL) can go in the merit function.
+- For multiple sets of observables. Astroseismic (periods, period spacings, frequencies) but also others (logg, logTeff, logL) can go in the merit function.
 - For multiple methods to construct the theoretical pulsation patterns.
 
 ## How to use this pipeline
