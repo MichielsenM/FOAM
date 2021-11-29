@@ -145,7 +145,7 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
                                            unit_rot=unit_rot, rotation_frame=rotation_frame)
     inlist_to_write = f'{setup_directory}/inlists/rot{rotation}_{Path(file_path).stem}.in'
     write_gyre_inlist(inlist_to_write, file_path, npg_min=npg_min,npg_max=npg_max, freq_min=f_min, freq_max=f_max, omega_rot=rotation,
-                      unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
+                      unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines, degree=degree, azimuthal_order=azimuthal_order)
 
     line_to_write = [param_dict["Z"], param_dict["M"], param_dict["logD"], param_dict["aov"], param_dict["fov"], param_dict["Xc"], inlist_to_write, output_dir_Z]
 
