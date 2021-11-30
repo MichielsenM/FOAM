@@ -43,6 +43,10 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
         MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
 
     df = df.append(MP_list[:], ignore_index=True) # Combine the dictionaries into one dataframe
+    # Sort the columns with frequencies by their radial order
+    column_list = list(df.columns[:len(parameters)])
+    column_list.extend(sorted(df.columns[len(parameters):]))
+    df = df.reindex(column_list, axis=1)
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
@@ -326,7 +330,7 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
     directory, gyre_file = sf.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
     Xc_file = float(sf.substring(gyre_file, 'Xc', '.GYRE'))       # get Xc
     MESA_hist_name, tail = sf.split_line(gyre_file, '_Xc')        # Get the MESA history name form the GYRE filename
-    hist_file = glob.glob(f'{directory}history/{MESA_hist_name}hist')[0]   # selects MESA history file corresponding to the GYRE file
+    hist_file = glob.glob(f'{directory}history/{MESA_hist_name}.*hist')[0]   # selects MESA history file (.hist or .h5_hist) corresponding to the GYRE file
 
     header, data  = ffm.read_mesa_file(hist_file)
     Xc_values = np.asarray(data['center_h1'])
