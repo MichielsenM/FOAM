@@ -66,11 +66,22 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     param_dict: dictionary
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
+
+    def sign(x):
+        if abs(x) == x:
+            return '+'
+        else:
+            return '-'
+
     data = sf.read_hdf5(GYRE_summary_file)
     param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
-        param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
+        n_pg = data["n_pg"][j]
+        if abs(n_pg) < 10:
+            n_pg = f'{sign(n_pg)}0{abs(n_pg)}'
+        param_dict.update({f'n_pg{n_pg}':data['freq'][j][0]})
+        # param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
     return param_dict
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -221,7 +232,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
         elif method_build_series == 'chisq_longest_sequence':
             series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
             if which_observable=='frequency':
-                selected_theoretical_pulsations = 1/final_theoretical_periods
+                selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
             elif which_observable=='period':
                 selected_theoretical_pulsations = final_theoretical_periods
         else:

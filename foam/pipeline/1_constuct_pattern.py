@@ -10,7 +10,7 @@ for grid in config.grids:
     spectro= f'grid_summary/spectroGrid_{grid}.tsv'
     for method in config.pattern_methods:   # Methods to construct theoretical pulsation patterns
         puls_file = f'extracted_freqs/{observable}_{config.star}_{grid}_{method}.tsv'
-        ffg.construct_theoretical_freq_pattern(f'grid_summary/pulsationGrid_{grid}.tsv', config.observations, method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file)
+        ffg.construct_theoretical_freq_pattern(f'grid_summary/pulsationGrid_{grid}_{config.rotation}.tsv', config.observations, method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file)
 
         # Merge spectro and pulsation info into one file
         output_name = f'{Path(puls_file).parent}/spectro+{Path(puls_file).name}'

@@ -4,9 +4,9 @@ import config
 ################################################################################
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
 
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/bestModel_table_CS.txt', 'w') as outfile:
+with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_bestModel_table_CS.txt', 'w') as outfile:
     outfile.write(r' Grid & Observables & Pattern construction & $M_{ini}$ & $Z_{ini}$ & $\alpha_{\text{CBM}}$ & $\fcbm$ & log($\D[env]$) & $X_c$ & $\chi^2_{\text{red}}$ & MD & AICc($\chi^2_{\text{red}}$) \vspace{1pt} \\'+'\n')
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/bestModel_table_MD.txt', 'w') as outfile:
+with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_bestModel_table_MD.txt', 'w') as outfile:
     outfile.write(r' Grid & Observables & Pattern construction & $M_{ini}$ & $Z_{ini}$ & $\alpha_{\text{CBM}}$ & $\fcbm$ & log($\D[env]$) & $X_c$ & $\chi^2_{\text{red}}$ & MD & AICc(MD) \vspace{1pt} \\'+'\n')
 
 best_model_dict = {}
@@ -30,8 +30,8 @@ for pattern in config.pattern_methods:
                     endresult_MD_dict.update({f'{grid} {obs} {pattern} {best_model["M"]} {best_model["Z"]} {best_model["aov"]} {best_model["fov"]} {best_model["logD"]} {best_model["Xc"]}' : {}})
 
 
-df_AICc_Chi2 = pd.read_table(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/AICc_values_Chi2.tsv', delim_whitespace=True, header=0)
-df_AICc_MD   = pd.read_table(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/AICc_values_MD.tsv', delim_whitespace=True, header=0)
+df_AICc_Chi2 = pd.read_table(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_Chi2.tsv', delim_whitespace=True, header=0)
+df_AICc_MD   = pd.read_table(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_MD.tsv', delim_whitespace=True, header=0)
 # Print both the chi2 and MD values of those best models
 for merit in config.merit_functions:
     merit = merit_abbrev[merit]
@@ -68,10 +68,10 @@ for merit in config.merit_functions:
                     endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'AICc' : AICc_MD})
 
 # Write everything as a LaTeX tables to a file
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/bestModel_table_CS.txt', 'a') as outfile:
+with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_bestModel_table_CS.txt', 'a') as outfile:
     for key in sorted(endresult_CS_dict.keys()):
         outfile.write(f'{key.replace(" ", " & ")} & {int(round(endresult_CS_dict[key]["CS"]))} & {int(round(endresult_CS_dict[key]["MD"]))} & {round(endresult_CS_dict[key]["AICc"], 1)} \\\\ \n')
 
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/bestModel_table_MD.txt', 'a') as outfile:
+with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_bestModel_table_MD.txt', 'a') as outfile:
     for key in sorted(endresult_MD_dict.keys()):
         outfile.write(f'{key.replace(" ", " & ")} & {int(round(endresult_MD_dict[key]["CS"]))} & {int(round(endresult_MD_dict[key]["MD"]))} & {round(endresult_MD_dict[key]["AICc"], 1)} \\\\ \n')
