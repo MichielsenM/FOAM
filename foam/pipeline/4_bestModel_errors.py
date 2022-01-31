@@ -15,17 +15,21 @@ import config # imports the config file relative to the location of the main scr
 N_dict = config.N_dict  # number of observables
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
 
+
 xlabels_dict = {'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
-axis_range_dict =  {'M': [2.78, 3.72], 'Z': [0.0147, 0.0233], 'logD':[-0.08, 2.08], 'aov':[-0.011, 0.311],'fov':[-0.0011, 0.0311],'Xc':[0.295, 0.605]}
-grid_stepsize_dict =  {'M': 0.1, 'Z': 0.004, 'logD':0.5, 'aov':0.05, 'fov':0.005, 'Xc':0.02}
+# axis_range_dict =  {'M': [2.78, 3.72], 'Z': [0.0147, 0.0233], 'logD':[-0.08, 2.08], 'aov':[-0.011, 0.311],'fov':[-0.0011, 0.0311],'Xc':[0.295, 0.605]}
+axis_range_dict =  {'M': [2.98, 4.52], 'Z': [0.0077, 0.0243], 'logD':[-0.08, 4.08], 'aov':[-0.011, 0.311],'fov':[-0.0011, 0.0311],'Xc':[0.095, 0.705]}
+grid_stepsize_dict =  {'M': 0.1, 'Z': 0.004, 'logD':1.0, 'aov':0.05, 'fov':0.005, 'Xc':0.01}
 
 color_dict = {0:'blue', -1:'blue', -2:'blue', -3:'red', -4:'red', -5:'red'}
 ylabel_dict = {0:f'Longest sequence', -1:'Highest amplitude', -2:'Highest frequency', -3:'Longest sequence', -4:'Highest amplitude', -5:'Highest frequency'}
 
 # add ticks and minor ticks so that each step in the grid has at least a minor tick
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
-xticks_dict = {'M':[2.8, 3.0, 3.2, 3.4, 3.6], 'Z':[0.015, 0.019, 0.023], 'aov':[0, 0.1, 0.2, 0.3], 'fov':[0, 0.01, 0.02, 0.03], 'logD':[0, 1, 2], 'Xc':[0.3, 0.4, 0.5, 0.6]}
-minorticks_dict = {'M':2, 'Z':1, 'aov':2, 'fov':2, 'logD':2, 'Xc':5}
+# xticks_dict = {'M':[2.8, 3.0, 3.2, 3.4, 3.6], 'Z':[0.015, 0.019, 0.023], 'aov':[0, 0.1, 0.2, 0.3], 'fov':[0, 0.01, 0.02, 0.03], 'logD':[0, 1, 2], 'Xc':[0.3, 0.4, 0.5, 0.6]}
+xticks_dict = {'M':[3.0, 3.5, 4.0, 4.5], 'Z':[0.008, 0.016, 0.024], 'aov':[0, 0.1, 0.2, 0.3], 'fov':[0, 0.01, 0.02, 0.03], 'logD':[0, 2, 4], 'Xc':[0.1, 0.3, 0.5, 0.7]}
+minorticks_dict = {'M':5, 'Z':2, 'aov':2, 'fov':2, 'logD':2, 'Xc':10}
+
 
 sigma = 2
 percentile = {1 : 0.68, 2:0.95, 3:0.997}
@@ -36,12 +40,12 @@ def likelihood_chi2(chi2):
 
 def likelihood_MD(MD):
     """ Likelihood function of the mahalanobis distance """
-    df_AICc_MD = pd.read_table('V_matrix/determinant_conditionNr.tsv', delim_whitespace=True, header=0)
+    df_AICc_MD = pd.read_table(f'V_matrix/{config.star}_determinant_conditionNr.tsv', delim_whitespace=True, header=0)
     lndetV = float( df_AICc_MD.loc[df_AICc_MD['method'] == f'{config.star}_{analysis}', 'ln(det(V))'] )
     return np.exp(-0.5*( MD + config.k*np.log(2*np.pi) + lndetV ))
 
 ################################################################################
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{sigma}sigma_errorMargins.txt', 'w') as outfile:
+with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'w') as outfile:
     outfile.write(f'{config.free_param}'+'\n')
 
 for merit in config.merit_functions:
@@ -121,7 +125,7 @@ for merit in config.merit_functions:
 
             config.logger.info(error_region)
 
-            with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{sigma}sigma_errorMargins.txt', 'a') as outfile:
+            with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'a') as outfile:
                 outfile.write(f'{analysis} ')
                 i=0
                 for column_name in config.free_param:
@@ -147,4 +151,4 @@ for merit in config.merit_functions:
         Path(output_folder).mkdir(parents=True, exist_ok=True)
         leftspace = 0.22-0.015*config.k
         fig.subplots_adjust(left=leftspace, right=0.98, bottom=0.25, top=0.98, wspace=0.2)
-        fig.savefig(f'{output_folder}/errors_{merit}_{obs}.png', dpi=300)
+        fig.savefig(f'{output_folder}/{config.star}_errors_{merit}_{obs}.png', dpi=300)

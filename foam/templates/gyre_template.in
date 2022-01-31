@@ -54,8 +54,8 @@
 	summary_file_format = 'HDF'
 	summary_item_list = 'M_star,R_star,L_star,l,m,n_p,n_g,n_pg,omega,freq,E_norm'
 
-	mode_template = 'ad_mode_l%L_n%N_j%J.HDF'
-	mode_item_list = 'M_star,R_star,L_star,l,m,n,n_p,n_g,n_pg,freq,xi_h,xi_r,x,dW_dx,Gamma_1,P,rho,T,dE_dx'
+	! detail_template = 'ad_mode_l%L_n%N_j%J.HDF'
+	! detail_item_list = 'M_star,R_star,L_star,l,m,n,n_p,n_g,n_pg,freq,xi_h,xi_r,x,dW_dx,Gamma_1,P,rho,T,dE_dx'
 /
 
 &nad_output

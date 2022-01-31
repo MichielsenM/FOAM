@@ -43,6 +43,10 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
         MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
 
     df = df.append(MP_list[:], ignore_index=True) # Combine the dictionaries into one dataframe
+    # Sort the columns with frequencies by their radial order
+    column_list = list(df.columns[:len(parameters)])
+    column_list.extend(sorted(df.columns[len(parameters):]))
+    df = df.reindex(column_list, axis=1)
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
@@ -62,11 +66,22 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     param_dict: dictionary
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
+
+    def sign(x):
+        if abs(x) == x:
+            return '+'
+        else:
+            return '-'
+
     data = sf.read_hdf5(GYRE_summary_file)
     param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
-        param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
+        n_pg = data["n_pg"][j]
+        if abs(n_pg) < 10:
+            n_pg = f'{sign(n_pg)}0{abs(n_pg)}'
+        param_dict.update({f'n_pg{n_pg}':data['freq'][j][0]})
+        # param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
     return param_dict
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -217,7 +232,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, method_build_series, Obs, O
         elif method_build_series == 'chisq_longest_sequence':
             series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
             if which_observable=='frequency':
-                selected_theoretical_pulsations = 1/final_theoretical_periods
+                selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
             elif which_observable=='period':
                 selected_theoretical_pulsations = final_theoretical_periods
         else:
@@ -326,7 +341,7 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
     directory, gyre_file = sf.split_line(gyre_file_path, 'gyre/') # get directory name and GYRE filename
     Xc_file = float(sf.substring(gyre_file, 'Xc', '.GYRE'))       # get Xc
     MESA_hist_name, tail = sf.split_line(gyre_file, '_Xc')        # Get the MESA history name form the GYRE filename
-    hist_file = glob.glob(f'{directory}history/{MESA_hist_name}hist')[0]   # selects MESA history file corresponding to the GYRE file
+    hist_file = glob.glob(f'{directory}history/{MESA_hist_name}.*hist')[0]   # selects MESA history file (.hist or .h5_hist) corresponding to the GYRE file
 
     header, data  = ffm.read_mesa_file(hist_file)
     Xc_values = np.asarray(data['center_h1'])

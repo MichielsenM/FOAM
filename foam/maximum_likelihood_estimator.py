@@ -227,7 +227,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}')
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}', star_name=star_name)
 
     # Print smallest and highest values
     idx2 = np.argsort(merit_values)
@@ -392,7 +392,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def merit_chi2(YObs, ObsErr, YTheo, fig_title=None):
+def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
     Calculate chi squared values for the given theoretial patterns
     ------- Parameters -------
@@ -409,7 +409,7 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None):
     return chi2
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
+def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
     Calculate mahalanobis distance values for the given theoretial patterns
     ------- Parameters -------
@@ -441,7 +441,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
 
     # Include observational errors in the variance-covariance matrix
     V = V + np.diag(ObsErr**2.)
-    check_matrix(V, fig_title=fig_title)     # check if positive definite and make figure
+    check_matrix(V, fig_title=fig_title, star_name=star_name)     # check if positive definite and make figure
     # Calculate Mahalanobis distances
     MD = np.zeros(q)
     Vinv = np.linalg.inv(V)
@@ -452,7 +452,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None):
     return MD
 
 ################################################################################
-def check_matrix(V, plot=True, fig_title='Vmatrix'):
+def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
     """
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
     since this means the matrix is positive definite. Compute its determinant and condition number,
@@ -470,7 +470,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix'):
 
     logger.info(f'max(V) = {np.max(V)}')
     kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
-    file_Path = Path(f'{os.getcwd()}/V_matrix/determinant_conditionNr.tsv')
+    file_Path = Path(f'{os.getcwd()}/V_matrix/{star_name}_determinant_conditionNr.tsv')
     file_Path.parent.mkdir(parents=True, exist_ok=True)
 
     if not file_Path.is_file():

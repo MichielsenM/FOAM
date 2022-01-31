@@ -19,7 +19,7 @@ k = config.k            # number of free paramters in the grid
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
 ################################################################################
 # Get the condition numbers file to use its listed values of ln(det(V)) with V the variance-covariance matrix.
-condition_nr_file = 'V_matrix/determinant_conditionNr.tsv'
+condition_nr_file = f'V_matrix/{config.star}_determinant_conditionNr.tsv'
 try:
     df_AICc_MD = pd.read_table(condition_nr_file, delim_whitespace=True, header=0)
 except:
@@ -52,5 +52,5 @@ for merit in config.merit_functions:
                 df_AICc_MD.loc[df_AICc_MD.method == f'{config.star}_{analysis}', 'AICc'] = AICc
 
 Path(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/').mkdir(parents=True, exist_ok=True)
-df_AICc_MD.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/AICc_values_MD.tsv', sep='\t',index=False)
-df_AICc_Chi2.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/AICc_values_Chi2.tsv', sep='\t',index=False)
+df_AICc_MD.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_MD.tsv', sep='\t',index=False)
+df_AICc_Chi2.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_Chi2.tsv', sep='\t',index=False)
