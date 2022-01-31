@@ -12,6 +12,7 @@ else:
 
 observations = config.observations
 for file in files:
-    star_name, title = sf.split_line(Path(file).stem, '_')
-    config.logger.info(f'file: {file}')
+    # star_name, title = sf.split_line(Path(file).stem, '_')
+    title = Path(file).stem
+    config.logger.info(f'file: {title}')
     mle.plot_correlations(file, observations, fig_title=title, percentile_to_show=0.5, logg_or_logL='logL')

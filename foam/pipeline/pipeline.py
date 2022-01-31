@@ -1,6 +1,6 @@
 """ Top level script to run the pipeline sequentially, copy this script with the config file to the folder where you want to run the analysis.
 Comment certain imports if you don't want to repeat them on repeated runs."""
-import importlib
+import importlib, sys
 import config
 # Check for sensible input, so that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.
 match_obsAndTheory = False
