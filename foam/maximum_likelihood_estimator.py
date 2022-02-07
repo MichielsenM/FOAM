@@ -411,16 +411,16 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
-    Calculate mahalanobis distance values for the given theoretial patterns
+    Calculate mahalanobis distance (MD) values for the given theoretial patterns.
     ------- Parameters -------
     YObs, ObsErr: numpy array of floats
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
-        Array of all theoretical patterns to calculate the chi squared value for.
+        Array of all theoretical patterns to calculate the MD value for.
 
     ------- Returns -------
     MD: numpy array of floats
-        Mahalanobis distances for the given theoretical values
+        Mahalanobis distances for the given theoretical patterns.
     """
     # Convert to matrix format
     YObsMat = np.matrix(YObs).T
@@ -545,7 +545,7 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_cutoff(merit_values_file, observations_file, nsigma=2):
+def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
     """
     Make an n-sigma cutoff of the models based on the spectoscopic observations.
     Save this as a file with prefix "clipped".
