@@ -11,6 +11,11 @@ periods_or_frequencies_observed = 'period'      # # Use the observed periods or 
 # Pulsation with the highest amplitude to build pattern from in 'highest_amplitude' method. Array with highest amplitude per part of the split pattern
 highest_amplitude_pulsation = {'period': [1.158919], 'frequency': [None]} # ordered the same as the file with the observations
 
+gyre_dir = '/lhome/mathiasm/Software/gyre-6.0.1' # GYRE directory
+kval = 0                  # the mode ID of your g-mode pattern
+mval = 1
+rotation_gyre = '0.6304_prograde'
+
 # Parent directory of the computed grid, and names of the directories of the different grids
 grid_parent_directory = '/lhome/mathiasm/MESA_grid_ECP-DE'
 grids = ['ECP', 'DO']

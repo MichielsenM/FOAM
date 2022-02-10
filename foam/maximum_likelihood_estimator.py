@@ -46,7 +46,7 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
-    df = df_Theo.drop(columns=['rot', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+    df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
@@ -290,7 +290,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
 
     if 'period_spacing' in observables:
         for periods_part in np.split(periods,missing_indices):
-            spacing = ffg.generate_thry_series(periods_part)
+            spacing, _ = ffg.generate_spacing_series(periods_part)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observables.remove('period_spacing')
@@ -355,7 +355,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
     if 'period_spacing' in observables:
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
-            spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
+            spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             spacing_errs = np.asarray(spacing_errs)/86400
 
@@ -514,9 +514,9 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
         and the error on this total length.
     """
     if P_error[0] != -1:
-        dP, dP_error = ffg.generate_obs_series(P, P_error)
+        dP, dP_error = ffg.generate_spacing_series(P, P_error)
     else:
-        dP = ffg.generate_thry_series(P)
+        dP, _ = ffg.generate_spacing_series(P)
 
     total_length=0
     deltas_lengths = []

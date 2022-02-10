@@ -370,8 +370,10 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
     df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
 
-    # take the column with rotation and place it as the first column
+    # take the column with rotation and place it as the first column, and its error as second column
     col = df_merged.pop("rot")
     df_merged.insert(0, col.name, col)
+    col = df_merged.pop("rot_err")
+    df_merged.insert(1, col.name, col)    
     # write the merged dataFrame to a new tsv file
     df_merged.to_csv(output_name, sep='\t',index=False)
