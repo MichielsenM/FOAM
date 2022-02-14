@@ -7,6 +7,7 @@ import multiprocessing, csv, sys
 from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters
+from foam import functions_for_gyre as ffg
 import logging
 
 logger = logging.getLogger('logger.bop')
@@ -141,16 +142,16 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     else:
         # Optimise the rotation rate and get the pulsations at that rotation rate
         params = Parameters()
-        params.add('rotation', value=estimated_rotation, min=0)
+        params.add('rotation', value=estimated_rotation, min=1E-5)
 
         # Fit rotation to observed pattern with the default leastsq algorithm
         optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
-                fcn_args=(asymptotic_object, estimated_rotation, freqs, Obs, ObsErr, Obs_pattern_parts,
+                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
                 ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
 
         result_minimizer = optimise_rotation.minimize()
-        optimised_pulsations = Obs + result_minimizer.residual
-
+        optimised_pulsations = result_minimizer.residual + Obs
+        print(f'chi2: {result_minimizer.chisqr}')
         plot = False
         if result_minimizer.message != 'Fit succeeded.':
             logger.warning(f'Fitting rotation did not succeed: {result_minimizer.message}')
@@ -159,7 +160,6 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         if plot:
             fig1, ax1 = plt.subplots()
-            from foam import functions_for_gyre as ffg
             if which_observable == 'frequency':
                 Obsperiod = 1/Obs
                 optimised_periods = 1/optimised_pulsations
@@ -173,12 +173,15 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
             ax1.plot(1/freqs[:-1], ffg.generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', color='green')
 
             fig2, ax2 = plt.subplots()
-            ax2.errorbar(range(6,len(Obs)+6), (Obs), fmt='o', yerr=ObsErr, label='obs', color='blue', alpha=0.8)
-            ax2.plot(range(6,len(Obs)+6), (optimised_periods), '*', color='orange', label = 'optimised')
-            ax2.plot(range(len(freqs)), (1/freqs), '.', label='initial', color='green')
+
+            ax2.errorbar(Obs, Obs, fmt='o', xerr=ObsErr, label='obs', color='blue', alpha=0.8)
+            ax2.plot(optimised_periods, optimised_periods, '*', color='orange', label = 'optimised')
+            ax2.plot(1/freqs, 1/freqs, '.', label='initial', color='green')
 
             ax1.legend(prop={'size': 14})
             ax2.legend(prop={'size': 14})
+            ax1.set_title(f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}")
+            ax2.set_title(f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}")
             plt.show()
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
@@ -191,7 +194,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation,
-    freqs_input, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
+    freqs_input, orders, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
     """
     If rotation is not optimised in the modelling, asymptotic_object should be set to 'None' and
     this function will just select a theoretical pulsation pattern based on the specified method.
@@ -210,6 +213,8 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         Estimated rotation rate in units of 1/day. Used as initial value in the optimisation problem.
     freqs_input: numpy array
         Array of the frequencies as computed by GYRE, to be scaled to the optimal rotation rate.
+    orders: numpy array
+        Array with the radial orders of the theoretical input frequencies.
     Obs: numpy array
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
     ObsErr: numpy array
@@ -237,6 +242,8 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
     """
     if asymptotic_object is not None:
         v = params.valuesdict()
+        if estimated_rotation ==0:  # To avoid division by zero in scale_pattern
+            estimated_rotation=1E-99
         freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d) *u.d
     else:
         freqs = freqs_input
@@ -454,8 +461,8 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
         #final_theoretical_periods = np.sort(np.hstack([ordered_theoretical_periods_a,ordered_theoretical_periods_b]))[::-1]
         final_theoretical_periods = np.array(ordered_theoretical_periods)
 
-        obs_series,obs_series_errors = generate_spacing_series(operiods,operiods_errors)
-        thr_series, _ = generate_spacing_series(final_theoretical_periods)
+        obs_series,obs_series_errors = ffg.generate_spacing_series(operiods,operiods_errors)
+        thr_series, _ = ffg.generate_spacing_series(final_theoretical_periods)
 
         obs_series        = np.array(obs_series)
         obs_series_errors = np.array(obs_series_errors)
