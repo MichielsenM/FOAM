@@ -1,4 +1,4 @@
-# from foam import build_optimized_pattern as bop
+# from foam import build_optimised_pattern as bop
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -55,7 +55,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation)
 
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
-    p = multiprocessing.Pool(1)
+    p = multiprocessing.Pool()
     freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
 
     # Make the output file directory and write the file
@@ -140,27 +140,25 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
     else:
         # Optimise the rotation rate and get the pulsations at that rotation rate
-        chi2 = False
         params = Parameters()
         params.add('rotation', value=estimated_rotation, min=0)
 
         # Fit rotation to observed pattern with the default leastsq algorithm
         optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
                 fcn_args=(asymptotic_object, estimated_rotation, freqs, Obs, ObsErr, Obs_pattern_parts,
-                ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls, chi2))
+                ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
+
         result_minimizer = optimise_rotation.minimize()
-        if chi2:
-            optimised_pulsations = Obs + result_minimizer.residual *ObsErr
-        else:
-            optimised_pulsations = Obs + result_minimizer.residual
+        optimised_pulsations = Obs + result_minimizer.residual
 
         plot = False
         if result_minimizer.message != 'Fit succeeded.':
             logger.warning(f'Fitting rotation did not succeed: {result_minimizer.message}')
-            print(result_minimizer.nfev)
-            plot = True
+            # print(result_minimizer.nfev)
+            # plot = True
 
         if plot:
+            fig1, ax1 = plt.subplots()
             from foam import functions_for_gyre as ffg
             if which_observable == 'frequency':
                 Obsperiod = 1/Obs
@@ -169,17 +167,18 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
                 Obsperiod = Obs
                 optimised_periods = optimised_pulsations
             spacings = ffg.generate_spacing_series(Obsperiod, ObsErr)
-            plt.errorbar(Obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue')
-            plt.plot(Obsperiod[:-1], spacings[0], color='blue')
-            plt.plot(optimised_periods[:-1], ffg.generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
-            plt.plot(1/freqs[:-1], ffg.generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', )
+            ax1.errorbar(Obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue', alpha=0.8)
+            ax1.plot(Obsperiod[:-1], spacings[0], color='blue')
+            ax1.plot(optimised_periods[:-1], ffg.generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
+            ax1.plot(1/freqs[:-1], ffg.generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', color='green')
 
-            # plt.errorbar(range(6,len(Obs)+6), (Obs), fmt='+', yerr=ObsErr)
-            # plt.plot(range(6,len(Obs)+6), (optimised_periods), '-')
-            # plt.plot(range(len(freqs)), (1/freqs), 'o')
+            fig2, ax2 = plt.subplots()
+            ax2.errorbar(range(6,len(Obs)+6), (Obs), fmt='o', yerr=ObsErr, label='obs', color='blue', alpha=0.8)
+            ax2.plot(range(6,len(Obs)+6), (optimised_periods), '*', color='orange', label = 'optimised')
+            ax2.plot(range(len(freqs)), (1/freqs), '.', label='initial', color='green')
 
-            plt.title(f'chi2 {chi2}')
-            plt.legend()
+            ax1.legend(prop={'size': 14})
+            ax2.legend(prop={'size': 14})
             plt.show()
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
@@ -191,11 +190,13 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     return list_out
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Todo remove the chi2 option?
 def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation,
-    freqs_input, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls, chi2):
+    freqs_input, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
     """
-    Objective function for the lmfit Minimizer class to minimise the output of.
+    If rotation is not optimised in the modelling, asymptotic_object should be set to 'None' and
+    this function will just select a theoretical pulsation pattern based on the specified method.
+    If asymptotic_object is supplied, the rotation will be optimised and this will be the
+    objective function for the lmfit Minimizer class to minimise the output of.
     Rescales the theoretical pulsation pattern using the asymptotic object from
     'gmode_rotation_scaling', and selects a theoretical pulsation pattern based
     on the specified method.
@@ -231,7 +232,8 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
 
     ------- Returns -------
     output_pulsations - Obs: numpy array
-        The array to be minimised by the lmfit Minimizer. Differences between the scaled pulsations and the observations.
+        Differences between the scaled pulsations and the observations.
+        The array to be minimised by the lmfit Minimizer if rotation is opitmised.
     """
     if asymptotic_object is not None:
         v = params.valuesdict()
@@ -286,11 +288,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
 
         output_pulsations.extend(selected_theoretical_pulsations)
 
-    #TODO REMOVE chi2?
-    if chi2:
-        return (output_pulsations - Obs)/ObsErr
-    else:
-        return (output_pulsations - Obs)
+    return (output_pulsations - Obs)
 
 ################################################################################
 def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
