@@ -31,10 +31,10 @@ merit_functions = ['chi2', 'mahalanobis']
 
 # Lists of observables to fit
 # observable_list = [['period'], ['period_spacing'], ['period', 'period_spacing', 'rope_length', 'logTeff', 'logL', 'logg'], ['period', 'period_spacing']]
-observable_list = [['period'], ['period_spacing'], ['period', 'period_spacing']]
+observable_list = [['period'], ['period_spacing']]
 
 # calculate AIC for these observables (abbreviated names)
-observable_aic = ['P', 'dP', 'P-dP']
+observable_aic = ['P', 'dP']
 
 
 k = 6               # Number of free parameters
@@ -43,8 +43,8 @@ N_periods = 36      # Number of periods
 N_pattern_parts = 1
 # Number of observables, calculated from the number of periods
 # Number of period spacings is number of periods minus amount of separated patterns.
-# E.g. uninterrupted pattern: 36 periods, so 35 deltaP, so 71 observables
-N_dict = {'P' : N_periods,'dP': N_periods-N_pattern_parts, 'P-dP': N_periods+N_periods-N_pattern_parts}
+# E.g. uninterrupted pattern: 36 periods, so 35 deltaP
+N_dict = {'P' : N_periods,'dP': N_periods-N_pattern_parts}
 
 # ignore models outside of the n-sigma spectroscopic error box
 n_sigma_spectrobox = 3
