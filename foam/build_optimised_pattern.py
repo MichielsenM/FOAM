@@ -151,7 +151,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         result_minimizer = optimise_rotation.minimize()
         optimised_pulsations = result_minimizer.residual + Obs
-        print(f'chi2: {result_minimizer.chisqr}')
+        # print(f'chi2: {result_minimizer.chisqr}')
         plot = False
         if result_minimizer.message != 'Fit succeeded.':
             logger.warning(f'Fitting rotation did not succeed: {result_minimizer.message}')
