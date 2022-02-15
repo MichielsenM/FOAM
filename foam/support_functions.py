@@ -161,3 +161,19 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
     plt.subplots_adjust(hspace=h_space, left=left_space, right=right_space, top=top_space, bottom=bottom_space)
 
     return ax_dict, fig
+
+################################################################################
+def sign(x):
+    """
+    Returns the sign of a number as a string
+
+    ------- Parameters -------
+    x: float or int
+
+    ------- Returns -------
+    A string representing the sign of the number
+    """
+    if abs(x) == x:
+        return '+'
+    else:
+        return '-'
