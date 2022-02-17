@@ -154,7 +154,9 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         # print(f'chi2: {result_minimizer.chisqr}')
         plot = False
         if result_minimizer.message != 'Fit succeeded.':
-            logger.warning(f'Fitting rotation did not succeed: {result_minimizer.message}')
+            logger.warning(f"Fitting rotation did not succeed: {result_minimizer.message}
+                            \n for model {summary_grid_row[1][:'Xc'].drop('rot').to_dict()} using method: {method_build_series}
+                            \n rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}")
             # print(result_minimizer.nfev)
             # plot = True
 
