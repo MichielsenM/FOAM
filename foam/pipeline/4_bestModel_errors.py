@@ -120,6 +120,8 @@ for merit in config.merit_functions:
 
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
+                    # Write all models enclosed within the error ellips to a separate file
+                    df.iloc[:i+1].to_csv(Path_file.with_stem(f'{Path_file.stem}_error_ellips'), '\t')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
 

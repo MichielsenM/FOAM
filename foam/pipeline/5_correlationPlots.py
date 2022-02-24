@@ -12,7 +12,10 @@ else:
 
 observations = config.observations
 for file in files:
-    # star_name, title = sf.split_line(Path(file).stem, '_')
-    title = Path(file).stem
+    Path_file = Path(file)
+    title = Path_file.stem
     config.logger.info(f'file: {title}')
-    mle.plot_correlations(file, observations, fig_title=title, percentile_to_show=0.5, logg_or_logL='logL')
+    file_ErrorEllips = Path_file.with_stem(f'{Path_file.stem}_error_ellips')
+    file_ErrorEllips = str(file_ErrorEllips).replace('extracted_freqs', f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs')
+    if not Path(f'figures_correlation/{title}.png').is_file():
+        mle.corner_plot(file, file_ErrorEllips, observations, fig_title=title, percentile_to_show=0.5, logg_or_logL='logL')

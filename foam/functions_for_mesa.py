@@ -86,6 +86,7 @@ def check_hydro_eq(profile_file, treshold_for_plot=5E-8):
         ax = fig.add_subplot(111)
         ax.semilogy(np.delete(data['radius'], 0), hyeq, 'ko-') #also remove surface value, to have same amount of datapoints
         plt.show()
+        plt.clf()
         plt.close('all')
 
 ################################################################################
@@ -325,7 +326,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
             if line != None:
                 writer.writerow(line)
     p.close()
-    
+
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
     """
