@@ -27,6 +27,3 @@ mathias.michielsen@kuleuven.be
 Instituut voor Sterrenkunde
 KU Leuven, Belgium
 ```
-
-### Contributors
-May Gade Pedersen, Cole C. Johnston, Jordan Van Beeck

@@ -1,6 +1,7 @@
 """Helpful functions in general. Making figures, reading HDF5, processing strings."""
 # from foam import support_functions as sf
 import h5py, re
+import pandas as pd
 from pathlib import Path
 import logging
 import matplotlib.pyplot as plt
@@ -177,3 +178,26 @@ def sign(x):
         return '+'
     else:
         return '-'
+################################################################################
+def get_subgrid_dataframe(file_to_read, fixed_params=None):
+    """
+    Read a tsv file containing the grid information as a pandas dataframe.
+    Parameters can be fixed to certain values to fiter out entries with other values of that parameter.
+    ------- Parameters -------
+    file_to_read: string
+        path to the file to read
+    fixed_params: dictionary
+        keys are parameters to fix to the value specified in the dictionary
+
+    ------- Returns -------
+    df: pandas dataframe
+    """
+    df = pd.read_table(file_to_read, delim_whitespace=True, header=0)
+
+    if fixed_params is not None:
+        for param in fixed_params.keys():
+            indices_to_drop = df[df[param] != fixed_params[param] ].index
+            df.drop(indices_to_drop, inplace = True)
+        df.reset_index(drop=True, inplace=True)
+
+    return df

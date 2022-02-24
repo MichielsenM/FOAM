@@ -58,11 +58,11 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
             }
     CustomCMap = LinearSegmentedColormap('CustomMap', cdict)
     # theoretical models within the error ellips
-    df_Theo_EE = pd.read_csv(merit_values_file_error_ellips, delim_whitespace=True, header=0)
+    df_Theo_EE = pd.read_table(merit_values_file_error_ellips, delim_whitespace=True, header=0)
     df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
 
     # theoretical models
-    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
@@ -230,7 +230,7 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
         Indicate the best model with a marker
     """
     # theoretical models
-    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
@@ -349,10 +349,11 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =None, star_name=None):
+def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None):
     """
     Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
+    Can also select and continue the analysis of nested grids through the keyword 'fixed_params'.
     ------- Parameters -------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
@@ -367,6 +368,9 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
     star_name: string
         Name of the star, used in file naming.
+    fixed_params: dictionary
+        Only select and analyse the part of the theoretical grid with the specified parameter values.
+        The keys specify for which parameters only the specified value should be selected.
     """
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
@@ -382,7 +386,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
     DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
-    Theo_dFrame = pd.read_table(Theo_file, delim_whitespace=True, header=0)
+    Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
     Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
     Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
@@ -583,7 +587,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
-    Calculate chi squared values for the given theoretial patterns
+    Calculate chi squared values for the given theoretical patterns
     ------- Parameters -------
     YObs, ObsErr: numpy array of floats
         Observed values and their errors (period or frequency)
@@ -600,7 +604,7 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
-    Calculate mahalanobis distance (MD) values for the given theoretial patterns.
+    Calculate mahalanobis distance (MD) values for the given theoretical patterns.
     ------- Parameters -------
     YObs, ObsErr: numpy array of floats
         Observed values and their errors (period or frequency)
@@ -749,7 +753,7 @@ def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
         How many sigmas you want to make the interval to accept models.
     """
     Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
 
     df_Theo = df_Theo[df_Theo.logTeff < np.log10(Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0])]
     df_Theo = df_Theo[df_Theo.logTeff > np.log10(Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0])]
