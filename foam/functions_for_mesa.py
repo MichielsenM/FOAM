@@ -324,7 +324,8 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         for line in freqs:
             if line != None:
                 writer.writerow(line)
-
+    p.close()
+    
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
     """
@@ -374,6 +375,6 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     col = df_merged.pop("rot")
     df_merged.insert(0, col.name, col)
     col = df_merged.pop("rot_err")
-    df_merged.insert(1, col.name, col)    
+    df_merged.insert(1, col.name, col)
     # write the merged dataFrame to a new tsv file
     df_merged.to_csv(output_name, sep='\t',index=False)
