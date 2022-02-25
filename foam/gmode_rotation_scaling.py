@@ -1,3 +1,4 @@
+"""Calculate g-mode period spacing patterns in the asymptotic regime using the TAR."""
 # Class from T. Van Reeth
 # from foam import gmode_rotation_scaling as grs
 import numpy as np

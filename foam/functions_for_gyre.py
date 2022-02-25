@@ -22,7 +22,7 @@ def generate_spacing_series(periods, errors=None):
     periods, errors (optional): list of floats
         Periods and their errors in units of days
     ------- Returns -------
-    observed_spacings, observed_spacings_errors: list of floats
+    observed_spacings, observed_spacings_errors: tuple of lists of floats
         period spacing series (delta P values) and its errors (if supplied) in units of seconds
     """
     spacings = []
@@ -190,7 +190,6 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
         # will add extra functionality to calculate the bounds explicitly, making use of GYRE
 
         # Select nu (spin parameter) and lambda column when values in l and m column correspond to requested values
-        ###### SHOULD BE CHANGED TO PARAMETER 'K' ---> needs adjustment in lambda.csv - JVB.
         NuLambda = df.loc[(df['l'] == l) & (df['m'] == m)][['nu', 'Lambda']]
 
         # Generate numpy array from pandas dataframe series
@@ -214,33 +213,3 @@ def calc_scanning_range(gyre_file_path, npg_min=-50, npg_max=-1, l=1, m=1, omega
             f_max = (np.sqrt(Lambda[index_min]) / (P0*n_min_used))[0]
     return f_min, f_max
 ################################################################################
-################################################################################
-# Function written by Jordan Van Beeck
-################################################################################
-def calculate_k(l,m,rossby):
-  """
-    Compute the mode classification parameter for gravity or Rossby modes from the corresponding azimuthal order (m) and spherical degree (l).
-    Raises an error when l is smaller than m.
-    ------- Parameters -------
-    rossby: boolean
-        parameter that needs to be set to True if Rossby mode k is calculated
-    l, m: integer
-        degree (l) and azimuthal order (m) of the modes
-    ------- Returns -------
-    k: integer
-        mode classification parameter of the pulsation mode
-  """
-  if not rossby:
-    # g-mode k
-    if abs(l) >= abs(m):
-      k = l - abs(m) # Lee & Saio (1997) (& GYRE source code --> see below)
-      return k
-    else:
-      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')
-  else:
-    # Rossby mode k
-    if abs(l) >= abs(m):
-      k = (-1)*(l - abs(m) + 1) # see GYRE source code: /gyre/src/build/gyre_r_tar_rot.f90 ; function r_tar_rot_t_ (Townsend & Teitler (2013))
-      return k
-    else:
-      raise Exception(f'l is smaller than m, please revise your script/logic. The corresponding values were: (l,m) = ({l},{m})')

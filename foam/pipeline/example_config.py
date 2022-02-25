@@ -22,6 +22,7 @@ grids = ['ECP', 'DO']
 
 # String to select a subgrid of the original grid, fixing given parameters
 subgrid = '*'
+fixed_params = None # {'aov': 0.0, 'fov': 0.0}
 
 # Methods to construct the theoretical frequency pattern that are to be used
 pattern_methods = ['chisq_longest_sequence','highest_amplitude', 'highest_frequency']
@@ -37,8 +38,8 @@ observable_list = [['period'], ['period_spacing']]
 observable_aic = ['P', 'dP']
 
 
-k = 6               # Number of free parameters
-free_param=['M', 'Z', 'logD', 'aov', 'fov', 'Xc']
+free_parameters=['M', 'Z', 'logD', 'aov', 'fov', 'Xc']
+k = len(free_parameters) # Number of free parameters
 N_periods = 36      # Number of periods
 N_pattern_parts = 1
 # Number of observables, calculated from the number of periods

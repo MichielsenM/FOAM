@@ -1,3 +1,5 @@
+"""Selection of the theoretical pulsation patterns that best match the observations,
+   with the possibility to optimise the rotation rate in the process through rescaling."""
 # from foam import build_optimised_pattern as bop
 import numpy as np
 import pandas as pd
@@ -77,7 +79,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
     p.close()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series, highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None):
+def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series, highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
     ------- Parameters -------
@@ -151,16 +153,13 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         result_minimizer = optimise_rotation.minimize()
         optimised_pulsations = result_minimizer.residual + Obs
-        # print(f'chi2: {result_minimizer.chisqr}')
-        plot = False
-        if result_minimizer.message != 'Fit succeeded.':
-            logger.warning(f"Fitting rotation did not succeed: {result_minimizer.message}
-                            \n for model {summary_grid_row[1][:'Xc'].drop('rot').to_dict()} using method: {method_build_series}
-                            \n rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}")
-            # print(result_minimizer.nfev)
-            # plot = True
 
-        if plot:
+        if result_minimizer.message != 'Fit succeeded.':
+            logger.warning(f"""Fitting rotation did not succeed: {result_minimizer.message}
+                            for model {summary_grid_row[1][:'Xc'].drop('rot').to_dict()} using method: {method_build_series}
+                            rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}""")
+
+        if plot_rotation_optimisation:
             fig1, ax1 = plt.subplots()
             if which_observable == 'frequency':
                 Obsperiod = 1/Obs
@@ -343,7 +342,7 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
         Theo = np.asarray(Theo_sequence)
         ax.plot((1/Obs)[::-1][:-1],np.diff((1/Obs)[::-1])*86400,'ko',lw=1.5,linestyle='-')
         ax.plot((1./Theo)[::-1][:-1], -np.diff(1./Theo)[::-1]*86400, 'ko', color='blue', lw=1.5,linestyle='--', markersize=6, markeredgewidth=0.,)
-        plt.show()    # print(GLOBAL_PULSATION)
+        plt.show()
 
 
     return Theo_sequence
