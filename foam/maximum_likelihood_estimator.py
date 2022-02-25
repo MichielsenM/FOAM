@@ -122,16 +122,21 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
             if (iy+ix == nr_params-1):  # make distribution plots on the diagonal subplots
                 values = sorted(np.unique(df.iloc[:,nr_params-ix]))
                 # determine edges of the bins for the histogram distribution plots
-                if len(values) > 1:
-                    bin_half_width = (values[0]+values[1])/2-values[0]
-                else:
-                    bin_half_width = 1E-3
-                bin_edges = [values[0]-bin_half_width]
-                for i in range(len(values)-1):
-                    bin_edges.extend([(values[i]+values[i+1])/2])
-                bin_edges.extend([values[-1]+bin_half_width])
+                if df.columns[nr_params-ix] == 'rot':
+                    domain = (values[0], values[-1])
+                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=25, range=domain, density=False, cumulative=False, histtype='step' )
 
-                ax.hist( df_EE.iloc[:,nr_params-ix], bins=bin_edges, density=True, cumulative=False, histtype='step' )
+                else:
+                    if len(values) > 1:
+                        bin_half_width = (values[0]+values[1])/2-values[0]
+                    else:
+                        bin_half_width = 1E-3
+                    bin_edges = [values[0]-bin_half_width]
+                    for i in range(len(values)-1):
+                        bin_edges.extend([(values[i]+values[i+1])/2])
+                    bin_edges.extend([values[-1]+bin_half_width])
+                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=bin_edges, density=False, cumulative=False, histtype='step' )
+
                 ax.tick_params(axis='y',left=False)
                 continue
 
