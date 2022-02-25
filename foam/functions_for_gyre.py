@@ -22,7 +22,7 @@ def generate_spacing_series(periods, errors=None):
     periods, errors (optional): list of floats
         Periods and their errors in units of days
     ------- Returns -------
-    observed_spacings, observed_spacings_errors: list of floats
+    observed_spacings, observed_spacings_errors: tuple of lists of floats
         period spacing series (delta P values) and its errors (if supplied) in units of seconds
     """
     spacings = []
