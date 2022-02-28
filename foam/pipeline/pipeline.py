@@ -20,7 +20,7 @@ if config.fixed_parameters is not None:
             sys.exit()
 
 importlib.import_module('foam.pipeline.0_extract_puls&spectro')
-importlib.import_module('foam.pipeline.1_constuct_pattern')
+importlib.import_module('foam.pipeline.1_construct_pattern')
 importlib.import_module('foam.pipeline.2_calculate_likelihood')
 importlib.import_module('foam.pipeline.3_spectroClip_AICc')
 importlib.import_module('foam.pipeline.4_bestModel_errors')
