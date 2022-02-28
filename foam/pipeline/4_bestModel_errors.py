@@ -46,7 +46,7 @@ def likelihood_MD(MD):
 
 ################################################################################
 with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'w') as outfile:
-    outfile.write(f'{config.free_param}'+'\n')
+    outfile.write(f'{config.free_parameters}'+'\n')
 
 for merit in config.merit_functions:
     for obs in config.observable_aic:
@@ -64,8 +64,8 @@ for merit in config.merit_functions:
                 f_ax.update({ i : fig.add_subplot(gs[0, i])})
                 f_ax[i].set_yticks([0, -1, -2, -3, -4, -5])
 
-            f_ax[i].set_xlabel(xlabels_dict[config.free_param[i]], size=17)
-            f_ax[i].set_xlim(axis_range_dict[config.free_param[i]])
+            f_ax[i].set_xlabel(xlabels_dict[config.free_parameters[i]], size=17)
+            f_ax[i].set_xlim(axis_range_dict[config.free_parameters[i]])
             f_ax[i].tick_params(labelsize=14, length=6)
             f_ax[i].tick_params(which='minor', length=4)
 
@@ -86,7 +86,7 @@ for merit in config.merit_functions:
             probabilities = {}
             error_region = {}
 
-            for column_name in config.free_param:
+            for column_name in config.free_parameters:
                 probabilities.update({column_name:{}})
                 error_region.update({column_name:[]})
                 for value in df[column_name].unique():     # construct dictionary
@@ -102,7 +102,7 @@ for merit in config.merit_functions:
                 prob = likelihood_function( df.iloc[i]['meritValue']-df.iloc[0]['meritValue'] )
                 # prob = likelihood_function( df.iloc[i]['meritValue'] )
 
-                for column_name in config.free_param:
+                for column_name in config.free_parameters:
                     value = df.iloc[i][column_name]
                     prob = prob*probabilities[column_name][value]
                 total_probability+=prob
@@ -110,7 +110,7 @@ for merit in config.merit_functions:
             for i in range(len(df)):
                 prob = likelihood_function( df.iloc[i]['meritValue']-df.iloc[0]['meritValue'] )
                 # prob = likelihood_function( df.iloc[i]['meritValue'] )
-                for column_name in config.free_param:
+                for column_name in config.free_parameters:
                     value = df.iloc[i][column_name]
                     prob = prob*probabilities[column_name][value]
 
@@ -120,6 +120,8 @@ for merit in config.merit_functions:
 
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
+                    # Write all models enclosed within the error ellips to a separate file
+                    df.iloc[:i+1].to_csv(Path_file.with_stem(f'{Path_file.stem}_error_ellips'), '\t')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
 
@@ -128,7 +130,7 @@ for merit in config.merit_functions:
             with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'a') as outfile:
                 outfile.write(f'{analysis} ')
                 i=0
-                for column_name in config.free_param:
+                for column_name in config.free_parameters:
                     outfile.write(f'{error_region[column_name]} ')
                     f_ax[i].scatter(df.iloc[0][column_name], j, color=color_dict[j])
                     f_ax[i].hlines(y=j, xmin=min(error_region[column_name]), xmax=max(error_region[column_name]), color='black')
