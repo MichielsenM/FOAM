@@ -12,12 +12,18 @@ for obs_list in config.observable_list:
         config.logger.error(f'The observables that are analysed {config.observable_list} do not all include the observational data that is used: {config.periods_or_frequencies_observed}')
         sys.exit()
     match_obsAndTheory = False
+# Check if none of the fixed parameters are in the list of free parameters
+if config.fixed_parameters is not None:
+    for param in config.fixed_parameters.keys():
+        if param in config.free_parameters:
+            config.logger.error(f'The parameter {param} can not be both fixed and free.')
+            sys.exit()
 
 importlib.import_module('foam.pipeline.0_extract_puls&spectro')
-importlib.import_module('foam.pipeline.1_constuct_pattern')
+importlib.import_module('foam.pipeline.1_construct_pattern')
 importlib.import_module('foam.pipeline.2_calculate_likelihood')
 importlib.import_module('foam.pipeline.3_spectroClip_AICc')
 importlib.import_module('foam.pipeline.4_bestModel_errors')
+config.spectroClippedPlots=False
 importlib.import_module('foam.pipeline.5_correlationPlots')
-
 importlib.import_module('foam.pipeline.table_bestModels')

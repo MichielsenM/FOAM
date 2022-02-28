@@ -7,11 +7,204 @@ import sys, logging, os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
+from matplotlib.colors import LinearSegmentedColormap
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
+################################################################################
+def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False):
+    """
+    Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
+    A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
+    The subplots on the diagonal show the distribution of that variable.
+    The list of variables is retrieved from columns of the merit_values_file,
+    where the first column is 'meritValue', which are the MLE values.
+    The resulting figure is saved afterwards in the specified location.
+    ------- Parameters -------
+    merit_values_file, merit_values_file_error_ellips: string
+        Path to the tsv files with the merit function values and parameters of the models in the grid,
+        and of just the models in the error ellips.
+    observations_file: string
+        Path to the tsv file with observations, with a column for each observable and each set of errors.
+        Column names specify the observable, and "_err" suffix denotes that it's the error.
+    fig_title: string
+        Title of the figure and name of the saved png.
+    label_size: int
+        Size of the axis labels.
+    fig_outputDir: string
+        Output directory for the figures.
+    percentile_to_show: float
+        Percentile of models to show in the plots.
+    logg_or_logL: string
+        String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
+    mark_best_model: boolean
+        Indicate the best model with a marker
+    """
+    # Define custom colormap
+    cdict = {'red':((0.0, 1.0, 1.0),
+                    (0.5, 1.0, 1.0),
+                    (0.75, 1.0, 1.0),
+                    (1.0, 0.75, 0.75)),
+             'green': ((0.0, 1.0, 1.0),
+                       (0.25, 0.5, 0.5),
+                       (0.5, 0.0, 0.0),
+                       (1.0, 0.0, 0.0)),
+             'blue':  ((0.0, 0.0, 0.0),
+                       (0.5, 0.0, 0.0),
+                       (1.0, 1.0, 1.0))
+            }
+    CustomCMap = LinearSegmentedColormap('CustomMap', cdict)
+    # theoretical models within the error ellips
+    df_Theo_EE = pd.read_table(merit_values_file_error_ellips, delim_whitespace=True, header=0)
+    df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
+
+    # theoretical models
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
+    df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
+
+    if df_Theo.iloc[0]['rot'] == df_Theo.iloc[1]['rot'] == df_Theo.iloc[2]['rot'] == df_Theo.iloc[-1]['rot']: # rotation is fixed, don't plot it
+        df_EE = df_Theo_EE.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        # Remove models in the error ellips from the regular dataframe.
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
+
+    else: # rotation was varied, include it in the plots
+        df_EE = df_Theo_EE.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df = df_Theo.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        # Remove models in the error ellips from the regular dataframe.
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
+
+    ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
+    nr_params = len(df.columns)-1
+    for i in range(nr_params):
+        ax_dict.update({i:{}})
+
+    fig=plt.figure(figsize=(10,8))
+    gs=GridSpec(nr_params,nr_params) # multiple rows and columns
+    # proper label format on figures
+    axis_labels_dict = {'rot': r'$\Omega_{rot}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
+
+    if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
+
+    for ix in range(0, nr_params):
+        for iy in range(0, nr_params-ix):
+            if iy==0:
+                shX = None
+            else:
+                shX = ax_dict[0][ix]
+            if (ix==0) or (iy+ix == nr_params-1):
+                shY = None
+            else:
+                shY = ax_dict[iy][0]
+
+            # create subplots and add them to the dictionary
+            ax = fig.add_subplot(gs[nr_params-iy-1:nr_params-iy,ix:ix+1], sharex=shX, sharey=shY)
+            ax_dict[iy].update({ix:ax})
+
+            # manage visibility and size of the labels and ticks
+            ax.tick_params(labelsize=label_size-4)
+            if ix == 0:
+                ax.set_ylabel(axis_labels_dict[df.columns[iy+1]], size=label_size)
+                if (iy == nr_params-1):
+                    plt.setp(ax.get_yticklabels(), visible=False)
+            else:
+                plt.setp(ax.get_yticklabels(), visible=False)
+            if iy == 0:
+                ax.set_xlabel(axis_labels_dict[df.columns[nr_params-ix]], size=label_size)
+                ax.tick_params(axis='x', rotation=45)
+            else:
+                plt.setp(ax.get_xticklabels(), visible=False)
+
+            if (iy+ix == nr_params-1):  # make distribution plots on the diagonal subplots
+                values = sorted(np.unique(df.iloc[:,nr_params-ix]))
+                # determine edges of the bins for the histogram distribution plots
+                if df.columns[nr_params-ix] == 'rot':
+                    domain = (values[0], values[-1])
+                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=25, range=domain, density=False, cumulative=False, histtype='step' )
+
+                else:
+                    if len(values) > 1:
+                        bin_half_width = (values[0]+values[1])/2-values[0]
+                    else:
+                        bin_half_width = 1E-3
+                    bin_edges = [values[0]-bin_half_width]
+                    for i in range(len(values)-1):
+                        bin_edges.extend([(values[i]+values[i+1])/2])
+                    bin_edges.extend([values[-1]+bin_half_width])
+                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=bin_edges, density=False, cumulative=False, histtype='step' )
+
+                ax.tick_params(axis='y',left=False)
+                continue
+
+            im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='Greys_r')
+            im = ax.scatter(df_EE.iloc[:,nr_params-ix], df_EE.iloc[:,iy+1], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
+            if mark_best_model: ax.scatter(df_EE.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
+            # Adjust x an y limits of subplots
+            limit_adjust = (max(df.iloc[:,iy+1]) - min(df.iloc[:,iy+1]))*0.08
+            ax.set_ylim( min(df.iloc[:,iy+1])-limit_adjust,  max(df.iloc[:,iy+1])+limit_adjust  )
+            limit_adjust = (max(df.iloc[:,nr_params-ix]) - min(df.iloc[:,nr_params-ix])) *0.08
+            ax.set_xlim( min(df.iloc[:,nr_params-ix])-limit_adjust, max(df.iloc[:,nr_params-ix])+limit_adjust )
+
+    fig.align_labels()
+    # add subplot in top right for Kiel or HRD
+    ax_hrd = fig.add_axes([0.508, 0.65, 0.33, 0.33]) # X, Y, widht, height
+
+    ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
+    ax_hrd.tick_params(labelsize=label_size-4)
+    ax_hrd.invert_xaxis()
+
+    im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
+    im_EE = ax_hrd.scatter(df_Theo_EE['logTeff'], df_Theo_EE[logg_or_logL], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
+    ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
+    if logg_or_logL == 'logL':
+        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+    elif logg_or_logL == 'logg':
+        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+
+    # observations
+    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+    # Observed spectroscopic error bar
+    # To add the 1 and 3 sigma spectro error boxes, calculate their width (so 2 and 6 sigmas wide)
+    width_logTeff_2sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+    width_logTeff_6sigma= np.log10(Obs_dFrame['Teff'][0]+3*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0])
+    errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_2sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+    errorbox_3s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-3*Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_6sigma, 6*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+    ax_hrd.add_patch(errorbox_1s)
+    ax_hrd.add_patch(errorbox_3s)
+    if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
+
+    # Add color bar
+    cax = fig.add_axes([0.841, 0.476, 0.05, 0.4]) # X, Y, widht, height
+    cbar= fig.colorbar(im, cax=cax, orientation='vertical')
+    cax2 = fig.add_axes([0.841, 0.066, 0.05, 0.4]) # X, Y, widht, height
+    cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
+
+    if df_Theo_EE.shape[0]==1: # To prevent messing up colors due to automatic rescaling of colorbar
+        im_EE.set_clim(np.log10(df_Theo_EE['meritValue']), np.log10(df_Theo_EE['meritValue'])*1.1)
+
+    if '_MD_' in fig_title:
+        cbar.set_label('log(MD)', rotation=90, size=label_size)
+        cbar2.set_label('log(MD)', rotation=90, size=label_size)
+    elif '_CS_' in fig_title:
+        cbar.set_label(r'log($\chi^2$)', rotation=90, size=label_size)
+        cbar2.set_label(r'log($\chi^2$)', rotation=90, size=label_size)
+    else:
+        cbar.set_label('log(merit function value)', rotation=90)
+    cbar.ax.tick_params(labelsize=label_size-4)
+    cbar2.ax.tick_params(labelsize=label_size-4)
+    fig.subplots_adjust(left=0.109, right=0.835, bottom=0.13, top=0.99)
+
+    # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
+    Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
+    fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
+    plt.clf()
+    plt.close('all')
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
 def plot_correlations(merit_values_file, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
                       percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False):
@@ -42,11 +235,11 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
         Indicate the best model with a marker
     """
     # theoretical models
-    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
-    df = df_Theo.drop(columns=['rot', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+    df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
@@ -80,7 +273,7 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
             if ix == 0:
                 ax.set_ylabel(axis_labels_dict[df.columns[iy+1]], size=label_size)
                 if (iy == nr_params-1):
-                    ax.set_yticklabels(['']*10) # remove ticklabels for just the histogram
+                    plt.setp(ax.get_yticklabels(), visible=False)
             else:
                 plt.setp(ax.get_yticklabels(), visible=False)
             if iy == 0:
@@ -156,14 +349,16 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
     fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
+    plt.clf()
     plt.close('all')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =None, star_name=None):
+def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None):
     """
     Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
+    Can also select and continue the analysis of nested grids through the keyword 'fixed_params'.
     ------- Parameters -------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
@@ -178,6 +373,9 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
     star_name: string
         Name of the star, used in file naming.
+    fixed_params: dictionary
+        Only select and analyse the part of the theoretical grid with the specified parameter values.
+        The keys specify for which parameters only the specified value should be selected.
     """
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
@@ -193,7 +391,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function =
     DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
-    Theo_dFrame = pd.read_table(Theo_file, delim_whitespace=True, header=0)
+    Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
     Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
     Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
@@ -290,7 +488,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
 
     if 'period_spacing' in observables:
         for periods_part in np.split(periods,missing_indices):
-            spacing = ffg.generate_thry_series(periods_part)
+            spacing, _ = ffg.generate_spacing_series(periods_part)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observables.remove('period_spacing')
@@ -355,7 +553,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
     if 'period_spacing' in observables:
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
-            spacing, spacing_errs = ffg.generate_obs_series(periods, periodsErr)
+            spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             spacing_errs = np.asarray(spacing_errs)/86400
 
@@ -394,7 +592,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
-    Calculate chi squared values for the given theoretial patterns
+    Calculate chi squared values for the given theoretical patterns
     ------- Parameters -------
     YObs, ObsErr: numpy array of floats
         Observed values and their errors (period or frequency)
@@ -411,16 +609,16 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
-    Calculate mahalanobis distance values for the given theoretial patterns
+    Calculate mahalanobis distance (MD) values for the given theoretical patterns.
     ------- Parameters -------
     YObs, ObsErr: numpy array of floats
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
-        Array of all theoretical patterns to calculate the chi squared value for.
+        Array of all theoretical patterns to calculate the MD value for.
 
     ------- Returns -------
     MD: numpy array of floats
-        Mahalanobis distances for the given theoretical values
+        Mahalanobis distances for the given theoretical patterns.
     """
     # Convert to matrix format
     YObsMat = np.matrix(YObs).T
@@ -498,6 +696,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
         plt.tight_layout()
         plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.png')
         # plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
+        plt.clf()
         plt.close('all')
 
 ################################################################################
@@ -514,9 +713,9 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
         and the error on this total length.
     """
     if P_error[0] != -1:
-        dP, dP_error = ffg.generate_obs_series(P, P_error)
+        dP, dP_error = ffg.generate_spacing_series(P, P_error)
     else:
-        dP = ffg.generate_thry_series(P)
+        dP, _ = ffg.generate_spacing_series(P)
 
     total_length=0
     deltas_lengths = []
@@ -545,7 +744,7 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_cutoff(merit_values_file, observations_file, nsigma=2):
+def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
     """
     Make an n-sigma cutoff of the models based on the spectoscopic observations.
     Save this as a file with prefix "clipped".
@@ -559,7 +758,7 @@ def spectro_cutoff(merit_values_file, observations_file, nsigma=2):
         How many sigmas you want to make the interval to accept models.
     """
     Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    df_Theo = pd.read_csv(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
 
     df_Theo = df_Theo[df_Theo.logTeff < np.log10(Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0])]
     df_Theo = df_Theo[df_Theo.logTeff > np.log10(Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0])]

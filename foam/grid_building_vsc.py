@@ -108,7 +108,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
                            azimuthal_order=azimuthal_order, rotation=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
             for result in p.imap(func, gyre_files):
                 writer.writerow(result)
-
+        p.close()
     copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/run_GYRE.sh'), f'{setup_directory}/run_GYRE.sh')
     copyfile(os.path.expandvars(f'{Path(__file__).parent}/templates/VSC_submit_GYRE.pbs'), f'{setup_directory}/submit_GYRE.pbs')
     return
