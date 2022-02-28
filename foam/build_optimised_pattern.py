@@ -79,7 +79,8 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
     p.close()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series, highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False):
+def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,
+    highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
     ------- Parameters -------
@@ -131,8 +132,8 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
             highest_amp_puls = [None]*len(Obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
 
     if asymptotic_object is None: # In this case, rescaling nor optimisation will happen
-        residual = rescale_rotation_and_select_theoretical_pattern(None, asymptotic_object, estimated_rotation, freqs, Obs, ObsErr, Obs_pattern_parts,
-        ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls, False)
+        residual = rescale_rotation_and_select_theoretical_pattern(None, asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
+        ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls)
 
         list_out=[estimated_rotation, 0]
         for parameter in summary_grid_row[1][:'Xc'].drop('rot').index:
@@ -194,8 +195,8 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     return list_out
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation,
-    freqs_input, orders, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
+def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation, freqs_input,
+    orders, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
     """
     If rotation is not optimised in the modelling, asymptotic_object should be set to 'None' and
     this function will just select a theoretical pulsation pattern based on the specified method.

@@ -17,12 +17,8 @@ mval = 1
 rotation_gyre = '0.6304_prograde'
 
 # Parent directory of the computed grid, and names of the directories of the different grids
-grid_parent_directory = '/lhome/mathiasm/MESA_grid_ECP-DE'
+grid_parent_directory = '/lhome/mathiasm/MESA_grid_15140'
 grids = ['ECP', 'DO']
-
-# String to select a subgrid of the original grid, fixing given parameters
-subgrid = '*'
-fixed_params = None # {'aov': 0.0, 'fov': 0.0}
 
 # Methods to construct the theoretical frequency pattern that are to be used
 pattern_methods = ['chisq_longest_sequence','highest_amplitude', 'highest_frequency']
@@ -37,7 +33,9 @@ observable_list = [['period'], ['period_spacing']]
 # calculate AIC for these observables (abbreviated names)
 observable_aic = ['P', 'dP']
 
-
+# String to select a subgrid of the original grid, fixing given parameters
+subgrid = '*'
+fixed_parameters = None # {'aov': 0.0, 'fov': 0.0}
 free_parameters=['M', 'Z', 'logD', 'aov', 'fov', 'Xc']
 k = len(free_parameters) # Number of free parameters
 N_periods = 36      # Number of periods
