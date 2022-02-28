@@ -55,7 +55,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
     theo_pattern_func = partial(theoretical_pattern_from_dfrow, Obs=Obs, ObsErr=ObsErr, which_observable=which_observable,
                                 method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation,
-                                asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation)
+                                asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
     p = multiprocessing.Pool()
