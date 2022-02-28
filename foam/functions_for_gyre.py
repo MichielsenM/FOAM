@@ -51,10 +51,6 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
         List of parameters varied in the computed grid, so these are taken from the
         name of the summary files, and included in the 1 file containing all the info of the whole grid.
     """
-    # make a copy of the list, so parameters is not extended with all the orders before passing it on to 'all_freqs_from_summary'
-    header_parameters = list(parameters)
-
-    df = pd.DataFrame(columns=header_parameters)  # dataframe for all the pulations
     MP_list = multiprocessing.Manager().list()    # make empty MultiProcessing listProxy
 
     # Glob all the files, then iteratively send them to a pool of processors
@@ -65,7 +61,7 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
     for new_row in dictionaries:
         MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
 
-    df = df.append(MP_list[:], ignore_index=True) # Combine the dictionaries into one dataframe
+    df = pd.DataFrame(data=list(MP_list))
     # Sort the columns with frequencies by their radial order
     column_list = list(df.columns[:len(parameters)])
     column_list.extend(sorted(df.columns[len(parameters):]))
