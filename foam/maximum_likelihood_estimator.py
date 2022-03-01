@@ -386,9 +386,11 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     suffix = {'chi2'       : 'CS',
               'mahalanobis': 'MD'}
 
-    # set the name of the output file
+    # set the name of the output file and make it's directory if needed
     head, tail = sf.split_line(Path_theo.stem, star_name)
-    DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
+    DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
+    Path(DataOutDir).mkdir(parents=True, exist_ok=True)
+    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)

@@ -1,6 +1,7 @@
 """ Top level script to run the pipeline sequentially, copy this script with the config file to the folder where you want to run the analysis.
 Comment certain imports if you don't want to repeat them on repeated runs."""
-import importlib, sys
+import importlib, sys, os
+from pathlib import Path
 import config
 # Check for sensible input, so that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.
 match_obsAndTheory = False
@@ -12,15 +13,28 @@ for obs_list in config.observable_list:
         config.logger.error(f'The observables that are analysed {config.observable_list} do not all include the observational data that is used: {config.periods_or_frequencies_observed}')
         sys.exit()
     match_obsAndTheory = False
-# Check if none of the fixed parameters are in the list of free parameters
+# Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
 if config.fixed_parameters is not None:
+    nested_grid_dir = 'Nested_grid_fix'
     for param in config.fixed_parameters.keys():
+        nested_grid_dir = f'{nested_grid_dir}_{param}'
         if param in config.free_parameters:
             config.logger.error(f'The parameter {param} can not be both fixed and free.')
             sys.exit()
 
+# Set the main top-level directory
+config.main_directory = os.getcwd()
+config.observations = f'{config.main_directory}/{config.observations}'
+
+# Run the pipeline
 importlib.import_module('foam.pipeline.0_extract_puls&spectro')
 importlib.import_module('foam.pipeline.1_construct_pattern')
+
+# Change the current working directory for nested grids
+if config.fixed_parameters is not None:
+    Path(nested_grid_dir).mkdir(parents=True, exist_ok=True)
+    os.chdir(nested_grid_dir)
+
 importlib.import_module('foam.pipeline.2_calculate_likelihood')
 importlib.import_module('foam.pipeline.3_spectroClip_AICc')
 importlib.import_module('foam.pipeline.4_bestModel_errors')
