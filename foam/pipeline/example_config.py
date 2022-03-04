@@ -45,9 +45,5 @@ N_pattern_parts = 1
 # E.g. uninterrupted pattern: 36 periods, so 35 deltaP
 N_dict = {'P' : N_periods,'dP': N_periods-N_pattern_parts}
 
-# ignore models outside of the n-sigma spectroscopic error box
+# ignore models outside of the n-sigma spectroscopic error box, set to None to include all models
 n_sigma_spectrobox = 3
-
-################################################################################
-# Plotting options
-spectroClippedPlots = True

@@ -38,6 +38,5 @@ if config.fixed_parameters is not None:
 importlib.import_module('foam.pipeline.2_calculate_likelihood')
 importlib.import_module('foam.pipeline.3_spectroClip_AICc')
 importlib.import_module('foam.pipeline.4_bestModel_errors')
-config.spectroClippedPlots=False
 importlib.import_module('foam.pipeline.5_correlationPlots')
 importlib.import_module('foam.pipeline.table_bestModels')
