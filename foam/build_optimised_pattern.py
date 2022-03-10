@@ -146,13 +146,26 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         # Optimise the rotation rate and get the pulsations at that rotation rate
         params = Parameters()
         params.add('rotation', value=estimated_rotation, min=1E-5)
-
         # Fit rotation to observed pattern with the default leastsq algorithm
         optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
                 fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
                 ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
 
         result_minimizer = optimise_rotation.minimize()
+
+        # Search from second initial value, which is as separated from the first solution as the first initial guess.
+        search_second_initial_value = 2*result_minimizer.params["rotation"].value - estimated_rotation
+        params = Parameters()
+        params.add('rotation', value=search_second_initial_value , min=1E-5)
+        optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
+                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
+                ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
+
+        result_minimizer2 = optimise_rotation.minimize()
+        # Select the minimizer with the initial guess that resulted in the best fit.
+        if result_minimizer2.chisqr < result_minimizer.chisqr:
+            result_minimizer = result_minimizer2
+
         optimised_pulsations = result_minimizer.residual + Obs
 
         if result_minimizer.message != 'Fit succeeded.':
