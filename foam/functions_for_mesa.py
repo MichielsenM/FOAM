@@ -312,7 +312,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     p = multiprocessing.Pool()
-    freqs = p.imap(extract_func, profiles)
+    spectro = p.imap(extract_func, profiles)
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
@@ -322,7 +322,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg'])
         writer.writerow(header_parameters)
-        for line in freqs:
+        for line in spectro:
             if line != None:
                 writer.writerow(line)
     p.close()
