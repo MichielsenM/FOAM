@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.ticker import AutoMinorLocator
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
@@ -156,6 +157,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
     ax_hrd.invert_xaxis()
+    if logg_or_logL=='logg': ax_hrd.invert_yaxis()
 
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
     im_EE = ax_hrd.scatter(df_Theo_EE['logTeff'], df_Theo_EE[logg_or_logL], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
@@ -164,6 +166,11 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
         ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
     elif logg_or_logL == 'logg':
         ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+
+    ax_hrd.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax_hrd.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax_hrd.tick_params(which='major', length=6)
+    ax_hrd.tick_params(which='minor', length=4)
 
     # observations
     if n_sigma_spectrobox != None:
@@ -179,11 +186,11 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
-    cax = fig.add_axes([0.841, 0.476, 0.05, 0.4]) # X, Y, widht, height
+    cax = fig.add_axes([0.856, 0.56, 0.04, 0.42]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cax2 = fig.add_axes([0.841, 0.066, 0.05, 0.4]) # X, Y, widht, height
+    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.42]) # X, Y, widht, height
     cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
-
+    
     if df_Theo_EE.shape[0]==1: # To prevent messing up colors due to automatic rescaling of colorbar
         im_EE.set_clim(np.log10(df_Theo_EE['meritValue']), np.log10(df_Theo_EE['meritValue'])*1.1)
 
@@ -420,7 +427,9 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     logger.debug(f'ignored -1 freqs : {len(neg_value)}')
     logger.debug(f'original #models : {len(Theo_puls)}')
     logger.debug(f'remaining #models: {len(newTheo)}')
-
+    if len(neg_value)>0:
+        logger.warning(f"""{len(neg_value)} models were discarded due to mismatches during the selection of theoretical frequencies.
+                        This is likely due to the frequency range used for the theoretical calculations being too narrow.""")
     Theo_observables = np.asarray(newTheo)
     Thetas           = np.asarray(newThetas)
 
