@@ -186,11 +186,11 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
-    cax = fig.add_axes([0.856, 0.56, 0.04, 0.42]) # X, Y, widht, height
+    cax = fig.add_axes([0.856, 0.565, 0.04, 0.415]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.42]) # X, Y, widht, height
+    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.415]) # X, Y, widht, height
     cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
-    
+
     if df_Theo_EE.shape[0]==1: # To prevent messing up colors due to automatic rescaling of colorbar
         im_EE.set_clim(np.log10(df_Theo_EE['meritValue']), np.log10(df_Theo_EE['meritValue'])*1.1)
 
