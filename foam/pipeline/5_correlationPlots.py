@@ -12,7 +12,6 @@ else:
 
 files = glob.glob(f'extracted_freqs/*[!error_ellips].dat')
 
-
 observations = config.observations
 for file in files:
     Path_file = Path(file)

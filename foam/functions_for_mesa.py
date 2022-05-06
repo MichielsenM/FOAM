@@ -298,7 +298,7 @@ def convert_units(quantity, input, convertto='cgs'):
 ################################################################################
 def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Extract spectroscopic info for each globbed MESA profile and write them to 1 large file.
+    Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -320,7 +320,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         writer = csv.writer(tsvfile, delimiter='\t')
         # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
         header_parameters = list(parameters)
-        header_parameters.extend(['logTeff', 'logL', 'logg'])
+        header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
         writer.writerow(header_parameters)
         for line in spectro:
             if line != None:
@@ -330,7 +330,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
     """
-    Extract spectroscopic info from a MESA profile and the model parameters from its filename.
+    Extract spectroscopic info and age from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
@@ -347,11 +347,12 @@ def spectro_from_profiles(mesa_profile, parameters):
     logL = np.log10(float(prof_header['photosphere_L']))
     logTeff = np.log10(float(prof_header['Teff']))
     logg = prof_data['log_g'][0]
+    age=int(float(prof_header['star_age']))
 
     line=[]
     for p in parameters:
         line.append(param_dict[p])
-    line.extend([logTeff, logL, logg])
+    line.extend([logTeff, logL, logg, age])
     return line
 
 ################################################################################
@@ -371,6 +372,8 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
     # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
     df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
+
+    col = df_merged.pop("age") # Don't add the age in the combined file
 
     # take the column with rotation and place it as the first column, and its error as second column
     col = df_merged.pop("rot")
