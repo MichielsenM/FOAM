@@ -881,6 +881,11 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
             continue    # Only keep models that fall within mass range
         else:
             for history in glob.glob(f'{folder}/history/*hist'):
+                param_dict = sf.get_param_from_filename(history, ['Z','M', 'fov', 'aov', 'logD'])
+                if float(param_dict['M'])<2.5 and float(param_dict['logD'])>2.1:
+                    continue
+                if float(param_dict['M'])<3.5 and float(param_dict['logD'])>3.1:
+                    continue
                 header, data = ffm.read_mesa_file(history)
                 df = pd.DataFrame(zip(data['star_age'], data['log_Teff'], data['log_g'], data['log_L']), columns=['age', 'logTeff', 'logg', 'logL'])
 
