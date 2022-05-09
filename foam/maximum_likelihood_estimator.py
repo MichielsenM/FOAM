@@ -825,18 +825,18 @@ def get_age(model, df):
         Age of the model one sep younger and older than the procided model,
         these are the minimum and maximum age to accept models in the isochrone-cloud.
     """
-    unique_xc=pd.unique(df[df.Z == model.Z].Xc)
+    unique_xc=pd.unique(df[ np.isclose(df.Z, model.Z) ].Xc)
 
     if abs(model.Xc-max(unique_xc))<1E-4:
         min_age = 0
-        max_age = int(df.loc[(df.Z == model.Z) & (df.M == model.M) & (df.logD == model.logD) & (df.aov == model.aov) & (df.fov == model.fov) & (df.Xc == round(model.Xc-0.01, 2))].age)
+        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
     elif abs(model.Xc-min(unique_xc))<1E-4:
-        min_age = int(df.loc[(df.Z == model.Z) & (df.M == model.M) & (df.logD == model.logD) & (df.aov == model.aov) & (df.fov == model.fov) & (df.Xc == round(model.Xc+0.01, 2))].age)
-        age = int(df.loc[(df.Z == model.Z) & (df.M == model.M) & (df.logD == model.logD) & (df.aov == model.aov) & (df.fov == model.fov) & (df.Xc == round(model.Xc, 2))].age)
+        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
+        age     = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc, 2))].age)
         max_age = age+age-min_age
     else:
-        min_age = int(df.loc[(df.Z == model.Z) & (df.M == model.M) & (df.logD == model.logD) & (df.aov == model.aov) & (df.fov == model.fov) & (df.Xc == round(model.Xc+0.01, 2))].age)
-        max_age = int(df.loc[(df.Z == model.Z) & (df.M == model.M) & (df.logD == model.logD) & (df.aov == model.aov) & (df.fov == model.fov) & (df.Xc == round(model.Xc-0.01, 2))].age)
+        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
+        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
     return min_age, max_age
 
 ################################################################################
@@ -881,14 +881,15 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
             continue    # Only keep models that fall within mass range
         else:
             for history in glob.glob(f'{folder}/history/*hist'):
+                # Limit envelope mixing for low masses in isocloud
                 param_dict = sf.get_param_from_filename(history, ['Z','M', 'fov', 'aov', 'logD'])
                 if float(param_dict['M'])<2.5 and float(param_dict['logD'])>2.1:
                     continue
                 if float(param_dict['M'])<3.5 and float(param_dict['logD'])>3.1:
                     continue
+                # Enforce the age constraints
                 header, data = ffm.read_mesa_file(history)
                 df = pd.DataFrame(zip(data['star_age'], data['log_Teff'], data['log_g'], data['log_L']), columns=['age', 'logTeff', 'logg', 'logL'])
-
                 df = df[df.age < max_age]
                 df = df[df.age > min_age]
                 if df.shape[0] == 0:
