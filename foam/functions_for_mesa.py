@@ -212,11 +212,11 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     # Plot the x-axis in log scale
     if Teff_logscale:
         T = log_Teff
-        ax.set_xlabel(r'log(T$_{eff}$)', size=label_size)
+        ax.set_xlabel(r'log(T$_{\mathrm{{eff}}$)', size=label_size)
     # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff
-        ax.set_xlabel(r'T$_{eff}$ [K]', size=label_size)
+        ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
 
     if start_track_from_Xc!= None:
         for i in range(len(center_h1)):
@@ -227,7 +227,7 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
 
     # Plot the HRD diagram (log_L vs. T)
     ax.plot( T, log_L, color = colour, linestyle = linestyle, label = label)
-    ax.set_ylabel(r'log(L) [L$_{\odot}$]', size=label_size)
+    ax.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     ax.invert_xaxis()
 
     # Put specific marks on the HRD diagram

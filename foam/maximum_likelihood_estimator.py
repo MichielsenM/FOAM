@@ -90,7 +90,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
     # proper label format on figures
-    axis_labels_dict = {'rot': r'$\Omega_{rot}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
+    axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
 
     if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
@@ -166,9 +166,9 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     im_EE = ax_hrd.scatter(df_Theo_EE['logTeff'], df_Theo_EE[logg_or_logL], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
-        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+        ax_hrd.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     elif logg_or_logL == 'logg':
-        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+        ax_hrd.set_ylabel(r'$\log\,g$ [dex]', size=label_size)
 
     ax_hrd.xaxis.set_minor_locator(AutoMinorLocator(2))
     ax_hrd.yaxis.set_minor_locator(AutoMinorLocator(2))
@@ -331,9 +331,9 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='hot')
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
-        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+        ax_hrd.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     elif logg_or_logL == 'logg':
-        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+        ax_hrd.set_ylabel(r'$\log\,g$ [dex]', size=label_size)
 
     # observations
     if n_sigma_spectrobox != None:
