@@ -47,3 +47,7 @@ N_dict = {'P' : N_periods,'dP': N_periods-N_pattern_parts}
 
 # ignore models outside of the n-sigma spectroscopic error box, set to None to include all models
 n_sigma_spectrobox = 3
+
+# For modelling binaries and enfocring constraints of the companion star.
+isocloud_grid_directory = None # '/STER/mathiasm/MESA_15140_isochroneGrid'
+spectro_companion = None #{'q':0.77, 'q_err':0.09 ,'Teff':14020 , 'Teff_err':280, 'logg':3.55, 'logg_err':0.24, 'logL':None , 'logL_err':None, 'primary_pulsates':True}

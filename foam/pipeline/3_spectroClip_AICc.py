@@ -11,10 +11,13 @@ import config # imports the config file relative to the location of the main scr
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
 if config.n_sigma_spectrobox != None:
-    files = glob.glob(f'extracted_freqs/*.dat')
     observations = config.observations
-    for file in files:
-        mle.spectro_cutoff(file, observations, nsigma=config.n_sigma_spectrobox)
+    for grid in config.grids:
+        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.dat')
+        for file in files:
+            mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.tsv',
+                                    spectro_companion=config.spectro_companion, isocloud_grid_directory=config.isocloud_grid_directory)
+
 ################################################################################
 k = config.k            # number of free paramters in the grid
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}

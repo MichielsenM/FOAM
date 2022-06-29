@@ -4,8 +4,8 @@ from foam import functions_for_mesa as ffm
 import config # imports the config file relative to the location of the main script
 ################################################################################
 for grid in config.grids:
-    output_file = f'grid_summary/spectroGrid_{grid}.tsv'
+    output_file = f'../grid_summary/spectroGrid_{grid}.tsv'
     ffm.grid_extract_spectroscopy(f'{config.grid_parent_directory}/{grid}/MESA_out/Zini*/profiles/*{config.subgrid}*prof', output_file=output_file)
 
-    output_file = f'grid_summary/pulsationGrid_{grid}_{config.rotation_gyre}.tsv'
+    output_file = f'../grid_summary/pulsationGrid_{grid}_{config.rotation_gyre}.tsv'
     ffg.extract_frequency_grid(f'{config.grid_parent_directory}/{grid}/GYRE_out/rot{config.rotation_gyre}/Zini*/*{config.subgrid}*.HDF', output_file=output_file)
