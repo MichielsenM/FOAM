@@ -212,7 +212,7 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     # Plot the x-axis in log scale
     if Teff_logscale:
         T = log_Teff
-        ax.set_xlabel(r'log(T$_{\mathrm{{eff}}$)', size=label_size)
+        ax.set_xlabel(r'log(T$_{\mathrm{eff}}$)', size=label_size)
     # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff
