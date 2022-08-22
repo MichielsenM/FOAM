@@ -45,7 +45,12 @@ def likelihood_MD(MD):
     return np.exp(-0.5*( MD + config.k*np.log(2*np.pi) + lndetV ))
 
 ################################################################################
-with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'w') as outfile:
+if config.n_sigma_spectrobox != None:
+    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+else:
+    directory_prefix = f''
+
+with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'w') as outfile:
     outfile.write(f'{config.free_parameters}'+'\n')
 
 for merit in config.merit_functions:
@@ -69,7 +74,7 @@ for merit in config.merit_functions:
             f_ax[i].tick_params(labelsize=14, length=6)
             f_ax[i].tick_params(which='minor', length=4)
 
-        files = glob.glob(f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/*{merit_abbrev[merit]}_{obs}.dat')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit_abbrev[merit]}_{obs}.dat')
         j=0
         for file in sorted(files):
             Path_file = Path(file)
@@ -121,13 +126,13 @@ for merit in config.merit_functions:
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
                     # Write all models enclosed within the error ellips to a separate file
-                    df.iloc[:i+1].to_csv(Path_file.with_stem(f'{Path_file.stem}_error_ellips'), '\t')
+                    df.iloc[:i+1].to_csv(Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse'), '\t')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
 
             config.logger.info(error_region)
 
-            with open(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'a') as outfile:
+            with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'a') as outfile:
                 outfile.write(f'{analysis} ')
                 i=0
                 for column_name in config.free_parameters:
@@ -149,7 +154,7 @@ for merit in config.merit_functions:
             labels[j] = ylabel_dict[-j]
         f_ax[0].set_yticklabels(labels)
 
-        output_folder = f'figures_errors_{config.n_sigma_spectrobox}sigmaSpectro'
+        output_folder = f'{directory_prefix}figures_errors_1D'
         Path(output_folder).mkdir(parents=True, exist_ok=True)
         leftspace = 0.22-0.015*config.k
         fig.subplots_adjust(left=leftspace, right=0.98, bottom=0.25, top=0.98, wspace=0.2)

@@ -212,11 +212,11 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     # Plot the x-axis in log scale
     if Teff_logscale:
         T = log_Teff
-        ax.set_xlabel(r'log(T$_{eff}$)', size=label_size)
+        ax.set_xlabel(r'log(T$_{\mathrm{eff}}$)', size=label_size)
     # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff
-        ax.set_xlabel(r'T$_{eff}$ [K]', size=label_size)
+        ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
 
     if start_track_from_Xc!= None:
         for i in range(len(center_h1)):
@@ -227,7 +227,7 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
 
     # Plot the HRD diagram (log_L vs. T)
     ax.plot( T, log_L, color = colour, linestyle = linestyle, label = label)
-    ax.set_ylabel(r'log(L) [L$_{\odot}$]', size=label_size)
+    ax.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     ax.invert_xaxis()
 
     # Put specific marks on the HRD diagram
@@ -298,7 +298,7 @@ def convert_units(quantity, input, convertto='cgs'):
 ################################################################################
 def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Extract spectroscopic info for each globbed MESA profile and write them to 1 large file.
+    Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -312,7 +312,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     p = multiprocessing.Pool()
-    freqs = p.imap(extract_func, profiles)
+    spectro = p.imap(extract_func, profiles)
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
@@ -320,9 +320,9 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
         writer = csv.writer(tsvfile, delimiter='\t')
         # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
         header_parameters = list(parameters)
-        header_parameters.extend(['logTeff', 'logL', 'logg'])
+        header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
         writer.writerow(header_parameters)
-        for line in freqs:
+        for line in spectro:
             if line != None:
                 writer.writerow(line)
     p.close()
@@ -330,7 +330,7 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
     """
-    Extract spectroscopic info from a MESA profile and the model parameters from its filename.
+    Extract spectroscopic info and age from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
@@ -347,11 +347,12 @@ def spectro_from_profiles(mesa_profile, parameters):
     logL = np.log10(float(prof_header['photosphere_L']))
     logTeff = np.log10(float(prof_header['Teff']))
     logg = prof_data['log_g'][0]
+    age=int(float(prof_header['star_age']))
 
     line=[]
     for p in parameters:
         line.append(param_dict[p])
-    line.extend([logTeff, logL, logg])
+    line.extend([logTeff, logL, logg, age])
     return line
 
 ################################################################################
@@ -371,6 +372,8 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
     # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
     df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
+
+    col = df_merged.pop("age") # Don't add the age in the combined file
 
     # take the column with rotation and place it as the first column, and its error as second column
     col = df_merged.pop("rot")

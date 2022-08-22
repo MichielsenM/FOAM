@@ -10,13 +10,21 @@ from foam import maximum_likelihood_estimator as mle
 import config # imports the config file relative to the location of the main script
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
-files = glob.glob(f'extracted_freqs/*.dat')
-observations = config.observations
-for file in files:
-    mle.spectro_cutoff(file, observations, nsigma=config.n_sigma_spectrobox)
+if config.n_sigma_spectrobox != None:
+    observations = config.observations
+    for grid in config.grids:
+        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.dat')
+        for file in files:
+            mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.tsv',
+                                    spectro_companion=config.spectro_companion, isocloud_grid_directory=config.isocloud_grid_directory)
+
 ################################################################################
 k = config.k            # number of free paramters in the grid
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
+if config.n_sigma_spectrobox != None:
+    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+else:
+    directory_prefix = f''
 ################################################################################
 # Get the condition numbers file to use its listed values of ln(det(V)) with V the variance-covariance matrix.
 condition_nr_file = f'V_matrix/{config.star}_determinant_conditionNr.tsv'
@@ -33,7 +41,7 @@ for i in range(0, df_AICc_Chi2.size):
 for merit in config.merit_functions:
     merit = merit_abbrev[merit]
     for obs in config.observable_aic:
-        files = glob.glob(f'{config.n_sigma_spectrobox}sigmaSpectro_extracted_freqs/*{merit}_{obs}.dat')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.dat')
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
@@ -51,6 +59,7 @@ for merit in config.merit_functions:
                 AICc = df["meritValue"].iloc[0] + k*np.log(2*np.pi) + lndetV + (2*k*N)/(N-k-1)
                 df_AICc_MD.loc[df_AICc_MD.method == f'{config.star}_{analysis}', 'AICc'] = AICc
 
-Path(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/').mkdir(parents=True, exist_ok=True)
-df_AICc_MD.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_MD.tsv', sep='\t',index=False)
-df_AICc_Chi2.to_csv(f'{config.n_sigma_spectrobox}sigmaSpectro_output_tables/{config.star}_AICc_values_Chi2.tsv', sep='\t',index=False)
+output_folder = f'{directory_prefix}output_tables'
+Path(output_folder).mkdir(parents=True, exist_ok=True)
+df_AICc_MD.to_csv(f'{output_folder}/{config.star}_AICc_values_MD.tsv', sep='\t',index=False)
+df_AICc_Chi2.to_csv(f'{output_folder}/{config.star}_AICc_values_Chi2.tsv', sep='\t',index=False)

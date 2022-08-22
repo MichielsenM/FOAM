@@ -3,19 +3,23 @@ Note: The file with observations needs to hold temperature as Teff, although the
 # from foam import maximum_likelihood_estimator as mle
 import numpy as np
 import pandas as pd
-import sys, logging, os
+import sys, logging, os, glob
+from functools import partial
+import multiprocessing
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.ticker import AutoMinorLocator
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
+from foam import functions_for_mesa as ffm
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 ################################################################################
 def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
-                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False):
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -86,7 +90,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
     # proper label format on figures
-    axis_labels_dict = {'rot': r'$\Omega_{rot}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
+    axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
 
     if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
@@ -156,31 +160,40 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
     ax_hrd.invert_xaxis()
+    if logg_or_logL=='logg': ax_hrd.invert_yaxis()
 
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
     im_EE = ax_hrd.scatter(df_Theo_EE['logTeff'], df_Theo_EE[logg_or_logL], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
-        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+        ax_hrd.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     elif logg_or_logL == 'logg':
-        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+        ax_hrd.set_ylabel(r'$\log\,g$ [dex]', size=label_size)
+
+    ax_hrd.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax_hrd.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax_hrd.tick_params(which='major', length=6)
+    ax_hrd.tick_params(which='minor', length=4)
 
     # observations
-    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    # Observed spectroscopic error bar
-    # To add the 1 and 3 sigma spectro error boxes, calculate their width (so 2 and 6 sigmas wide)
-    width_logTeff_2sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-    width_logTeff_6sigma= np.log10(Obs_dFrame['Teff'][0]+3*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0])
-    errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_2sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-    errorbox_3s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-3*Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_6sigma, 6*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-    ax_hrd.add_patch(errorbox_1s)
-    ax_hrd.add_patch(errorbox_3s)
+    if n_sigma_spectrobox != None:
+        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+        # Observed spectroscopic error bar
+        # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
+        width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0])
+        errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                    width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                    width_logTeff_nsigma, 2*n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+        ax_hrd.add_patch(errorbox_1s)
+        ax_hrd.add_patch(errorbox_ns)
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
-    cax = fig.add_axes([0.841, 0.476, 0.05, 0.4]) # X, Y, widht, height
+    cax = fig.add_axes([0.856, 0.565, 0.04, 0.415]) # X, Y, widht, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cax2 = fig.add_axes([0.841, 0.066, 0.05, 0.4]) # X, Y, widht, height
+    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.415]) # X, Y, widht, height
     cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
 
     if df_Theo_EE.shape[0]==1: # To prevent messing up colors due to automatic rescaling of colorbar
@@ -196,7 +209,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
         cbar.set_label('log(merit function value)', rotation=90)
     cbar.ax.tick_params(labelsize=label_size-4)
     cbar2.ax.tick_params(labelsize=label_size-4)
-    fig.subplots_adjust(left=0.109, right=0.835, bottom=0.13, top=0.99)
+    fig.subplots_adjust(left=0.114, right=0.835, bottom=0.137, top=0.99)
 
     # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
@@ -207,7 +220,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
 def plot_correlations(merit_values_file, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
-                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False):
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -318,20 +331,24 @@ def plot_correlations(merit_values_file, observations_file, fig_title=None, labe
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='hot')
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
-        ax_hrd.set_ylabel(r'log(L [L$_{\odot}$])', size=label_size)
+        ax_hrd.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
     elif logg_or_logL == 'logg':
-        ax_hrd.set_ylabel(r'log$g$ [dex]', size=label_size)
+        ax_hrd.set_ylabel(r'$\log\,g$ [dex]', size=label_size)
 
     # observations
-    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    # Observed spectroscopic error bar
-    # To add the 1 and 3 sigma spectro error boxes, calculate their width (so 2 and 6 sigmas wide)
-    width_logTeff_2sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-    width_logTeff_6sigma= np.log10(Obs_dFrame['Teff'][0]+3*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0])
-    errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_2sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-    errorbox_3s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-3*Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-3*Obs_dFrame[f'{logg_or_logL}_err'][0]), width_logTeff_6sigma, 6*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-    ax_hrd.add_patch(errorbox_1s)
-    ax_hrd.add_patch(errorbox_3s)
+    if n_sigma_spectrobox != None:
+        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+        # Observed spectroscopic error bar
+        # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
+        width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0])
+        errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                    width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                width_logTeff_nsigma, 2*n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+        ax_hrd.add_patch(errorbox_1s)
+        ax_hrd.add_patch(errorbox_ns)
+
     if mark_best_model: ax_hrd.scatter(df_Theo['logTeff'][min_index], df_Theo[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
@@ -386,9 +403,11 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     suffix = {'chi2'       : 'CS',
               'mahalanobis': 'MD'}
 
-    # set the name of the output file
+    # set the name of the output file and make it's directory if needed
     head, tail = sf.split_line(Path_theo.stem, star_name)
-    DataOut = f'{Path_theo.parent}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
+    DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
+    Path(DataOutDir).mkdir(parents=True, exist_ok=True)
+    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
@@ -415,7 +434,9 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     logger.debug(f'ignored -1 freqs : {len(neg_value)}')
     logger.debug(f'original #models : {len(Theo_puls)}')
     logger.debug(f'remaining #models: {len(newTheo)}')
-
+    if len(neg_value)>0:
+        logger.warning(f"""{len(neg_value)} models were discarded due to mismatches during the selection of theoretical frequencies.
+                        This is likely due to the frequency range used for the theoretical calculations being too narrow.""")
     Theo_observables = np.asarray(newTheo)
     Thetas           = np.asarray(newThetas)
 
@@ -744,10 +765,10 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
+def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_companion=None, isocloud_grid_directory=None, spectroGrid_file=None):
     """
-    Make an n-sigma cutoff of the models based on the spectoscopic observations.
-    Save this as a file with prefix "clipped".
+    Enforce an n-sigma constraint on the models based on the spectoscopic observations.
+    Save this as a file with prefix indicating how many sigma the error box was.
     ------- Parameters -------
     merit_values_file: string
         Path to the tsv files with the merit funtion values and the spectroscopic info of the models in the grid.
@@ -756,6 +777,12 @@ def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     nsigma: int
         How many sigmas you want to make the interval to accept models.
+    spectro_companion: dict
+        Information on the companion star. Set to None to model single stars, and provide this to include binary constraints using isochrone-clouds.
+    isocloud_grid_directory: string
+        Directory holding the grid for the isochrone-cloud modelling.
+    spectroGrid_file: string
+        File with the spectroscopic info and ages of the model-grid.
     """
     Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
     df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
@@ -767,6 +794,124 @@ def spectro_cutoff(merit_values_file, observations_file, nsigma=3):
     df_Theo = df_Theo[df_Theo.logL < Obs_dFrame['logL'][0]+nsigma*Obs_dFrame['logL_err'][0]]
     df_Theo = df_Theo[df_Theo.logL > Obs_dFrame['logL'][0]-nsigma*Obs_dFrame['logL_err'][0]]
 
+    if spectro_companion is not None:
+        if (isocloud_grid_directory is None) or (spectroGrid_file is None):
+            logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid spectroscopy and ages.')
+            sys.exit()
+        spectroGrid_dataFrame = pd.read_table(spectroGrid_file, delim_whitespace=True, header=0)
+        p = multiprocessing.Pool()
+        func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_directory=isocloud_grid_directory, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
+        for index_to_drop in p.imap(func, df_Theo.iterrows()):
+            if index_to_drop is not None:
+                df_Theo.drop(index_to_drop, inplace=True)
+        p.close()
+
     outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
     Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
     df_Theo.to_csv(outputFile, sep='\t',index=False)
+
+################################################################################
+def get_age(model, df):
+    """
+    Get the age of the models one step older and younger than the provided model.
+    ------- Parameters -------
+        model: pandas series
+            Parameters of the model.
+        df: pandas dataframe
+            Dataframe with the model parameters and age (and spectroscopic info) of the theoretical models.
+
+    ------- Returns -------
+    min_age, max_age: tuple of integers
+        Age of the model one sep younger and older than the procided model,
+        these are the minimum and maximum age to accept models in the isochrone-cloud.
+    """
+    unique_xc=pd.unique(df[ np.isclose(df.Z, model.Z) ].Xc)
+
+    if abs(model.Xc-max(unique_xc))<1E-4:
+        min_age = 0
+        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
+    elif abs(model.Xc-min(unique_xc))<1E-4:
+        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
+        age     = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc, 2))].age)
+        max_age = age+age-min_age
+    else:
+        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
+        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
+    return min_age, max_age
+
+################################################################################
+def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_grid_directory=None, nsigma=3, spectroGrid_dataFrame=None):
+    """
+    Enforce an n-sigma constraint on the models based on spectoscopic observations of the binary companion employing isochrone-clouds.
+    ------- Parameters -------
+    df_Theo_row: tuple, made of (int, pandas series)
+        tuple retruned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
+        second tuple entry is a pandas series, containing a row from the pandas dataFrame.
+        (This row holds model parameters, the meritfunction value, and spectroscopic information.)
+    spectro_companion: dict
+        Information on the companion star, including spectroscopic parameters, mass ratio (q), the errors,
+        and a boolean indicating whether the primary or secondary star is assumed pulsating and hence being modelled.
+    isocloud_grid_directory: string
+        Directory holding the grid for the isochrone-cloud modelling.
+    nsigma: int
+        How many sigmas you want to make the interval to accept models.
+    spectroGrid_dataFrame: pandas DataFrame
+        DataFrame with the spectroscopic info and ages of the model-grid.
+    ------- Returns -------
+    index: int or None
+        Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
+        Returns None if the binary constraints do not discard the model.
+    """
+    index, model = df_Theo_row
+
+    min_age, max_age = get_age(model, spectroGrid_dataFrame)
+    q= spectro_companion['q']
+    q_err= spectro_companion['q_err']
+    if spectro_companion['primary_pulsates']:
+        M2_min = round(model.M*(q-q_err), 1)
+        M2_max = round(model.M*(q+q_err), 1)
+    else:
+        M2_min = round(model.M/(q+q_err), 1)
+        M2_max = round(model.M/(q-q_err), 1)
+
+    isocloud_folders = glob.glob(f'{isocloud_grid_directory}/Zini{model.Z}_Mini*') #only use models with same metallicity
+    for folder in isocloud_folders:
+        param_dict = sf.get_param_from_filename(folder+'.suffix', ['Zini','Mini']) #add suffix to make function work properly
+        if float(param_dict['Mini']) < M2_min or float(param_dict['Mini']) > M2_max:
+            continue    # Only keep models that fall within mass range
+        else:
+            for history in glob.glob(f'{folder}/history/*hist'):
+                # Limit envelope mixing for low masses in isocloud
+                param_dict = sf.get_param_from_filename(history, ['Z','M', 'fov', 'aov', 'logD'])
+                if float(param_dict['M'])<2.5 and float(param_dict['logD'])>2.1:
+                    continue
+                if float(param_dict['M'])<3.5 and float(param_dict['logD'])>3.1:
+                    continue
+                # Enforce the age constraints
+                header, data = ffm.read_mesa_file(history)
+                df = pd.DataFrame(zip(data['star_age'], data['log_Teff'], data['log_g'], data['log_L']), columns=['age', 'logTeff', 'logg', 'logL'])
+                df = df[df.age < max_age]
+                df = df[df.age > min_age]
+                if df.shape[0] == 0:
+                    if min_age>int(max(data["star_age"])):
+                        logger.warning(f'Companion would be post MS: {history}')
+                    else:
+                        age = 0.5*(min_age+max_age)
+                        logTeff = np.interp(age, data['star_age'], data['log_Teff'])
+                        logg = np.interp(age, data['star_age'], data['log_g'])
+                        logL = np.interp(age, data['star_age'], data['log_L'])
+                        df = pd.DataFrame(zip([age],[logTeff], [logg],[logL]), columns=['age', 'logTeff', 'logg', 'logL'])
+
+                # Check for all porvided constraints if the track passes through the error region
+                if spectro_companion['Teff'] is not None:
+                    df=df[df.logTeff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
+                    df=df[df.logTeff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
+                if spectro_companion['logg'] is not None:
+                    df=df[df.logg < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
+                    df=df[df.logg > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
+                if spectro_companion['logL'] is not None:
+                    df=df[df.logL < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
+                    df=df[df.logL > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
+                if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
+                    return None
+    return index
