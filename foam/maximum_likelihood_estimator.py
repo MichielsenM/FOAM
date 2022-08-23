@@ -778,7 +778,8 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
     nsigma: int
         How many sigmas you want to make the interval to accept models.
     spectro_companion: dict
-        Information on the companion star. Set to None to model single stars, and provide this to include binary constraints using isochrone-clouds.
+        Information on the companion star. Set to None to model single stars,
+        or provide this to include binary constraints using isochrone-clouds.
     isocloud_grid_directory: string
         Directory holding the grid for the isochrone-cloud modelling.
     spectroGrid_file: string
@@ -874,44 +875,31 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         M2_min = round(model.M/(q+q_err), 1)
         M2_max = round(model.M/(q-q_err), 1)
 
-    isocloud_folders = glob.glob(f'{isocloud_grid_directory}/Zini{model.Z}_Mini*') #only use models with same metallicity
-    for folder in isocloud_folders:
-        param_dict = sf.get_param_from_filename(folder+'.suffix', ['Zini','Mini']) #add suffix to make function work properly
+    isocloud_files = glob.glob(f'{isocloud_grid_directory}/isocloud_*Zini{model.Z:.3f}*.tsv') #only use models with same metallicity
+
+    for file in isocloud_files:
+        param_dict = sf.get_param_from_filename(file, ['Zini','Mini'])
         if float(param_dict['Mini']) < M2_min or float(param_dict['Mini']) > M2_max:
             continue    # Only keep models that fall within mass range
         else:
-            for history in glob.glob(f'{folder}/history/*hist'):
-                # Limit envelope mixing for low masses in isocloud
-                param_dict = sf.get_param_from_filename(history, ['Z','M', 'fov', 'aov', 'logD'])
-                if float(param_dict['M'])<2.5 and float(param_dict['logD'])>2.1:
-                    continue
-                if float(param_dict['M'])<3.5 and float(param_dict['logD'])>3.1:
-                    continue
-                # Enforce the age constraints
-                header, data = ffm.read_mesa_file(history)
-                df = pd.DataFrame(zip(data['star_age'], data['log_Teff'], data['log_g'], data['log_L']), columns=['age', 'logTeff', 'logg', 'logL'])
-                df = df[df.age < max_age]
-                df = df[df.age > min_age]
-                if df.shape[0] == 0:
-                    if min_age>int(max(data["star_age"])):
-                        logger.warning(f'Companion would be post MS: {history}')
-                    else:
-                        age = 0.5*(min_age+max_age)
-                        logTeff = np.interp(age, data['star_age'], data['log_Teff'])
-                        logg = np.interp(age, data['star_age'], data['log_g'])
-                        logL = np.interp(age, data['star_age'], data['log_L'])
-                        df = pd.DataFrame(zip([age],[logTeff], [logg],[logL]), columns=['age', 'logTeff', 'logg', 'logL'])
+            df = pd.read_table(file, delim_whitespace=True, header=0)
 
-                # Check for all porvided constraints if the track passes through the error region
-                if spectro_companion['Teff'] is not None:
-                    df=df[df.logTeff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
-                    df=df[df.logTeff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
-                if spectro_companion['logg'] is not None:
-                    df=df[df.logg < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
-                    df=df[df.logg > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
-                if spectro_companion['logL'] is not None:
-                    df=df[df.logL < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
-                    df=df[df.logL > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
-                if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
-                    return None
+            df = df[ ((df.M>M2_min) | (np.isclose(df.M, M2_min))) & ((df.M<M2_max) | (np.isclose(df.M, M2_min)))]
+            df = df[(df.age < max_age) & (df.age > min_age)]
+
+            if df.shape[0] == 0:
+                continue
+
+            # Check for all provided constraints if the track passes through the uncertainty region
+            if spectro_companion['Teff'] is not None:
+                df=df[df.logTeff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
+                df=df[df.logTeff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
+            if spectro_companion['logg'] is not None:
+                df=df[df.logg < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
+                df=df[df.logg > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
+            if spectro_companion['logL'] is not None:
+                df=df[df.logL < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
+                df=df[df.logL > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
+            if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
+                return None
     return index
