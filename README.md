@@ -9,10 +9,6 @@ If you do not wish to use poetry, you could install by running `pip install .`. 
 
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 
-### Note for contributors
-Please submit pull requests to the developer branch instead of the master branch.
-The master branch will be updated from time to time when possible conflicts between different pull requests have been resolved.
-
 ## contents
 
 1. `foam`: The FOrward Asteroseismic Modelling python package
