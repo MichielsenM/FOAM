@@ -9,7 +9,7 @@ from functools import partial
 from foam import support_functions as sf
 
 ################################################################################
-def read_mesa_file(file_path):
+def read_mesa_file(file_path, index_col=None):
     """
     Read in a mesa profile or history file and return 2 dictionaries.
     The first with the header info, and the second with the data.
@@ -45,7 +45,7 @@ def read_mesa_file(file_path):
 
     else:   # assumes the default MESA output format
         header_df = pd.read_table(file_path, delim_whitespace=True, nrows=1, header=1)
-        data_df = pd.read_table(file_path, delim_whitespace=True, skiprows = 3, header=1, index_col=0)
+        data_df = pd.read_table(file_path, delim_whitespace=True, skiprows=3, header=1, index_col=index_col)
 
         header={}
         for k in header_df.keys():
@@ -90,9 +90,9 @@ def check_hydro_eq(profile_file, treshold_for_plot=5E-8):
         plt.close('all')
 
 ################################################################################
-def plot_profile(profile_file, x_value, y_value, ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None):
+def plot_MESA_file(profile_file, x_value, y_value, ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None):
     """
-    Plot the requested quantities for the given MESA profile
+    Plot the requested quantities for the given MESA profile or history file.
     ------- Parameters -------
     profile_file: String
         The path to the profile file to be used for the plotting.
@@ -131,7 +131,7 @@ def plot_profile(profile_file, x_value, y_value, ax=None, label_size=16, colour=
         ax.legend(loc='best', prop={'size': label_size})
     ax.set_xlabel(x_value, size=label_size)
     ax.set_ylabel(y_value, size=label_size)
-################################################################################
+
 ################################################################################
 def mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None, bins=200):
     """
@@ -180,7 +180,8 @@ def mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, colou
     ax.set_ylabel('Meshpoints', size=label_size)
 
 ################################################################################
-def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16, Xc_marked=None, Teff_logscale=True, start_track_from_Xc=None):
+def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16,
+    Xc_marked=None, Teff_logscale=True, start_track_from_Xc=None, diagram='HRD'):
     """
     Makes an HRD plot from a provided history file
     ------- Parameters -------
@@ -198,15 +199,19 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
         Plot effective temperature in logscale (True), or not (False).
     start_track_from_Xc: float
         Only start plotting the track if Xc drops below this value (e.g. to not plot the initial relaxation loop).
+    diagram: string
+        Type of diagram that is plotted. Options are HRD (logL vs logTeff), sHRD (log(Teff^4/g) vs logTeff) or kiel (logg vs logTeff).
     """
     if ax is None:
-        fig=plt.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
 
     header, data = read_mesa_file(hist_file)
-    # from "data", extract the required columns as numpy arrays
+
+    # From "data", extract the required columns as numpy arrays
     log_L     = np.asarray(data['log_L'])
     log_Teff  = np.asarray(data['log_Teff'])
+    log_g     = np.asarray(data['log_g'])
     center_h1 = np.asarray(data['center_h1'])
 
     # Plot the x-axis in log scale
@@ -218,17 +223,30 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
         T = 10**log_Teff
         ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
 
+    # Plot HRD
+    if diagram == 'HRD':
+        y_axis = log_L
+        ax.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
+    # Plot sHRD (log_Teff^4/log_g vs log_Teff)
+    elif diagram == 'sHRD':
+        log_Lsun = 10.61
+        y_axis = 4*log_Teff - log_g - log_Lsun
+        ax.set_ylabel(r'$\log \left(\frac{{T_{\mathrm{eff}}}^4}{g}\right) \ (\mathscr{L}_\odot)$', size=label_size)
+    # Plot Kiel diagram (log_g vs log_Teff)
+    elif diagram == 'kiel':
+        y_axis = log_g
+        ax.set_ylabel(r'log g [dex]', size=label_size)
+
+    # Start plotting from Xc value
     if start_track_from_Xc!= None:
         for i in range(len(center_h1)):
             if center_h1[i] < start_track_from_Xc:
                 T = T[i:]
-                log_L = log_L[i:]
+                y_axis = y_axis[i:]
                 break
 
     # Plot the HRD diagram (log_L vs. T)
-    ax.plot( T, log_L, color = colour, linestyle = linestyle, label = label)
-    ax.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
-    ax.invert_xaxis()
+    ax.plot(T, y_axis, color = colour, linestyle = linestyle, label = label)
 
     # Put specific marks on the HRD diagram
     if Xc_marked is None:
@@ -240,6 +258,35 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
             k += 1
             if k >= len(Xc_marked):
                 return
+
+################################################################################
+def plot_KHD(hist_file, ax=None, number_mix_zones=8):
+    """
+    Makes a Kippenhahn plot from a provided history file
+    ------- Parameters -------
+    hist_file: String
+        The path to the history file to be used for the plot.
+    ax: an axis object
+        Axes object on which the plot will be made. If None: make figure and axis within this function.
+    """
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+    header, data = read_mesa_file(hist_file)
+
+    N_mix = number_mix_zones
+    for j in range(N_mix):
+        colours = {'-1':'w', '0':'g', '1':'grey', '2':'b', '7':'g'}
+        if j == N_mix-1:
+            ax.vlines(data['model_number'], 0, data[f'mix_qtop_{N_mix-j}'], color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+        else:
+            ax.vlines(data['model_number'], data[f'mix_qtop_{N_mix-1-j}'], data[f'mix_qtop_{N_mix-j}'], color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+
+    return
+
+
 ################################################################################
 def calculate_number_densities(hist_file):
     '''
@@ -267,6 +314,7 @@ def calculate_number_densities(hist_file):
         number_densities.update({ key.replace('_per_Mass_tot', '_per_N_tot') : element_list[key]*average_atomic_mass})
 
     return number_densities
+
 ################################################################################
 def convert_units(quantity, input, convertto='cgs'):
     '''
