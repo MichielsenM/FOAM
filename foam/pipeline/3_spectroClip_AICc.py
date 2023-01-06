@@ -35,7 +35,7 @@ except:
                             \n or make a file with the same "Method" column (including column entries) in case you just want to use chi-squared.'))
 
 df_AICc_Chi2 = df_AICc_MD[['method']].copy()
-for i in range(0, df_AICc_Chi2.size):
+for i in range(0, df_AICc_Chi2['method'].size):
     df_AICc_Chi2.iloc[i]['method'] = df_AICc_Chi2.iloc[i]['method'].replace('MD', 'CS')
 
 for merit in config.merit_functions:
