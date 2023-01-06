@@ -55,13 +55,14 @@ for merit in config.merit_functions:
             for pattern in config.pattern_methods:
                 MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
                 df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
-                best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
+
+                if 'CS' in config.merit_functions:
+                    best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
+                    row_best_CSmodel = df.loc[(df['rot']==best_CS["rot"]) & (df['Z']==best_CS["Z"])
+                                & (df['M']==best_CS["M"]) & (df['logD']==best_CS["logD"])
+                                & (df['aov']==best_CS["aov"]) & (df['fov']==best_CS["fov"]) & (df['Xc']==best_CS["Xc"])]
+
                 best_MD = best_model_dict[f'{grid} MD {obs} {pattern}']  # best model according to mahalanobis distance
-
-                row_best_CSmodel = df.loc[(df['rot']==best_CS["rot"]) & (df['Z']==best_CS["Z"])
-                            & (df['M']==best_CS["M"]) & (df['logD']==best_CS["logD"])
-                            & (df['aov']==best_CS["aov"]) & (df['fov']==best_CS["fov"]) & (df['Xc']==best_CS["Xc"])]
-
                 row_best_MDmodel = df.loc[(df['rot']==best_MD["rot"]) & (df['Z']==best_MD["Z"])
                             & (df['M']==best_MD["M"]) & (df['logD']==best_MD["logD"])
                             & (df['aov']==best_MD["aov"]) & (df['fov']==best_MD["fov"]) & (df['Xc']==best_MD["Xc"])]
@@ -70,7 +71,8 @@ for merit in config.merit_functions:
                     reduced = config.N_dict[obs]-config.k
                 else:
                     reduced = 1
-                endresult_CS_dict[f'{grid} {obs} {pattern} {best_CS["M"]} {best_CS["Z"]} {best_CS["aov"]} {best_CS["fov"]} {best_CS["logD"]} {best_CS["Xc"]}'].update({f'{merit}' : row_best_CSmodel['meritValue'].iloc[0]/reduced })
+                if 'CS' in config.merit_functions:
+                    endresult_CS_dict[f'{grid} {obs} {pattern} {best_CS["M"]} {best_CS["Z"]} {best_CS["aov"]} {best_CS["fov"]} {best_CS["logD"]} {best_CS["Xc"]}'].update({f'{merit}' : row_best_CSmodel['meritValue'].iloc[0]/reduced })
                 endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'{merit}' : row_best_MDmodel['meritValue'].iloc[0]/reduced })
 
                 # Get the pre-calculated AICc values from the other file and add them as well
@@ -83,12 +85,16 @@ for merit in config.merit_functions:
                     endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'AICc' : AICc_MD})
 
 # Write everything as a LaTeX tables to a file
-with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'a') as outfile:
-    for key in sorted(endresult_CS_dict.keys()):
-        if LaTeX_format:
-            outfile.write(f'{key.replace(" ", " & ")} & {round(endresult_CS_dict[key]["rot"], 4)} & {int(round(endresult_CS_dict[key]["CS"]))} & {int(round(endresult_CS_dict[key]["MD"]))} & {round(endresult_CS_dict[key]["AICc"], 1)} \\\\ \n')
-        else:
-            outfile.write(f'{key} {round(endresult_CS_dict[key]["rot"], 4)} {int(round(endresult_CS_dict[key]["CS"]))} {int(round(endresult_CS_dict[key]["MD"]))} {round(endresult_CS_dict[key]["AICc"], 1)} \n')
+if 'CS' in config.merit_functions:
+    with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'a') as outfile:
+        for key in sorted(endresult_CS_dict.keys()):
+            if LaTeX_format:
+                outfile.write(f'{key.replace(" ", " & ")} & {round(endresult_CS_dict[key]["rot"], 4)} & {int(round(endresult_CS_dict[key]["CS"]))} & {int(round(endresult_CS_dict[key]["MD"]))} & {round(endresult_CS_dict[key]["AICc"], 1)} \\\\ \n')
+            else:
+                outfile.write(f'{key} {round(endresult_CS_dict[key]["rot"], 4)} {int(round(endresult_CS_dict[key]["CS"]))} {int(round(endresult_CS_dict[key]["MD"]))} {round(endresult_CS_dict[key]["AICc"], 1)} \n')
+else:
+    for key in sorted(endresult_MD_dict.keys()):
+        endresult_MD_dict[key].update({'CS':0})
 
 with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_MD.txt', 'a') as outfile:
     for key in sorted(endresult_MD_dict.keys()):
