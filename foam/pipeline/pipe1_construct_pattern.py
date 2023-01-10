@@ -1,6 +1,5 @@
 """Construct the theoretical pulsation patterns and merge with spectroscopic info into one file."""
 from pathlib import Path
-from foam import functions_for_gyre as ffg
 from foam import functions_for_mesa as ffm
 from foam import gmode_rotation_scaling as grs
 from foam import build_optimised_pattern as bop
