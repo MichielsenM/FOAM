@@ -1,9 +1,12 @@
+""" Module for the configuration of the pipeline, contains the class pipelineConfig,
+and one instance of this class named 'config'. Through this instance, the configuration
+is accessible from all other modules by importing the module and accessing the config attribute of the module."""
 import os, sys, logging
 from pathlib import Path
 
 class pipelineConfig:
     """
-        A python class to keep the configurations settings of the modelling pipeline.
+        A python class to keep the configuration settings of the modelling pipeline.
     """
 
     def __init__(self, **kwargs):
@@ -121,10 +124,10 @@ class pipelineConfig:
         self.isocloud_grid_directory = kwargs.pop("isocloud_grid_directory", None)
 
         # Check for errors in input arguments
-        self.check_init_arguments(kwargs)
+        self._check_init_arguments(kwargs)
 
 
-    def check_init_arguments(self, remaining_kwargs):
+    def _check_init_arguments(self, remaining_kwargs):
         """
         Check for errors in the input kwargs. Logs all errors and exits the program if any are found.
 

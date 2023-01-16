@@ -1,5 +1,5 @@
-""" Top level script to run the pipeline sequentially, copy this script with the config file to the folder where you want to run the analysis.
-Comment certain imports if you don't want to repeat them on repeated runs."""
+""" Top level script to run the pipeline sequentially, copy this script to the folder where you want to run the analysis.
+Comment specific imports if you don't want to repeat them on repeated runs."""
 import importlib, os
 from pathlib import Path
 from foam.pipeline import pipelineConfig

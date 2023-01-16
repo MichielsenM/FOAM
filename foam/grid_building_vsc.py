@@ -106,7 +106,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
         p = multiprocessing.Pool()	# Multiprocessing pool, uses #processes = #CPUs
         for rotation in omega_rot:
             # set part of the input parameters already in 'func', and only iterate over 'gyre_files' in the 'p.imap'
-            func = partial(gyre_process, output_dir=output_dir, setup_directory=setup_directory, npg_min=npg_min, npg_max=npg_max, degree=degree,
+            func = partial(_process_gyre_file, output_dir=output_dir, setup_directory=setup_directory, npg_min=npg_min, npg_max=npg_max, degree=degree,
                            azimuthal_order=azimuthal_order, rotation=rotation, unit_rot=unit_rot, rotation_frame=rotation_frame, gyre_base_inlist_lines=gyre_base_inlist_lines)
             for result in p.imap(func, gyre_files):
                 writer.writerow(result)
@@ -116,7 +116,7 @@ def make_gyre_setup(setup_directory=f'{os.getcwd()}/GYRE_setup', npg_min=-50, np
     return
 
 ################################################################################
-def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_max=-1, degree=1, azimuthal_order=1,
+def _process_gyre_file(file_path, output_dir='', setup_directory='', npg_min=-50,npg_max=-1, degree=1, azimuthal_order=1,
                  rotation=0, unit_rot='CYC_PER_DAY', rotation_frame='INERTIAL', gyre_base_inlist_lines=None):
     """
     Write GYRE inlist and make a corresponding line for the CSV file with all the run parameters for submitting the jobs to the VSC
@@ -154,7 +154,7 @@ def gyre_process(file_path, output_dir='', setup_directory='', npg_min=-50,npg_m
     return line_to_write
 
 ################################################################################
-def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
+def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file=None,
                        freq_min=0.01, freq_max=10, rotation_frame='INERTIAL',
                        npg_min=-50,npg_max=-1, omega_rot=0.0, unit_rot = 'CYC_PER_DAY', azimuthal_order=1, degree=1, gyre_base_inlist_lines = None,
                        gyre_base_inlist = None
@@ -179,7 +179,7 @@ def write_gyre_inlist( gyre_in_file, mesa_pulsation_file, gyre_summary_file='',
         azimuthal order and degree of the modes
     """
 
-    if gyre_summary_file == '':
+    if gyre_summary_file is None:
         gyre_summary_file = f'{Path(gyre_in_file).stem}.HDF'
 
     if gyre_base_inlist_lines is None:
