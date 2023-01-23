@@ -1,6 +1,6 @@
 """Write the best models of the grid as a LaTeX table."""
 import pandas as pd
-import config
+from foam.pipeline.pipelineConfig import config
 ################################################################################
 if config.n_sigma_spectrobox != None:
     directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
@@ -56,7 +56,7 @@ for merit in config.merit_functions:
                 MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
                 df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
 
-                if 'CS' in config.merit_functions:
+                if 'chi2' in config.merit_functions:
                     best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
                     row_best_CSmodel = df.loc[(df['rot']==best_CS["rot"]) & (df['Z']==best_CS["Z"])
                                 & (df['M']==best_CS["M"]) & (df['logD']==best_CS["logD"])
@@ -71,7 +71,7 @@ for merit in config.merit_functions:
                     reduced = config.N_dict[obs]-config.k
                 else:
                     reduced = 1
-                if 'CS' in config.merit_functions:
+                if 'chi2' in config.merit_functions:
                     endresult_CS_dict[f'{grid} {obs} {pattern} {best_CS["M"]} {best_CS["Z"]} {best_CS["aov"]} {best_CS["fov"]} {best_CS["logD"]} {best_CS["Xc"]}'].update({f'{merit}' : row_best_CSmodel['meritValue'].iloc[0]/reduced })
                 endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'{merit}' : row_best_MDmodel['meritValue'].iloc[0]/reduced })
 
@@ -85,7 +85,7 @@ for merit in config.merit_functions:
                     endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'AICc' : AICc_MD})
 
 # Write everything as a LaTeX tables to a file
-if 'CS' in config.merit_functions:
+if 'chi2' in config.merit_functions:
     with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'a') as outfile:
         for key in sorted(endresult_CS_dict.keys()):
             if LaTeX_format:

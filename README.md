@@ -15,6 +15,7 @@ This repository is an open-source package, GNU-licensed, and any improvements pr
 2. `LICENSE`: GNU general public license
 3. `poetry.lock`: List of dependencies and their exact versions.
 4. `pyproject.toml`: Installation configuration file.
+5. `tests`: pytest for the package
 
 ### Author
 Developed by Mathias Michielsen
