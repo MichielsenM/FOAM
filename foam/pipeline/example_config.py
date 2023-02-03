@@ -14,7 +14,7 @@ highest_amplitude_pulsation = {'period': [None], 'frequency': [None]} # ordered 
 gyre_dir = #'/lhome/mathiasm/Software/gyre-6.0.1' # GYRE directory
 kval = #0                  # the mode ID of your g-mode pattern
 mval = #1
-rotation_gyre = # '0.6304_prograde'
+rotation_gyre = # 0.6304
 
 # Parent directory of the computed grid, and names of the directories of the different grids
 grid_parent_directory = #'/lhome/mathiasm/MESA_grid_15140'

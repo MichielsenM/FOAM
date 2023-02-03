@@ -31,17 +31,8 @@ def read_mesa_file(file_path, index_col=None):
     data: dictionary
         A dictionary holding the data columns of the MESA file as numpy arrays.
     """
-
     if h5py.is_hdf5(file_path):
-        with h5py.File(file_path, 'r') as file:
-            # Read attributes (MESA header)
-            header = dict(zip(file.attrs.keys(),file.attrs.values()))
-            # Read datasets (MESA main data)
-            data={}
-            for k in file.keys() :
-                data[k] = file[k][...]
-
-        return header, data
+        return sf.read_hdf5(file_path)
 
     else:   # assumes the default MESA output format
         header_df = pd.read_table(file_path, delim_whitespace=True, nrows=1, header=1)

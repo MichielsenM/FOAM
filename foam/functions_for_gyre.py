@@ -86,7 +86,7 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
 
-    data = sf.read_hdf5(GYRE_summary_file)
+    attributes, data = sf.read_hdf5(GYRE_summary_file)
     param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order

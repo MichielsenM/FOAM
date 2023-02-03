@@ -7,7 +7,7 @@ import numpy as np
 from pathlib import Path
 from foam import support_functions as sf
 from foam import maximum_likelihood_estimator as mle
-import config # imports the config file relative to the location of the main script
+from foam.pipeline.pipelineConfig import config
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
 if config.n_sigma_spectrobox != None:

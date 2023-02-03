@@ -89,18 +89,20 @@ def read_hdf5(filename):
         Input file
 
     ------- Returns -------
+    attributes: dictionary
+        Dictionary containing the attributes of the file.
     data: dictionary
-        Dictionary containing the information from the file.
+        Dictionary containing the data from the file as numpy arrays.
     """
     # Open the file
     with h5py.File(filename, 'r') as file:
         # Read attributes
-        data = dict(zip(file.attrs.keys(),file.attrs.values()))
+        attributes = dict(zip(file.attrs.keys(),file.attrs.values()))
         # Read datasets
+        data = {}
         for k in file.keys() :
             data[k] = file[k][...]
-
-    return data
+    return attributes, data
 ################################################################################
 def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', label_size=22, xlim=[],
                         left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8]):

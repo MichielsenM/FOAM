@@ -9,8 +9,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from foam import support_functions as sf
-import config # imports the config file relative to the location of the main script
-
+from foam.pipeline.pipelineConfig import config
 ################################################################################
 N_dict = config.N_dict  # number of observables
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
