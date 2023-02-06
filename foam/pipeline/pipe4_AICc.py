@@ -1,6 +1,4 @@
-"""Ignore all the models that fall outside an n-sigma spectroscopic error box.
-Calculate the AICc (Akaike information criterion, corrected for small sample size) and write to a tsv.
-"""
+""" Calculate the AICc (Akaike information criterion, corrected for small sample size) and write to a tsv. """
 import glob, sys
 import pandas as pd
 import numpy as np
