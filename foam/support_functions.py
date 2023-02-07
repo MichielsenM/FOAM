@@ -53,7 +53,7 @@ def substring(line, sep_first, sep_second) :
     head, tail = split_line(tail, sep =sep_second)
     return head
 ################################################################################
-def get_param_from_filename(file_path, parameters):
+def get_param_from_filename(file_path, parameters, values_as_float=False):
     """
     Get parameters from filename
 
@@ -72,6 +72,8 @@ def get_param_from_filename(file_path, parameters):
     for parameter in parameters:
         try:
             p = substring(Path(file_path).stem, parameter, '_')
+            if values_as_float:
+                p = float(p)
             param_dict[parameter] = p
         except:
             param_dict[parameter] = '0'
@@ -194,7 +196,7 @@ def get_subgrid_dataframe(file_to_read, fixed_params=None):
     ------- Returns -------
     df: pandas dataframe
     """
-    df = pd.read_table(file_to_read, delim_whitespace=True, header=0)
+    df = pd.read_hdf(file_to_read)
 
     if fixed_params is not None:
         for param in fixed_params.keys():

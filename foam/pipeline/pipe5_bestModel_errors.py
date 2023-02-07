@@ -73,12 +73,12 @@ for merit in config.merit_functions:
             f_ax[i].tick_params(labelsize=14, length=6)
             f_ax[i].tick_params(which='minor', length=4)
 
-        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit_abbrev[merit]}_{obs}.dat')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit_abbrev[merit]}_{obs}.hdf')
         j=0
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
-            df = pd.read_csv(file, delim_whitespace=True, header=0)
+            df = pd.read_hdf(file)
             df = df.sort_values('meritValue', ascending=True)
 
             # Dictionary containing different likelihood functions

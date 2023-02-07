@@ -28,11 +28,11 @@ for i in range(0, df_AICc_Chi2['method'].size):
 for merit in config.merit_functions:
     merit = merit_abbrev[merit]
     for obs in config.observable_aic:
-        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.dat')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
-            df = pd.read_csv(file, delim_whitespace=True, header=0)
+            df = pd.read_hdf(file)
             df = df.sort_values('meritValue', ascending=True)
 
             # Calculate the AICc

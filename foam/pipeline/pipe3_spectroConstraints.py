@@ -8,9 +8,9 @@ from foam.pipeline.pipelineConfig import config
 if config.n_sigma_spectrobox != None:
     observations = config.observations
     for grid in config.grids:
-        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.dat')
+        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.hdf')
         for file in files:
             outputFile = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'
             if not Path(outputFile).is_file():
-                mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.tsv',
+                mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
                                     spectro_companion=config.spectro_companion, isocloud_grid_directory=config.isocloud_grid_directory)

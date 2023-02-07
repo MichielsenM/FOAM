@@ -407,7 +407,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     head, tail = sf.split_line(Path_theo.stem, star_name)
     DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
     Path(DataOutDir).mkdir(parents=True, exist_ok=True)
-    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.dat'
+    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.hdf'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
@@ -471,7 +471,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     for spectro in ['logTeff', 'logL', 'logg']:
         if spectro in Theo_dFrame.columns:
             df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
-    df.to_csv(DataOut, sep='\t',index=False)             # write the dataframe to a tsv file
+    df.to_hdf(f'{DataOut}', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_indices):
@@ -786,7 +786,7 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
         File with the spectroscopic info and ages of the model-grid.
     """
     Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_hdf(merit_values_file)
 
     df_Theo = df_Theo[df_Theo.logTeff < np.log10(Obs_dFrame['Teff'][0]+nsigma*Obs_dFrame['Teff_err'][0])]
     df_Theo = df_Theo[df_Theo.logTeff > np.log10(Obs_dFrame['Teff'][0]-nsigma*Obs_dFrame['Teff_err'][0])]
@@ -799,7 +799,7 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
         if (isocloud_grid_directory is None) or (spectroGrid_file is None):
             logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid spectroscopy and ages.')
             sys.exit()
-        spectroGrid_dataFrame = pd.read_table(spectroGrid_file, delim_whitespace=True, header=0)
+        spectroGrid_dataFrame = pd.read_hdf(spectroGrid_file)
         p = multiprocessing.Pool()
         func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_directory=isocloud_grid_directory, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
         for index_to_drop in p.imap(func, df_Theo.iterrows()):
@@ -809,7 +809,7 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
 
     outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
     Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
-    df_Theo.to_csv(outputFile, sep='\t',index=False)
+    df_Theo.to_hdf(f'{outputFile}', 'spectro_constrained_models', format='table', mode='w')
 
 ################################################################################
 def get_age(model, df):

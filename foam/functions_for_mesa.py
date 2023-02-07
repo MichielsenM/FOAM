@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import multiprocessing, glob, csv, h5py
+import multiprocessing, glob, h5py
 from pathlib import Path
 from functools import partial
 from foam import support_functions as sf
@@ -335,7 +335,7 @@ def convert_units(quantity, input, convertto='cgs'):
         return input / to_cgs[quantity]
 
 ################################################################################
-def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
     Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
@@ -350,21 +350,23 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.tsv',
     extract_func = partial(spectro_from_profiles, parameters=parameters)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
-    p = multiprocessing.Pool()
-    spectro = p.imap(extract_func, profiles)
+    with multiprocessing.Pool() as p:
+        spectro = p.imap(extract_func, profiles)
 
-    # Generate the directory for the output file and write the file afterwards
-    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as tsvfile:
-        writer = csv.writer(tsvfile, delimiter='\t')
+        # Generate the directory for the output file and write the file afterwards
+        Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
         # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
-        writer.writerow(header_parameters)
+
+        # Make list of lists, put it in a dataframe, and write to a file
+        data = []
         for line in spectro:
-            if line != None:
-                writer.writerow(line)
-    p.close()
+            data.append(line)
+
+    df = pd.DataFrame(data=data, columns=header_parameters)
+    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
+
 
 ################################################################################
 def spectro_from_profiles(mesa_profile, parameters):
@@ -380,7 +382,7 @@ def spectro_from_profiles(mesa_profile, parameters):
     line: string
         Line containing all the model- and spectroscopic parameters of the MESA profile.
     """
-    param_dict = sf.get_param_from_filename(mesa_profile, parameters)
+    param_dict = sf.get_param_from_filename(mesa_profile, parameters,values_as_float=True)
     prof_header, prof_data = read_mesa_file(mesa_profile)
 
     logL = np.log10(float(prof_header['photosphere_L']))
@@ -395,20 +397,20 @@ def spectro_from_profiles(mesa_profile, parameters):
     return line
 
 ################################################################################
-def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.tsv', model_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.hdf', model_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Combine the output files with the frequencies and spectroscopy of the grid in one new tsv file,
+    Combine the output files with the frequencies and spectroscopy of the grid in one new file,
     only keeping models that have entries in both the frequency and specto files.
     ------- Parameters -------
     grid_frequencies, grid_spectroscopy: string
-        Paths to the tsv files containing the model input parameters and corresponding frequency/spectroscopy of the model.
+        Paths to the files containing the model input parameters and corresponding frequency/spectroscopy of the model.
     output_name: string
-        Name of the generated tsv file containing the combined info.
+        Name of the generated file containing the combined info.
     model_parameters: list of string
         List of the model parameters to use for matching the entries in the freq/spectro file.
     """
-    freq_df    = pd.read_csv(grid_frequencies, delim_whitespace=True, header=0)
-    spectro_df = pd.read_csv(grid_spectroscopy, delim_whitespace=True, header=0)
+    freq_df    = pd.read_hdf(grid_frequencies)
+    spectro_df = pd.read_hdf(grid_spectroscopy)
     # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
     df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
 
@@ -419,5 +421,5 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     df_merged.insert(0, col.name, col)
     col = df_merged.pop("rot_err")
     df_merged.insert(1, col.name, col)
-    # write the merged dataFrame to a new tsv file
-    df_merged.to_csv(output_name, sep='\t',index=False)
+    # write the merged dataFrame to a new file
+    df_merged.to_hdf(f'{output_name}', 'puls_spectro_grid', format='table', mode='w')
