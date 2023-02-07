@@ -14,6 +14,8 @@ class pipelineConfig:
         Initialising the instance of the configuration.
 
         ------- Parameters -------
+        debugging: boolean
+            Set to True to set logger level to debug
         --- Settings about observational data ---
         star: string
             Name of the star, used for generating filenames
@@ -81,7 +83,8 @@ class pipelineConfig:
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger('logger')
-        self.logger.setLevel(logging.DEBUG)
+        if kwargs.pop("debugging", False):
+            self.logger.setLevel(logging.DEBUG)
 
         # Set the main top-level directory
         self.main_directory = os.getcwd()
