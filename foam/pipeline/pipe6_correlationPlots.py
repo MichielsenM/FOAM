@@ -10,7 +10,7 @@ if config.n_sigma_spectrobox != None:
 else:
     directory_prefix = f''
 
-files = glob.glob(f'extracted_freqs/*[!error_ellips].dat')
+files = glob.glob(f'extracted_freqs/*[!error_ellips].hdf')
 
 observations = config.observations
 for file in files:

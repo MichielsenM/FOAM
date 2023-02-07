@@ -66,7 +66,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_
     df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
 
     # theoretical models
-    df_Theo = pd.read_table(merit_values_file, delim_whitespace=True, header=0)
+    df_Theo = pd.read_hdf(merit_values_file)
     df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
