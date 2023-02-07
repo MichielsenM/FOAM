@@ -22,8 +22,15 @@ for grid in config.grids:
     spectro= f'../grid_summary/spectroGrid_{grid}.hdf'
     for method in config.pattern_methods:   # Methods to construct theoretical pulsation patterns
         puls_file = f'extracted_freqs/{observable}_{config.star}_{grid}_{method}.hdf'
-        bop.construct_theoretical_freq_pattern(f'../grid_summary/pulsationGrid_{grid}_{config.rotation_gyre}_{rotation_spin_direction}.hdf', config.observations, method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file, asymptotic_object=asymp_obj, estimated_rotation=config.rotation_gyre)
+
+        if not Path(puls_file).is_file():
+            bop.construct_theoretical_freq_pattern(f'../grid_summary/pulsationGrid_{grid}_{config.rotation_gyre}_{rotation_spin_direction}.hdf', config.observations, method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file, asymptotic_object=asymp_obj, estimated_rotation=config.rotation_gyre)
+        else:
+            config.logger.warning(f'file already existed: {puls_file}')
 
         # Merge spectro and pulsation info into one file
         output_name = f'{Path(puls_file).parent}/spectro+{Path(puls_file).name}'
-        ffm.add_spectro_to_puls_grid(puls_file, spectro, output_name)
+        if not Path(output_name).is_file():
+            ffm.add_spectro_to_puls_grid(puls_file, spectro, output_name)
+        else:
+            config.logger.warning(f'file already existed: {output_name}')
