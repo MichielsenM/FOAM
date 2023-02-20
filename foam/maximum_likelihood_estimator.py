@@ -765,7 +765,7 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_companion=None, isocloud_grid_directory=None, spectroGrid_file=None):
+def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_companion=None, isocloud_grid_summary=None, spectroGrid_file=None):
     """
     Enforce an n-sigma constraint on the models based on the spectoscopic observations.
     Save this as a file with prefix indicating how many sigma the error box was.
@@ -796,12 +796,13 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
     df_Theo = df_Theo[df_Theo.logL > Obs_dFrame['logL'][0]-nsigma*Obs_dFrame['logL_err'][0]]
 
     if spectro_companion is not None:
-        if (isocloud_grid_directory is None) or (spectroGrid_file is None):
+        if (isocloud_grid_summary is None) or (spectroGrid_file is None):
             logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid spectroscopy and ages.')
             sys.exit()
+
         spectroGrid_dataFrame = pd.read_hdf(spectroGrid_file)
         p = multiprocessing.Pool()
-        func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_directory=isocloud_grid_directory, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
+        func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
         for index_to_drop in p.imap(func, df_Theo.iterrows()):
             if index_to_drop is not None:
                 df_Theo.drop(index_to_drop, inplace=True)
@@ -841,7 +842,7 @@ def get_age(model, df):
     return min_age, max_age
 
 ################################################################################
-def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_grid_directory=None, nsigma=3, spectroGrid_dataFrame=None):
+def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_grid_summary=None, nsigma=3, spectroGrid_dataFrame=None):
     """
     Enforce an n-sigma constraint on the models based on spectoscopic observations of the binary companion employing isochrone-clouds.
     ------- Parameters -------
@@ -875,31 +876,34 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         M2_min = round(model.M/(q+q_err), 1)
         M2_max = round(model.M/(q-q_err), 1)
 
-    isocloud_files = glob.glob(f'{isocloud_grid_directory}/isocloud_*Zini{model.Z:.3f}*.tsv') #only use models with same metallicity
+    # isocloud_files = glob.glob(f'{isocloud_grid_directory}/isocloud_*Zini{model.Z:.3f}*.tsv') #only use models with same metallicity
+    isocloud_dict = isocloud_grid_summary[model.Z]
 
-    for file in isocloud_files:
-        param_dict = sf.get_param_from_filename(file, ['Zini','Mini'])
-        if float(param_dict['Mini']) < M2_min or float(param_dict['Mini']) > M2_max:
+    for key_Mass, df in zip(isocloud_dict.keys(), isocloud_dict.values()):
+        # param_dict = sf.get_param_from_filename(file, ['Zini','Mini'])
+        print(key_Mass)
+        if key_Mass < M2_min or key_Mass > M2_max:
             continue    # Only keep models that fall within mass range
         else:
-            df = pd.read_table(file, delim_whitespace=True, header=0)
+            print(f'Keep {key_Mass}')
+            # df = pd.read_table(file, delim_whitespace=True, header=0)
 
-            df = df[ ((df.M>M2_min) | (np.isclose(df.M, M2_min))) & ((df.M<M2_max) | (np.isclose(df.M, M2_min)))]
-            df = df[(df.age < max_age) & (df.age > min_age)]
+            # df = df[ ((df.M>M2_min) | (np.isclose(df.M, M2_min))) & ((df.M<M2_max) | (np.isclose(df.M, M2_min)))]
+            df = df[(df.star_age < max_age) & (df.star_age > min_age)]
 
             if df.shape[0] == 0:
                 continue
 
             # Check for all provided constraints if the track passes through the uncertainty region
             if spectro_companion['Teff'] is not None:
-                df=df[df.logTeff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
-                df=df[df.logTeff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
+                df=df[df.log_Teff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
+                df=df[df.log_Teff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
             if spectro_companion['logg'] is not None:
-                df=df[df.logg < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
-                df=df[df.logg > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
+                df=df[df.log_g < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
+                df=df[df.log_g > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
             if spectro_companion['logL'] is not None:
-                df=df[df.logL < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
-                df=df[df.logL > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
+                df=df[df.log_L < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
+                df=df[df.log_L > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
             if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
                 return None
     return index

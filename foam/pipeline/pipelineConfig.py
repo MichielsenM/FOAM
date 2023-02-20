@@ -112,7 +112,7 @@ class pipelineConfig:
         self.observable_list = kwargs.pop("observable_list", [['period'], ['period_spacing']])
         self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
         self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)
-        self.free_parameters = kwargs.pop("free_parameters", ['M', 'Z', 'logD', 'aov', 'fov', 'Xc'])
+        self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
         self.fixed_parameters = kwargs.pop("fixed_parameters", None)
         self.k = len(self.free_parameters) # Number of free parameters
         self.N_periods = kwargs.pop("N_periods", None)
