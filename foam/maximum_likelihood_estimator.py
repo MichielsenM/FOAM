@@ -16,6 +16,8 @@ from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
 from foam import functions_for_mesa as ffm
 
+import time
+
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 ################################################################################
 def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
@@ -795,18 +797,23 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
     df_Theo = df_Theo[df_Theo.logL < Obs_dFrame['logL'][0]+nsigma*Obs_dFrame['logL_err'][0]]
     df_Theo = df_Theo[df_Theo.logL > Obs_dFrame['logL'][0]-nsigma*Obs_dFrame['logL_err'][0]]
 
+    t1=time.perf_counter()
+    # print(f'Via hdf dataframe: {t2-t1}')
+    print(df_Theo)
     if spectro_companion is not None:
         if (isocloud_grid_summary is None) or (spectroGrid_file is None):
             logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid spectroscopy and ages.')
             sys.exit()
 
         spectroGrid_dataFrame = pd.read_hdf(spectroGrid_file)
-        p = multiprocessing.Pool()
+        p = multiprocessing.Pool(1)
         func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
         for index_to_drop in p.imap(func, df_Theo.iterrows()):
             if index_to_drop is not None:
                 df_Theo.drop(index_to_drop, inplace=True)
         p.close()
+    t2=time.perf_counter()
+    print(f'Via csv file: {t2-t1}')
 
     outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
     Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
@@ -864,6 +871,7 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
         Returns None if the binary constraints do not discard the model.
     """
+    t1=time.perf_counter()
     index, model = df_Theo_row
 
     min_age, max_age = get_age(model, spectroGrid_dataFrame)
@@ -876,16 +884,58 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         M2_min = round(model.M/(q+q_err), 1)
         M2_max = round(model.M/(q-q_err), 1)
 
+    t2=time.perf_counter()
+    print(f'start: {t2-t1}')
+    #
+    # t3=time.perf_counter()
+    # isocloud_grid_directory='/STER/mathiasm/modelling_KIC4930889/grid_summary/isocloud_summary'
     # isocloud_files = glob.glob(f'{isocloud_grid_directory}/isocloud_*Zini{model.Z:.3f}*.tsv') #only use models with same metallicity
+    #
+    # for file in isocloud_files:
+    #     param_dict = sf.get_param_from_filename(file, ['Zini','Mini'])
+    #     if float(param_dict['Mini']) < M2_min or float(param_dict['Mini']) > M2_max:
+    #         continue    # Only keep models that fall within mass range
+    #     else:
+    #         df = pd.read_table(file, delim_whitespace=True, header=0)
+    #
+    #         df = df[ ((df.M>M2_min) | (np.isclose(df.M, M2_min))) & ((df.M<M2_max) | (np.isclose(df.M, M2_min)))]
+    #         df = df[(df.age < max_age) & (df.age > min_age)]
+    #
+    #         if df.shape[0] == 0:
+    #             continue
+    #
+    #         # Check for all provided constraints if the track passes through the uncertainty region
+    #         if spectro_companion['Teff'] is not None:
+    #             df=df[df.logTeff < np.log10(spectro_companion['Teff']+nsigma*spectro_companion['Teff_err'])]
+    #             df=df[df.logTeff > np.log10(spectro_companion['Teff']-nsigma*spectro_companion['Teff_err'])]
+    #         if spectro_companion['logg'] is not None:
+    #             df=df[df.logg < spectro_companion['logg']+nsigma*spectro_companion['logg_err']]
+    #             df=df[df.logg > spectro_companion['logg']-nsigma*spectro_companion['logg_err']]
+    #         if spectro_companion['logL'] is not None:
+    #             df=df[df.logL < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
+    #             df=df[df.logL > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
+    #         if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
+    #             t4=time.perf_counter()
+    #             print(f'Via read files: {t4-t3}')
+    #             print(f'Full time iteration: {t4-t1}')
+    #
+    #             return None
+    #
+    # t4=time.perf_counter()
+    # print(f'Via read files: {t4-t3}')
+    # print(f'Full time iteration: {t4-t1}')
+    # return index
+    #
+
+    t3=time.perf_counter()
     isocloud_dict = isocloud_grid_summary[model.Z]
+
 
     for key_Mass, df in zip(isocloud_dict.keys(), isocloud_dict.values()):
         # param_dict = sf.get_param_from_filename(file, ['Zini','Mini'])
-        print(key_Mass)
         if key_Mass < M2_min or key_Mass > M2_max:
             continue    # Only keep models that fall within mass range
         else:
-            print(f'Keep {key_Mass}')
             # df = pd.read_table(file, delim_whitespace=True, header=0)
 
             # df = df[ ((df.M>M2_min) | (np.isclose(df.M, M2_min))) & ((df.M<M2_max) | (np.isclose(df.M, M2_min)))]
@@ -905,5 +955,11 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
                 df=df[df.log_L < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
                 df=df[df.log_L > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
             if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
+                t4=time.perf_counter()
+                print(f'selecting dataframe: {t4-t3}')
+                print(f'Full time iteration: {t4-t1}')
                 return None
+    t4=time.perf_counter()
+    print(f'Via hdf dataframe: {t4-t3}')
+    print(f'Full time iteration: {t4-t1}')
     return index

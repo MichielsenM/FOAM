@@ -14,12 +14,15 @@ if config.n_sigma_spectrobox != None:
     params.remove('Xc')
     summary = mg.gridSummary(params)
 
+    import time
+    t1=time.perf_counter()
     if not Path('isocloud_grid.h5').is_file():
         summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name='isocloud_grid.h5', file_ending='hist', files_directory_name='history')
     else:
-        print('read sum')
         summary.read_summary_file('isocloud_grid.h5')
-        print('done reading')
+
+    t2=time.perf_counter()
+    print(f'Reading took: {t2-t1}')
 
     isocloud_summary_dict = {}
     for Z in summary.Z_array:
@@ -34,6 +37,9 @@ if config.n_sigma_spectrobox != None:
                         df = pd.DataFrame( data = summary.grid_data[f'{Z:.3f}'][f'{M:.2f}'][f'{logD:.2f}'][f'{aov:.3f}'][f'{fov:.3f}'])
                         df_MZ = pd.concat([df_MZ, df], ignore_index=True)
             isocloud_summary_dict[Z].update({M : df_MZ })
+
+    t3=time.perf_counter()
+    print(f'Making dicts took: {t3-t2}')
 
     for grid in config.grids:
         files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.hdf')
