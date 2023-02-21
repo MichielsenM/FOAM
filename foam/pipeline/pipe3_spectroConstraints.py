@@ -2,9 +2,16 @@
 import glob
 from pathlib import Path
 import pandas as pd
+import multiprocessing
+from functools import partial
 from foam import maximum_likelihood_estimator as mle
 from foam import modelGrid as mg
 from foam.pipeline.pipelineConfig import config
+import os
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
 if config.n_sigma_spectrobox != None:
@@ -18,11 +25,13 @@ if config.n_sigma_spectrobox != None:
     t1=time.perf_counter()
     if not Path('isocloud_grid.h5').is_file():
         summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name='isocloud_grid.h5', file_ending='hist', files_directory_name='history')
+        t2=time.perf_counter()
+        print(f'Creating isocloud took: {t2-t1}')
     else:
         summary.read_summary_file('isocloud_grid.h5')
 
-    t2=time.perf_counter()
-    print(f'Reading took: {t2-t1}')
+        t2=time.perf_counter()
+        print(f'Reading isocloud took: {t2-t1}')
 
     isocloud_summary_dict = {}
     for Z in summary.Z_array:
@@ -43,10 +52,28 @@ if config.n_sigma_spectrobox != None:
 
     for grid in config.grids:
         files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.hdf')
+        files_kept = list(files)
         for file in files:
             output_file = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'
-            if not Path(output_file).is_file():
-                mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
-                                    spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
-            else:
+            if Path(output_file).is_file():
+                files_kept.remove(file)
                 config.logger.warning(f'file already existed: {output_file}')
+
+        with multiprocessing.Pool(2) as p:
+            func = partial( mle.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
+                                spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
+            # for result in p.map(func, files_kept):
+                # item=result
+            # p.map_async(func, files_kept)
+            p.map(func, files_kept)
+            p.close()
+            p.join()
+
+
+        # for file in files:
+        #     output_file = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'
+        #     v
+        #         mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
+        #                             spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
+        #     else:
+        #         config.logger.warning(f'file already existed: {output_file}')

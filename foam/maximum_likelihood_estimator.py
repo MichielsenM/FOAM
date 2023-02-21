@@ -767,7 +767,7 @@ def PdP_pattern_rope_length(P, P_error=[-1]):
 ################################################################################
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ################################################################################
-def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_companion=None, isocloud_grid_summary=None, spectroGrid_file=None):
+def spectro_constraint(merit_values_file, observations_file=None, nsigma=3, spectro_companion=None, isocloud_grid_summary=None, spectroGrid_file=None):
     """
     Enforce an n-sigma constraint on the models based on the spectoscopic observations.
     Save this as a file with prefix indicating how many sigma the error box was.
@@ -799,25 +799,90 @@ def spectro_constraint(merit_values_file, observations_file, nsigma=3, spectro_c
 
     t1=time.perf_counter()
     # print(f'Via hdf dataframe: {t2-t1}')
-    print(df_Theo)
+    # print( sum(1 for _ in df_Theo.iterrows()) )
     if spectro_companion is not None:
         if (isocloud_grid_summary is None) or (spectroGrid_file is None):
             logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid spectroscopy and ages.')
             sys.exit()
 
         spectroGrid_dataFrame = pd.read_hdf(spectroGrid_file)
-        p = multiprocessing.Pool(1)
+        # with multiprocessing.Pool(1) as p:
         func = partial(enforce_binary_constraints, spectro_companion=spectro_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
-        for index_to_drop in p.imap(func, df_Theo.iterrows()):
-            if index_to_drop is not None:
+        # df.apply(func, axis=1)
+        #     for index_to_drop in p.map(func, df_Theo.iterrows()):
+
+        # for row in df_Theo.iterrows():
+        #     print('iterrows')
+        #     print(row)
+        #     print(row[1].Z)
+        #     break
+        # for row in df_Theo.itertuples():
+        #     print('itertuple')
+        #     print(row)
+        #     print(row.Z)
+        #     break
+        # sys.exit()
+
+        # for row in df_Theo.itertuples():
+        #     index_to_drop = enforce_binary_constraints(row, spectro_companion=spectro_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, spectroGrid_dataFrame=spectroGrid_dataFrame)
+        #     if index_to_drop is not None:
+        #         df_Theo.drop(index_to_drop, inplace=True)
+
+        indices_to_drop = df_Theo.apply(func, axis=1)
+        for index_to_drop in indices_to_drop:
+            if (index_to_drop is not None) and (index_to_drop==index_to_drop):
                 df_Theo.drop(index_to_drop, inplace=True)
-        p.close()
+
     t2=time.perf_counter()
-    print(f'Via csv file: {t2-t1}')
+    print(f'Via hdf file, mp2: {t2-t1}')
 
     outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
     Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
     df_Theo.to_hdf(f'{outputFile}', 'spectro_constrained_models', format='table', mode='w')
+
+# import pandas as pd
+# from functools import partial
+# df = pd.DataFrame(data = [[1,2,3,4],[11,12,13,14], [118,112,13,25]], columns=['kol1', 'kol2', 'kol3', 'kol4'], index=[1,2,3])
+# df
+#
+# def remove_data(datafram, data_min=0, data_max=100):
+#     print(datafram)
+#     if datafram.kol2< data_max:
+#         return datafram.index
+#
+# def test(input, maxvalue=1):
+#     # print(input.kol1)
+#     # input.kol2+=1
+#     # print(input)
+#     # print(type(input))
+#     # print(input.name)
+#     print(input)
+#     if input.kol1 < maxvalue:
+#         return input.name
+#     else:
+#         return None
+#
+#
+# func = partial(test, maxvalue=10)
+# df
+# result = df.apply(func, axis=1)
+#
+# for r in df.iterrows():
+#     print(r)
+# for r in df.itertuples():
+#     print(r)
+#
+# df.apply(func, axis=1)
+# result
+#
+# for r in result:
+#     # print(r)
+#     if (r is not None) and (r==r):
+#         df.drop(r, inplace=True)
+#     else:
+#         continue
+#
+# df
 
 ################################################################################
 def get_age(model, df):
@@ -871,9 +936,9 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
         Returns None if the binary constraints do not discard the model.
     """
-    t1=time.perf_counter()
-    index, model = df_Theo_row
-
+    # t1=time.perf_counter()
+    model = df_Theo_row
+    tt1=time.perf_counter()
     min_age, max_age = get_age(model, spectroGrid_dataFrame)
     q= spectro_companion['q']
     q_err= spectro_companion['q_err']
@@ -884,8 +949,11 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
         M2_min = round(model.M/(q+q_err), 1)
         M2_max = round(model.M/(q-q_err), 1)
 
-    t2=time.perf_counter()
-    print(f'start: {t2-t1}')
+    # t2=time.perf_counter()
+    # print(f'start_f: {t2-t1}')
+    # #
+    # print(f'get_uxc: {tt2-tt1}')
+    # print(f'get_m/m: {tt3-tt2}')
     #
     # t3=time.perf_counter()
     # isocloud_grid_directory='/STER/mathiasm/modelling_KIC4930889/grid_summary/isocloud_summary'
@@ -926,8 +994,7 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
     # print(f'Full time iteration: {t4-t1}')
     # return index
     #
-
-    t3=time.perf_counter()
+    # t3=time.perf_counter()
     isocloud_dict = isocloud_grid_summary[model.Z]
 
 
@@ -955,11 +1022,11 @@ def enforce_binary_constraints(df_Theo_row, spectro_companion=None, isocloud_gri
                 df=df[df.log_L < spectro_companion['logL']+nsigma*spectro_companion['logL_err']]
                 df=df[df.log_L > spectro_companion['logL']-nsigma*spectro_companion['logL_err']]
             if df.shape[0] > 0: #If some models fall within the constraints, return None to not remove the model.
-                t4=time.perf_counter()
-                print(f'selecting dataframe: {t4-t3}')
-                print(f'Full time iteration: {t4-t1}')
+                # t4=time.perf_counter()
+                # print(f'selecting dataframe: {t4-t3}')
+                # print(f'Full time iteration: {t4-t1}')
                 return None
-    t4=time.perf_counter()
-    print(f'Via hdf dataframe: {t4-t3}')
-    print(f'Full time iteration: {t4-t1}')
-    return index
+    # t4=time.perf_counter()
+    # print(f'Via hdf dataframe: {t4-t3}')
+    # print(f'Full time iteration: {t4-t1}')
+    return model.name
