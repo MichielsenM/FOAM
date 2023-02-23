@@ -8,9 +8,7 @@ from foam import maximum_likelihood_estimator as mle
 from foam import modelGrid as mg
 from foam.pipeline.pipelineConfig import config
 import os
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
+
 
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
@@ -59,7 +57,7 @@ if config.n_sigma_spectrobox != None:
                 files_kept.remove(file)
                 config.logger.warning(f'file already existed: {output_file}')
 
-        with multiprocessing.Pool(2) as p:
+        with multiprocessing.Pool(1) as p:
             func = partial( mle.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
                                 spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
             # for result in p.map(func, files_kept):

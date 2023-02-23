@@ -834,7 +834,7 @@ def spectro_constraint(merit_values_file, observations_file=None, nsigma=3, spec
                 df_Theo.drop(index_to_drop, inplace=True)
 
     t2=time.perf_counter()
-    print(f'Via hdf file, mp2: {t2-t1}')
+    print(f'Via hdf file, mp1: {t2-t1}')
 
     outputFile = f'{nsigma}sigmaSpectro_{merit_values_file}'
     Path(outputFile).parent.mkdir(parents=True, exist_ok=True)
