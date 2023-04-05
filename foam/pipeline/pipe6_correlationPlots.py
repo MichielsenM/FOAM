@@ -1,7 +1,7 @@
 """Make the correlation plots of the grid for the different modelling methodologies."""
 from pathlib import Path
 import glob
-from foam import maximum_likelihood_estimator as mle
+from foam import figures
 from foam import support_functions as sf
 from foam.pipeline.pipelineConfig import config
 ################################################################################
@@ -22,4 +22,4 @@ for file in files:
     if not Path(file_ErrorEllips).is_file():
         continue
     if not Path(f'{directory_prefix}figures_correlation/{title}.png').is_file():
-        mle.corner_plot(file, file_ErrorEllips, observations, fig_title=title, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox )
+        figures.corner_plot(file, file_ErrorEllips, observations, fig_title=title, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox )

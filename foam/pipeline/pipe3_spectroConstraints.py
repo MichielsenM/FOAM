@@ -4,11 +4,9 @@ from pathlib import Path
 import pandas as pd
 import multiprocessing
 from functools import partial
-from foam import maximum_likelihood_estimator as mle
+from foam import additional_constraints as ac
 from foam import modelGrid as mg
 from foam.pipeline.pipelineConfig import config
-import os
-
 
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
@@ -58,7 +56,7 @@ if config.n_sigma_spectrobox != None:
                 config.logger.warning(f'file already existed: {output_file}')
 
         with multiprocessing.Pool(1) as p:
-            func = partial( mle.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
+            func = partial( ac.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
                                 spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
             # for result in p.map(func, files_kept):
                 # item=result
@@ -70,8 +68,8 @@ if config.n_sigma_spectrobox != None:
 
         # for file in files:
         #     output_file = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'
-        #     v
-        #         mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
+        #     if not (Path(output_file).is_file()):
+        #         ac.spectro_constraint(file, observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
         #                             spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
         #     else:
         #         config.logger.warning(f'file already existed: {output_file}')
