@@ -26,7 +26,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Path to the tsv file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Can contain 'frequencies' or 'periods', 'period_spacing', and 'rope_length', which will be computed for the period pattern.
+        Can contain 'frequencies' or 'periods', and 'period_spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
@@ -127,7 +127,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Row index in the dataFrame of the theoretical model to make the array for.
     observables_in: list of strings
         Which observables are included in the returned array.
-        Can contain 'frequency', 'period', 'period_spacing', and/or 'rope_length', which will be computed for the period pattern.
+        Can contain 'frequency', 'period', and/or 'period_spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
@@ -156,12 +156,6 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
             observables_out = np.append(observables_out, spacing)   # Include dP as observables
         observables.remove('period_spacing')
 
-    if 'rope_length' in observables:
-        for periods_part in np.split(periods,missing_indices):
-            RL, error = PdP_pattern_rope_length(periods_part)
-            observables_out = np.append(observables_out, RL)        # Include pattern rope length as observable
-        observables.remove('rope_length')
-
     # Add all other observables in the list from the dataFrame
     for observable in observables:
         observables_out = np.append(observables_out, np.asarray(Theo_dFrame.loc[index,observable]))
@@ -178,7 +172,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     observables: list of strings
         Which observables are included in the returned array, must contain 'frequency' or 'period'.
-        Can contain 'period_spacing' and 'rope_length', which will be computed for the period pattern.
+        Can contain 'period_spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
 
     ------- Returns -------
@@ -226,15 +220,6 @@ def create_obs_observables_array(Obs_dFrame, observables):
         if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
         filename_suffix+='dP'
         observables.remove('period_spacing')
-
-    if 'rope_length' in observables:
-        for periods, periodsErr in zip(periods_parts, periodsErr_parts):
-            RL, error = PdP_pattern_rope_length(periods, P_error=periodsErr)
-            observables_out = np.append(observables_out, RL)      # Include pattern rope length as observable
-            observablesErr_out = np.append(observablesErr_out, error)
-
-        filename_suffix+='-rl'
-        observables.remove('rope_length')
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:
@@ -361,45 +346,3 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
         # plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
         plt.clf()
         plt.close('all')
-
-################################################################################
-def PdP_pattern_rope_length(P, P_error=[-1]):
-    """
-    Calculate the rope length of the period spacing pattern (total eucledian distance between each consecutive point in P-dP space).
-    ------- Parameters -------
-    P, P_error: numpy array of float
-        Periods (P) their errors.
-
-    ------- Returns -------
-    total_length, total_error: float
-        The sum of the eucledian distance between each consecutive point in P-dP space (P in days, dP in seconds)
-        and the error on this total length.
-    """
-    if P_error[0] != -1:
-        dP, dP_error = ffg.generate_spacing_series(P, P_error)
-    else:
-        dP, _ = ffg.generate_spacing_series(P)
-
-    total_length=0
-    deltas_lengths = []
-    for i in range(len(dP)-1):
-        dx = P[i]-P[i+1]
-        dy = dP[i]-dP[i+1]
-        total_length += np.sqrt(dx**2+dy**2)
-
-        # calculate the error on the length between each of the P-dP points
-        if P_error[0] != -1:
-            delta_dx = np.sqrt( P_error[i]**2 + P_error[i+1]**2  )
-            delta_dy = np.sqrt( dP_error[i]**2 + dP_error[i+1]**2  )
-
-            delta_length = np.sqrt( ((dx*delta_dx)**2 + (dy*delta_dy)**2) /(dx**2 + dy**2) )
-            deltas_lengths.append(delta_length)
-
-    # calculate the total resulting error on the length of the whole pattern
-    total_error = 0
-    if P_error[0] != -1:
-        for delta in deltas_lengths:
-            total_error+= delta**2
-        total_error = np.sqrt(total_error)
-
-    return total_length, total_error
