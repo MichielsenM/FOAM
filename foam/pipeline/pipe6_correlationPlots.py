@@ -1,6 +1,7 @@
 """Make the correlation plots of the grid for the different modelling methodologies."""
 from pathlib import Path
-import glob
+import glob, multiprocessing
+from functools import partial
 from foam import figures
 from foam import support_functions as sf
 from foam.pipeline.pipelineConfig import config
@@ -12,7 +13,7 @@ else:
 
 files = glob.glob(f'extracted_freqs/*[!error_ellips].hdf')
 
-observations = config.observations
+args = []
 for file in files:
     Path_file = Path(file)
     title = Path_file.stem
@@ -22,4 +23,8 @@ for file in files:
     if not Path(file_ErrorEllips).is_file():
         continue
     if not Path(f'{directory_prefix}figures_correlation/{title}.png').is_file():
-        figures.corner_plot(file, file_ErrorEllips, observations, fig_title=title, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox )
+        args.append((file, file_ErrorEllips, title))
+
+with multiprocessing.Pool() as p:
+    func = partial(figures.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox  )
+    p.starmap(func, args)

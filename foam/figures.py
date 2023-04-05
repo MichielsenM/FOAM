@@ -8,7 +8,7 @@ from matplotlib.ticker import AutoMinorLocator
 from pathlib import Path
 
 ################################################################################
-def corner_plot(merit_values_file, merit_values_file_error_ellips, observations_file, fig_title=None, label_size=20, fig_outputDir='figures_correlation/',
+def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
                       percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
