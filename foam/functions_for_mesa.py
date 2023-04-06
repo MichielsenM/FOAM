@@ -251,7 +251,7 @@ def plot_HRD(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
                 return
 
 ################################################################################
-def plot_KHD(hist_file, ax=None, number_mix_zones=8):
+def plot_KHD(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
     """
     Makes a Kippenhahn plot from a provided history file
     ------- Parameters -------
@@ -259,24 +259,42 @@ def plot_KHD(hist_file, ax=None, number_mix_zones=8):
         The path to the history file to be used for the plot.
     ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
+    number_mix_zones: int
+        Number of mixing zones included in the mesa history file
+    xaxis: String
+        quantity to put on the x-axis of the plot (e.g. model_number or star_age)
     """
-
     if ax is None:
-        fig = plt.figure()
+        fig = plt.figure( figsize=(10, 4))
         ax = fig.add_subplot(111)
 
     header, data = read_mesa_file(hist_file)
 
+    xvals=data[xaxis]
+    M_star = data['star_mass']
+    M_ini  = M_star[0]
+
     N_mix = number_mix_zones
     for j in range(N_mix):
-        colours = {'-1':'w', '0':'g', '1':'grey', '2':'b', '7':'g'}
+        colours = {'-1':'w', '0':'w', '1':'lightgrey', '2':'b', '7':'g', '3':'cornflowerblue', '8':'red'}
         if j == N_mix-1:
-            ax.vlines(data['model_number'], 0, data[f'mix_qtop_{N_mix-j}'], color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+            ax.vlines(xvals, 0, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
         else:
-            ax.vlines(data['model_number'], data[f'mix_qtop_{N_mix-1-j}'], data[f'mix_qtop_{N_mix-j}'], color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+            ax.vlines(xvals, data[f'mix_qtop_{N_mix-1-j}']*M_star/M_ini, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+
+    ax.plot(xvals, M_star / M_ini, lw=1, color='black', label=f'{M_ini:.1f} $M_\odot$')
+
+    ax.set_xlim(min(xvals)*0.99, max(xvals)*1.01)
+    ax.set_ylim(0, 1.02)
+
+    ax.plot([], [], lw=10, color='lightgrey', label=r'Convective') # Only to make it appear in the Legend
+    ax.plot([], [], lw=10, color='cornflowerblue', label=r'CBM')   # Only to make it appear in the Legend
+    ax.legend(bbox_to_anchor=(0.15, 0.97), fontsize=10, frameon=False, fancybox=False, shadow=False, borderpad=False)
+    ax.set_ylabel(r'Relative Mass $\, m/M_\star$')
+    ax.set_xlabel(xaxis)
+    plt.tight_layout()
 
     return
-
 
 ################################################################################
 def calculate_number_densities(hist_file):
