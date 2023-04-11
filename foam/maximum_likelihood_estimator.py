@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
-from foam import functions_for_mesa as ffm
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 

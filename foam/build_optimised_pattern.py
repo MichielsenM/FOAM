@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import astropy.units as u
-import multiprocessing, csv, sys
+import multiprocessing, sys
 from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters

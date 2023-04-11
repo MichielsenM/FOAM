@@ -2,8 +2,7 @@
 from pathlib import Path
 import glob, multiprocessing
 from functools import partial
-from foam import figures
-from foam import support_functions as sf
+from foam import plot_tools
 from foam.pipeline.pipelineConfig import config
 ################################################################################
 if config.n_sigma_spectrobox != None:
@@ -26,5 +25,5 @@ for file in files:
         args.append((file, file_ErrorEllips, title))
 
 with multiprocessing.Pool() as p:
-    func = partial(figures.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox  )
+    func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox  )
     p.starmap(func, args)
