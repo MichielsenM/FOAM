@@ -270,3 +270,218 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     plt.close('all')
 
 ################################################################################
+def plot_mesa_file(profile_file, x_value, y_value, ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None):
+    """
+    Plot the requested quantities for the given MESA profile or history file.
+    ------- Parameters -------
+    profile_file: String
+        The path to the profile file to be used for the plotting.
+    x_value, y_value,: String
+        The parameters of the profile plotted on the x and y axis.
+        If x_value is mass or radius, it will be put in units relative to the total mass or radius
+    ax: an axis object
+        Axes object on which the plot will be made. If None: make figure and axis within this function.
+    label_size, alpha: float
+        The size of the labels in the figure, and transparency of the plot
+    colour, linestyle, label: float
+        Settings for the plot
+    legend: boolean
+        Flag to enable or disable a legend on the figure
+    """
+    if ax is None:
+        fig=plt.figure()
+        ax = fig.add_subplot(111)
+
+    header, data = read_mesa_file(profile_file)
+    # from "data", extract the columns
+    y   = np.asarray(data[y_value])
+    x   = np.asarray(data[x_value])
+    if label == None:   #Set the label to be the name of the y variable
+        label = y_value
+    if x_value == 'radius' or x_value == 'mass':
+        x = x/x[0] # normalized radius/mass coordinates
+        ax.set_xlim(0,1)
+    # generate the plot, in which colour will not be specified
+    if colour == '':
+        ax.plot( x , y, label=label, linestyle=linestyle, alpha=alpha)
+    # generate the plot, in which colour will be specified
+    else:
+        ax.plot( x , y, label=label, linestyle=linestyle, alpha=alpha, color=colour)
+    if legend is True:
+        ax.legend(loc='best', prop={'size': label_size})
+    ax.set_xlabel(x_value, size=label_size)
+    ax.set_ylabel(y_value, size=label_size)
+
+################################################################################
+def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None, bins=200):
+    """
+    Make a histogram of the mesh points in the MESA profile
+    ------- Parameters -------
+    profile_file: String
+        The path to the profile file to be used for the plotting.
+    x_value: String
+        The x value to use for the histogram
+        If x_value is mass or radius, it will be put in units relative to the total mass or radius
+    ax: an axis object
+        Axes object on which the plot will be made. If None: make figure and axis within this function.
+    label_size, alpha: float
+        The size of the labels in the figure, and KHDtransparency of the plot
+    colour, linestyle, label: float
+        Settings for the plot
+    legend: boolean
+        Flag to enable or disable a legend on the figure.
+    bins: int
+        Number of bins used in the histogram
+    """
+    if ax is None:
+        fig=plt.figure()
+        ax = fig.add_subplot(111)
+
+    header, data = read_mesa_file(profile_file)
+    print(f'Total zones of {profile_file} : {header["num_zones"]}')
+
+    # from "data", extract the columns
+    x   = np.asarray(data[x_value])
+    if label == None:   #Set the label to be the name of the y variable
+        legend = False
+    if x_value == 'radius' or x_value == 'mass':
+        x = x/x[0] # normalized radius/mass coordinates
+        ax.set_xlim(0,1)
+    # generate the plot, in which colour will not be specified
+    if colour == '':
+        ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle)
+    # generate the plot, in which colour will be sKHDpecified
+    else:
+        ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle, color=colour)
+    # generate a legend if true
+    if legend is True:
+        ax.legend(loc='best', prop={'size': label_size})
+    ax.set_xlabel(x_value, size=label_size)
+    ax.set_ylabel('Meshpoints', size=label_size)
+
+################################################################################
+def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16,
+    Xc_marked=None, Teff_logscale=True, start_track_from_Xc=None, diagram='HRD'):
+    """
+    Makes an HRD plot from a provided MESA history file
+    ------- Parameters -------
+    hist_file: String
+        The path to the profile file to be used for the plot.
+    ax: an axis objectKHD
+        Axes object on which the plot will be made. If None: make figure and axis within this function.
+    colour, linestyle, label: strings
+        Specify the colour, linestyle and label of the plotted data.
+    label_size: float
+        The size of the labels in the figure.
+    Xc_marked: list of floats
+        Models with these Xc values are marked with red dots on the plot (listed in increasing value).
+    Teff_logscale: boolean
+        Plot effective temperature in logscale (True), or not (False).
+    start_track_from_Xc: float
+        Only start plotting the track if Xc drops below this value (e.g. to not plot the initial relaxation loop).
+    diagram: string
+        Type of diagram that is plotted. Options are HRD (logL vs logTeff), sHRD (log(Teff^4/g) vs logTeff) or kiel (logg vs logTeff).
+    """
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+    header, data = read_mesa_file(hist_file)
+
+    # From "data", extract the required columns as numpy arrays
+    log_L     = np.asarray(data['log_L'])    plt.close('all')
+    log_Teff  = np.asarray(data['log_Teff'])
+    log_g     = np.asarray(data['log_g'])
+    center_h1 = np.asarray(data['center_h1'])
+    plt.close('all')
+    # Plot the x-axis in log scale
+    if Teff_logscale:
+        T = log_Teff
+        ax.set_xlabel(r'log(T$_{\mathrm{eff}}$)', size=label_size)
+    # Plot the x-axis in linear scaleKHD
+    else:
+        T = 10**log_Teff
+        ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
+
+    # Plot HRD
+    if diagram == 'HRD':
+        y_axis = log_L
+        ax.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
+    # Plot sHRD (log_Teff^4/log_g vs log_Teff)
+    elif diagram == 'sHRD':
+        log_Lsun = 10.61
+        y_axis = 4*log_Teff - log_g - log_Lsun
+        ax.set_ylabel(r'$\log \left(\frac{{T_{\mathrm{eff}}}^4}{g}\right) \ (\mathscr{L}_\odot)$', size=label_size)
+    # Plot Kiel diagram (log_g vs log_Teff)
+    elif diagram == 'kiel':
+        y_axis = log_g
+        ax.set_ylabel(r'log g [dex]', size=label_sKHDize)
+
+    # Start plotting from Xc value
+    if start_track_from_Xc!= None:
+        for i in range(len(center_h1)):
+            if center_h1[i] < start_track_from_Xc:
+                T = T[i:]
+                y_axis = y_axis[i:]
+                break
+
+    # Plot the HRD diagram (log_L vs. T)
+    ax.plot(T, y_axis, color = colour, linestyle = linestyle, label = label)
+
+    # Put specific marks on the HRD diagram
+    if Xc_marked is None:
+        return
+    k = 0
+    for i in range(len(center_h1)-1, -1, -1):
+        if center_h1[i] > Xc_marked[k]:
+            ax.scatter( T[i] , log_L[i], marker='o', color = 'red', lw=2)
+            k += 1
+            if k >= len(Xc_marked):
+                return
+
+################################################################################
+def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
+    """
+    Makes a Kippenhahn plot from a provided MESA history file
+    ------- Parameters -------
+    hist_file: String
+        The path to the history file to be used for the plot.
+    ax: an axis object
+        Axes object on which the plot will be made. If None: make figure and axis within this function.
+    number_mix_zones: int
+        Number of mixing zones included in the mesa history file
+    xaxis: String
+        quantity to put on the x-axis of the plot (e.g. model_number or star_age)
+    """
+    if ax is None:
+        fig = plt.figure( figsize=(10, 4))
+        ax = fig.add_subplot(111)
+
+    header, data = read_mesa_file(hist_file)
+
+    xvals=data[xaxis]
+    M_star = data['star_mass']
+    M_ini  = M_star[0]
+
+    N_mix = number_mix_zones
+    for j in range(N_mix):
+        colours = {'-1':'w', '0':'w', '1':'lightgrey', '2':'b', '7':'g', '3':'cornflowerblue', '8':'red'}
+        if j == N_mix-1:
+            ax.vlines(xvals, 0, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+        else:
+            ax.vlines(xvals, data[f'mix_qtop_{N_mix-1-j}']*M_star/M_ini, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+
+    ax.plot(xvals, M_star / M_ini, lw=1, color='black', label=f'{M_ini:.1f} $M_\odot$')
+
+    ax.set_xlim(min(xvals)*0.99, max(xvals)*1.01)
+    ax.set_ylim(0, 1.02)
+
+    ax.plot([], [], lw=10, color='lightgrey', label=r'Convective') # Only to make it appear in the Legend
+    ax.plot([], [], lw=10, color='cornflowerblue', label=r'CBM')   # Only to make it appear in the Legend
+    ax.legend(bbox_to_anchor=(0.15, 0.97), fontsize=10, frameon=False, fancybox=False, shadow=False, borderpad=False)
+    ax.set_ylabel(r'Relative Mass $\, m/M_\star$')
+    ax.set_xlabel(xaxis)
+    plt.tight_layout()
+
+    return
+################################################################################
