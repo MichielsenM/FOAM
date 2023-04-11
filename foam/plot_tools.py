@@ -81,7 +81,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
     merit_values_file, merit_values_file_error_ellips: string
-        Path to the tsv files with the merit function values and parameters of the models in the grid,
+        Path to the hdf5 files with the merit function values and parameters of the models in the grid,
         and of just the models in the error ellips.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
@@ -114,7 +114,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
             }
     CustomCMap = LinearSegmentedColormap('CustomMap', cdict)
     # theoretical models within the error ellips
-    df_Theo_EE = pd.read_table(merit_values_file_error_ellips, delim_whitespace=True, header=0)
+    df_Theo_EE = pd.read_hdf(merit_values_file_error_ellips, delim_whitespace=True, header=0)
     df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
 
     # theoretical models

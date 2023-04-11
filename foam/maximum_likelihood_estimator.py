@@ -22,7 +22,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     Theo_file: string
-        Path to the tsv file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
+        Path to the hdf5 file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
         Can contain 'frequencies' or 'periods', and 'period_spacing', which will be computed for the period pattern.
@@ -145,7 +145,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
         observables.remove('frequency')
     else:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the tsv file was in periods if nothing was specified
+        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the file was in periods if nothing was specified
         observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
 
     if 'period_spacing' in observables:

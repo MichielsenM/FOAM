@@ -122,7 +122,7 @@ def sign(x):
 ################################################################################
 def get_subgrid_dataframe(file_to_read, fixed_params=None):
     """
-    Read a tsv file containing the grid information as a pandas dataframe.
+    Read a hdf5 file containing the grid information as a pandas dataframe.
     Parameters can be fixed to certain values to fiter out entries with other values of that parameter.
     ------- Parameters -------
     file_to_read: string

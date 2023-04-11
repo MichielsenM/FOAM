@@ -10,7 +10,7 @@ def spectro_constraint(merit_values_file, observations_file=None, nsigma=3, spec
     Save this as a file with prefix indicating how many sigma the error box was.
     ------- Parameters -------
     merit_values_file: string
-        Path to the tsv files with the merit funtion values and the spectroscopic info of the models in the grid.
+        Path to the hdf5 files with the merit funtion values and the spectroscopic info of the models in the grid.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
