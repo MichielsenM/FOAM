@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --cluster=wice
+#SBATCH --job−name='mesa_grid'
+#SBATCH --nodes=8
+#SBATCH --ntasks-per-node=72
+#SBATCH --partition=batchlong
+#SBATCH --time='7-00:00:00'
+#SBATCH --account=lp_wice_pilot
+#SBATCH --mail-type ='BEGIN,END,FAIL,TIME_LIMIT'
+#SBATCH --mail-user='XXXXX.XXXXX@kuleuven.be'
+
+module purge
+source $VSC_HOME/.bashrc
+export OMP_NUM_THREADS=1
+
+bash run_MESA.sh $Zini $Mini $logD $aov $fov $output_dir $MESA_work_dir
+
+# This script is submitted to the cluster with the following 2 commands (default worker module gives issues)
+# module use /apps/leuven/skylake/2021a/modules/all
+# module load worker/1.6.12-intel-2021a-wice
+# wsub -data MESA_parameters.csv -batch submit_MESA.pbs
+
+# Adjust the #SBATCH settings at the top of this file (email, nodes, etc.) according to your needs.

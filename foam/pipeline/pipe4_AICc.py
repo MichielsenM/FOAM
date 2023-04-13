@@ -1,23 +1,10 @@
-"""Ignore all the models that fall outside an n-sigma spectroscopic error box.
-Calculate the AICc (Akaike information criterion, corrected for small sample size) and write to a tsv.
-"""
+""" Calculate the AICc (Akaike information criterion, corrected for small sample size) and write to a tsv. """
 import glob, sys
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from foam import support_functions as sf
-from foam import maximum_likelihood_estimator as mle
 from foam.pipeline.pipelineConfig import config
-################################################################################
-# Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
-if config.n_sigma_spectrobox != None:
-    observations = config.observations
-    for grid in config.grids:
-        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.dat')
-        for file in files:
-            mle.spectro_constraint(file, observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.tsv',
-                                    spectro_companion=config.spectro_companion, isocloud_grid_directory=config.isocloud_grid_directory)
-
 ################################################################################
 k = config.k            # number of free paramters in the grid
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
@@ -41,11 +28,11 @@ for i in range(0, df_AICc_Chi2['method'].size):
 for merit in config.merit_functions:
     merit = merit_abbrev[merit]
     for obs in config.observable_aic:
-        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.dat')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
-            df = pd.read_csv(file, delim_whitespace=True, header=0)
+            df = pd.read_hdf(file)
             df = df.sort_values('meritValue', ascending=True)
 
             # Calculate the AICc

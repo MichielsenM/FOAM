@@ -14,16 +14,17 @@ Frequencies are preferred to be listed decreasing in value, so increasing in per
 
 ## contents
 
-1. `0_extract_puls&spectro.py`: Extract all spectroscopic info from MESA profiles and all frequencies from GYRE models in a grid.
-2. `1_construct_pattern.py`: Construct the theoretical pulsation patterns and merge with spectroscopic info into one file.
-3. `2_calculate_likelihood.py`: Calculate the likelihood of all the theoretical patterns according to the specified merit functions.
-4. `3_spectroClip_AICc.py`: Calculate the AICc, ignoring all the models that fall outside an n-sigma spectroscopic error box.
-5. `4_bestModel_errors.py`: Calculate the 2 sigma uncertainty region of the maximum likelihood solution.
-6. `5_correlationPlots.py`: Make the correlation plots of the grid for the different modelling methodologies.
+1. `pipe0_extract_puls_and_spectro.py`: Extract all spectroscopic info from MESA profiles and all frequencies from GYRE models in a grid.
+2. `pipe1_construct_pattern.py`: Construct the theoretical pulsation patterns and merge with spectroscopic info into one file.
+3. `pipe2_calculate_likelihood.py`: Calculate the likelihood of all the theoretical patterns according to the specified merit functions.
+4. `pipe3_spectroConstraints.py`: Select all the models that fall inside an n-sigma spectroscopic error box.
+5. `pipe4_AICc.py`: Calculate the AICc
+6. `pipe5_bestModel_errors.py`: Calculate the 2 sigma uncertainty region of the maximum likelihood solution.
+7. `pipe6_correlationPlots.py`: Make the correlation plots of the grid for the different modelling methodologies.
+8. `pipe7_table_bestModels.py`: Write the best models of the grid as a table
 
-7. `example_config.py`: Example of a configuration file for the pipeline
-8. `pipeline.py`: The top level script that runs the others sequentially.
-9. `table_bestModels.py`: Write the best models of the grid as a LaTeX table.
+9. `pipeline.py`: The top level script that runs the others sequentially.
+10 `pipelineConfig.py` : A python class to keep the configuration settings of the modelling pipeline.
 
 ### Author
 Developed by Mathias Michielsen

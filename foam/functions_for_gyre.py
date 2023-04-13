@@ -39,7 +39,7 @@ def generate_spacing_series(periods, errors=None):
     return spacings, spacings_errors
 
 ################################################################################
-def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
     Extract frequencies from each globbed GYRE file and write them to 1 large file.
     ------- Parameters -------
@@ -55,13 +55,13 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
 
     # Glob all the files, then iteratively send them to a pool of processors
     summary_files = glob.iglob(gyre_files)
-    p = multiprocessing.Pool()
-    extract_func = partial(all_freqs_from_summary, parameters=parameters)
-    dictionaries = p.imap(extract_func, summary_files)
-    for new_row in dictionaries:
-        MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
+    with multiprocessing.Pool() as p:
+        extract_func = partial(all_freqs_from_summary, parameters=parameters)
+        dictionaries = p.imap(extract_func, summary_files)
+        for new_row in dictionaries:
+            MP_list.append(new_row)   # Fill the listProxy with dictionaries for each read file
 
-    df = pd.DataFrame(data=list(MP_list))
+        df = pd.DataFrame(data=list(MP_list))
     # Sort the columns with frequencies by their radial order
     column_list = list(df.columns[:len(parameters)])
     column_list.extend(sorted(df.columns[len(parameters):]))
@@ -69,8 +69,8 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.tsv', paramete
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_file, sep='\t',index=False) # write the dataframe to a tsv file
-    p.close()
+    df.to_hdf(f'{output_file}', 'pulsgrid', format='table', mode='w')
+
 ################################################################################
 def all_freqs_from_summary(GYRE_summary_file, parameters):
     """
@@ -87,7 +87,7 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
     """
 
     attributes, data = sf.read_hdf5(GYRE_summary_file)
-    param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters)
+    param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters, values_as_float=True)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
         n_pg = data["n_pg"][j]
