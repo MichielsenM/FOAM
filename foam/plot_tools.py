@@ -6,7 +6,7 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.ticker import AutoMinorLocator
 from pathlib import Path
-
+from foam import functions_for_mesa as ffm
 ################################################################################
 def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', label_size=22, xlim=[],
                         left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8]):
@@ -292,7 +292,7 @@ def plot_mesa_file(profile_file, x_value, y_value, ax=None, label_size=16, colou
         fig=plt.figure()
         ax = fig.add_subplot(111)
 
-    header, data = read_mesa_file(profile_file)
+    header, data = ffm.read_mesa_file(profile_file)
     # from "data", extract the columns
     y   = np.asarray(data[y_value])
     x   = np.asarray(data[x_value])
@@ -337,7 +337,7 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
         fig=plt.figure()
         ax = fig.add_subplot(111)
 
-    header, data = read_mesa_file(profile_file)
+    header, data = ffm.read_mesa_file(profile_file)
     print(f'Total zones of {profile_file} : {header["num_zones"]}')
 
     # from "data", extract the columns
@@ -386,14 +386,13 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-    header, data = read_mesa_file(hist_file)
+    header, data = ffm.read_mesa_file(hist_file)
 
     # From "data", extract the required columns as numpy arrays
-    log_L     = np.asarray(data['log_L'])    plt.close('all')
+    log_L     = np.asarray(data['log_L'])
     log_Teff  = np.asarray(data['log_Teff'])
     log_g     = np.asarray(data['log_g'])
     center_h1 = np.asarray(data['center_h1'])
-    plt.close('all')
     # Plot the x-axis in log scale
     if Teff_logscale:
         T = log_Teff
@@ -457,7 +456,7 @@ def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
         fig = plt.figure( figsize=(10, 4))
         ax = fig.add_subplot(111)
 
-    header, data = read_mesa_file(hist_file)
+    header, data = ffm.read_mesa_file(hist_file)
 
     xvals=data[xaxis]
     M_star = data['star_mass']
