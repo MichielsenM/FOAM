@@ -1,6 +1,6 @@
 """Write the best models of the grid as a LaTeX table."""
 import pandas as pd
-import config
+from foam.pipeline.pipelineConfig import config
 ################################################################################
 if config.n_sigma_spectrobox != None:
     directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
@@ -34,8 +34,8 @@ for pattern in config.pattern_methods:
         merit = merit_abbrev[merit]
         for grid in config.grids:
             for obs in config.observable_aic:
-                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
-                df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
+                df = pd.read_hdf(MLE_values_file)
                 best_model = df.loc[df['meritValue'].idxmin()]
                 best_model_dict.update({f'{grid} {merit} {obs} {pattern}': best_model})
 
@@ -53,8 +53,8 @@ for merit in config.merit_functions:
     for grid in config.grids:
         for obs in config.observable_aic:
             for pattern in config.pattern_methods:
-                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.dat'
-                df = pd.read_csv(MLE_values_file, delim_whitespace=True, header=0)
+                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
+                df = pd.read_hdf(MLE_values_file)
 
                 if 'chi2' in config.merit_functions:
                     best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
