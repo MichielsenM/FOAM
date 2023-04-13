@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import astropy.units as u
-import multiprocessing, csv, sys
+import multiprocessing, sys
 from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters
@@ -47,7 +47,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-    Theo_dFrame = pd.read_table(pulsationGrid_file, delim_whitespace=True, header=0)
+    Theo_dFrame = pd.read_hdf(pulsationGrid_file)
 
     Obs    = np.asarray(Obs_dFrame[which_observable])
     ObsErr = np.asarray(Obs_dFrame[f'{which_observable}_err'])
@@ -58,25 +58,28 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
-    p = multiprocessing.Pool()
-    freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
+    with multiprocessing.Pool() as p:
+        freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
+        # Make the output file directory and write the file  TODO, this should be hdf and not hard coded
+        Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
 
-    # Make the output file directory and write the file
-    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as tsvfile:
-        writer = csv.writer(tsvfile, delimiter='\t')
-        header = ['rot', 'rot_err']
-        header.extend(list(Theo_dFrame.drop(columns=['rot']).loc[:,:'Xc'].columns))
+        header_parameters = ['rot', 'rot_err']
+        filtered_header = filter(lambda param: 'n_pg' not in param and 'rot' not in param, Theo_dFrame.columns)
+        header_parameters.extend(list(filtered_header))
+
         for i in range(1, Obs_dFrame.shape[0]+1):
             if i-1 in np.where(Obs_dFrame.index == 'f_missing')[0]:
                 f='f_missing'
             else:
                 f = 'f'+str(i)
-            header.append(f.strip())
-        writer.writerow(header)
+            header_parameters.append(f.strip())
+
+        data = []
         for line in freqs:
-            writer.writerow(line)
-    p.close()
+            data.append(line)
+
+    df = pd.DataFrame(data=data, columns=header_parameters)
+    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,

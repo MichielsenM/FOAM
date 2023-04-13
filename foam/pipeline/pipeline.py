@@ -16,7 +16,8 @@ if pipelineConfig.config.fixed_parameters is not None:
     os.chdir(pipelineConfig.config.nested_grid_dir)
 
 importlib.import_module('foam.pipeline.pipe2_calculate_likelihood')
-importlib.import_module('foam.pipeline.pipe3_spectroClip_AICc')
-importlib.import_module('foam.pipeline.pipe4_bestModel_errors')
-importlib.import_module('foam.pipeline.pipe5_correlationPlots')
-importlib.import_module('foam.pipeline.pipe6_table_bestModels')
+importlib.import_module('foam.pipeline.pipe3_spectroConstraints')
+importlib.import_module('foam.pipeline.pipe4_AICc')
+importlib.import_module('foam.pipeline.pipe5_bestModel_errors')
+importlib.import_module('foam.pipeline.pipe6_correlationPlots')
+importlib.import_module('foam.pipeline.pipe7_table_bestModels')
