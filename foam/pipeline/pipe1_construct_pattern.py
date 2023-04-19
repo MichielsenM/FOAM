@@ -3,7 +3,7 @@ from pathlib import Path
 from foam import functions_for_mesa as ffm
 from foam import gmode_rotation_scaling as grs
 from foam import build_optimised_pattern as bop
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ################################################################################
 
 # The required asymptotic class object

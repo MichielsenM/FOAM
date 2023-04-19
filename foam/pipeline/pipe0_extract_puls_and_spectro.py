@@ -2,7 +2,7 @@
 from pathlib import Path
 from foam import functions_for_gyre as ffg
 from foam import functions_for_mesa as ffm
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ################################################################################
 
 if config.mval>0:

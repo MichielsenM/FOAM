@@ -3,7 +3,7 @@ from foam import maximum_likelihood_estimator as mle
 from functools import partial
 import multiprocessing
 from pathlib import Path
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ###############################################################################
 file_Path = Path(f'V_matrix/{config.star}_determinant_conditionNr.tsv')
 if file_Path.is_file(): file_Path.unlink()  #remove file if it exists to avoid duplicate entries on successive runs

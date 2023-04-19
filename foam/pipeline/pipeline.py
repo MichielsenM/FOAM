@@ -2,9 +2,9 @@
 Comment specific imports if you don't want to repeat them on repeated runs."""
 import importlib, os
 from pathlib import Path
-from foam.pipeline import pipelineConfig
+from foam.pipeline import pipeline_config
 
-pipelineConfig.config = pipelineConfig.pipelineConfig()
+pipeline_config.config = pipeline_config.PipelineConfig()
 
 # Run the pipeline
 importlib.import_module('foam.pipeline.pipe0_extract_puls_and_spectro')
@@ -16,8 +16,8 @@ if pipelineConfig.config.fixed_parameters is not None:
     os.chdir(pipelineConfig.config.nested_grid_dir)
 
 importlib.import_module('foam.pipeline.pipe2_calculate_likelihood')
-importlib.import_module('foam.pipeline.pipe3_spectroConstraints')
+importlib.import_module('foam.pipeline.pipe3_spectro_constraints')
 importlib.import_module('foam.pipeline.pipe4_AICc')
-importlib.import_module('foam.pipeline.pipe5_bestModel_errors')
-importlib.import_module('foam.pipeline.pipe6_correlationPlots')
-importlib.import_module('foam.pipeline.pipe7_table_bestModels')
+importlib.import_module('foam.pipeline.pipe5_best_model_errors')
+importlib.import_module('foam.pipeline.pipe6_correlation_plots')
+importlib.import_module('foam.pipeline.pipe7_table_best_models')

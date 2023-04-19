@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from foam import support_functions as sf
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ################################################################################
 k = config.k            # number of free paramters in the grid
 merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
