@@ -7,7 +7,7 @@ from foam.pipeline.pipeline_config import config
 ################################################################################
 
 # The required asymptotic class object
-asymp_obj = grs.asymptotic(gyre_dir=config.gyre_dir, kval=config.kval, mval=config.mval)
+asymp_obj = grs.Asymptotic(gyre_dir=config.gyre_dir, kval=config.kval, mval=config.mval)
 
 if config.mval>0:
     rotation_spin_direction = 'prograde'
