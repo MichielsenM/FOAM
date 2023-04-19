@@ -1,10 +1,10 @@
-""" Module for the configuration of the pipeline, contains the class pipelineConfig,
+""" Module for the configuration of the pipeline, contains the class PipelineConfig,
 and one instance of this class named 'config'. Through this instance, the configuration
 is accessible from all other modules by importing the module and accessing the config attribute of the module."""
 import os, sys, logging
 from pathlib import Path
 
-class pipelineConfig:
+class PipelineConfig:
     """
         A python class to keep the configuration settings of the modelling pipeline.
     """
@@ -142,43 +142,43 @@ class pipelineConfig:
 
         # Check if all keyword arguments were used
         if len(remaining_kwargs) !=0:
-            self.logger.error(f'pipelineConfig: The following keyword arguments were not recognised {[x for x in remaining_kwargs.keys()]}')
+            self.logger.error(f'PipelineConfig: The following keyword arguments were not recognised {[x for x in remaining_kwargs.keys()]}')
             input_error = True
 
         # Check if a GYRE directory is specified
         if self.gyre_dir is None:
-            self.logger.error('pipelineConfig: Either set GYRE_DIR as environment variable, or specify when initialising the pipelineConfig object')
+            self.logger.error('PipelineConfig: Either set GYRE_DIR as environment variable, or specify when initialising the PipelineConfig object')
             input_error = True
 
         # Check star name is provided
         if self.star is None:
-            self.logger.error('pipelineConfig: Please provide the name of the modelled star')
+            self.logger.error('PipelineConfig: Please provide the name of the modelled star')
             input_error = True
 
         # Check if file with observations exists
         if self.observations is not None:
             if not Path(self.observations).is_file():
-                self.logger.error(f'pipelineConfig: observations file not found: {self.observations} ')
+                self.logger.error(f'PipelineConfig: observations file not found: {self.observations} ')
                 input_error = True
         else:
-            self.logger.error(f'pipelineConfig: observations file not found: {self.observations} ')
+            self.logger.error(f'PipelineConfig: observations file not found: {self.observations} ')
             input_error = True
 
         # Check if parent directory of the grids exists
         if self.grid_parent_directory is not None:
             if not Path(self.grid_parent_directory).is_dir():
-                self.logger.error(f'pipelineConfig: Parent directory of theoretical grids not found: {self.grid_parent_directory} ')
+                self.logger.error(f'PipelineConfig: Parent directory of theoretical grids not found: {self.grid_parent_directory} ')
                 input_error = True
 
         # Check if directories of grids exists
             for grid in self.grids:
                 if not Path(f'{self.grid_parent_directory}/{grid}').is_dir():
-                    self.logger.error(f'pipelineConfig: Directory of theoretical grid not found: {self.grid_parent_directory}/{grid} ')
+                    self.logger.error(f'PipelineConfig: Directory of theoretical grid not found: {self.grid_parent_directory}/{grid} ')
                     input_error = True
 
         # Check if names of grids are specified
         if self.grids is None:
-            self.logger.error(f'pipelineConfig: Name of theoretical grid not specified')
+            self.logger.error(f'PipelineConfig: Name of theoretical grid not specified')
             input_error = True
 
         # Check that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.

@@ -5,8 +5,8 @@ import pandas as pd
 import multiprocessing
 from functools import partial
 from foam import additional_constraints as ac
-from foam import modelGrid as mg
-from foam.pipeline.pipelineConfig import config
+from foam import model_grid as mg
+from foam.pipeline.pipeline_config import config
 
 ################################################################################
 # Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
@@ -15,7 +15,7 @@ if config.n_sigma_spectrobox != None:
 
     params = list(config.free_parameters) # To make a copy and not remove Xc from the config
     params.remove('Xc')
-    summary = mg.gridSummary(params)
+    summary = mg.GridSummary(params)
 
     if not Path('isocloud_grid.h5').is_file():
         summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name='isocloud_grid.h5', file_ending='hist', files_directory_name='history')

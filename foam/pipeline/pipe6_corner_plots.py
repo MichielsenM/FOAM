@@ -3,7 +3,7 @@ from pathlib import Path
 import glob, multiprocessing
 from functools import partial
 from foam import plot_tools
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ################################################################################
 if config.n_sigma_spectrobox != None:
     directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'

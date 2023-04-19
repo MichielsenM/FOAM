@@ -1,6 +1,6 @@
 """Write the best models of the grid as a LaTeX table."""
 import pandas as pd
-from foam.pipeline.pipelineConfig import config
+from foam.pipeline.pipeline_config import config
 ################################################################################
 if config.n_sigma_spectrobox != None:
     directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'

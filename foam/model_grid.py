@@ -28,7 +28,7 @@ def _make_nested_dict(list_keys, value):
     return {list_keys[0] : _make_nested_dict( list_keys[1:], value) }
 ################################################################################
 
-class gridSummary:
+class GridSummary:
     """
     Class to create and contain a summary of a MESA grid in a nested dictionary.
     """
