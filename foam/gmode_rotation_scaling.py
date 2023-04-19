@@ -5,7 +5,7 @@ import numpy as np
 import astropy.units as u
 import sys
 ################################################################################
-class asymptotic(object):
+class Asymptotic(object):
     """
         A python class to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     """
