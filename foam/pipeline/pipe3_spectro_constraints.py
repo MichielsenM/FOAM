@@ -15,14 +15,15 @@ if config.n_sigma_spectrobox != None:
 
     isocloud_summary_dict = None
     if config.spectro_companion is not None:
-        params = list(config.free_parameters) # To make a copy and not remove Xc from the config
-        params.remove('Xc')
-        summary = mg.GridSummary(params)
-
-        if not Path('isocloud_grid.h5').is_file():
-            summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name='isocloud_grid.h5', file_ending='hist', files_directory_name='history')
+        if not Path(f'{config.main_directory}/isocloud_grid.h5').is_file():
+            params = list(config.free_parameters) # To make a copy and not remove Xc from the config
+            params.remove('Xc')
+            params.extend(config.fixed_parameters)
+            summary = mg.GridSummary(params)
+            summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name=f'{config.main_directory}/isocloud_grid.h5', file_ending='hist', files_directory_name='history')
         else:
-            summary.read_summary_file('isocloud_grid.h5')
+            summary = mg.GridSummary(None)
+            summary.read_summary_file(f'{config.main_directory}/isocloud_grid.h5')
 
         isocloud_summary_dict = {}
         for Z in summary.Z_array:
