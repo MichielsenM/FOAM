@@ -70,14 +70,14 @@ def get_age(model, df):
 
     if abs(model.Xc-max(unique_xc))<1E-4:
         min_age = 0
-        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
+        max_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age).iloc[0])
     elif abs(model.Xc-min(unique_xc))<1E-4:
-        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
-        age     = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc, 2))].age)
+        min_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age).iloc[0])
+        age     = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc, 2))].age).iloc[0])
         max_age = age+age-min_age
     else:
-        min_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age)
-        max_age = int(df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age)
+        min_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age).iloc[0])
+        max_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age).iloc[0])
     return min_age, max_age
 
 ################################################################################
