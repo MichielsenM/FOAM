@@ -342,6 +342,5 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
         plt.tick_params(labelsize=14)
         plt.tight_layout()
         plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.png')
-        # plt.savefig(f'{os.getcwd()}/V_matrix/{fig_title}.pdf')
         plt.clf()
         plt.close('all')
