@@ -158,3 +158,4 @@ for merit in config.merit_functions:
         leftspace = 0.22-0.015*config.k
         fig.subplots_adjust(left=leftspace, right=0.98, bottom=0.25, top=0.98, wspace=0.2)
         fig.savefig(f'{output_folder}/{config.star}_errors_{merit}_{obs}.png', dpi=300)
+        plt.close(fig)

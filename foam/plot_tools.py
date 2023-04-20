@@ -201,8 +201,10 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
             if mark_best_model: ax.scatter(df_EE.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
             limit_adjust = (max(df.iloc[:,iy+1]) - min(df.iloc[:,iy+1]))*0.08
+            if limit_adjust == 0: limit_adjust=0.1
             ax.set_ylim( min(df.iloc[:,iy+1])-limit_adjust,  max(df.iloc[:,iy+1])+limit_adjust  )
             limit_adjust = (max(df.iloc[:,nr_params-ix]) - min(df.iloc[:,nr_params-ix])) *0.08
+            if limit_adjust == 0: limit_adjust=0.1
             ax.set_xlim( min(df.iloc[:,nr_params-ix])-limit_adjust, max(df.iloc[:,nr_params-ix])+limit_adjust )
 
     fig.align_labels()
@@ -267,8 +269,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
     fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
     plt.clf()
-    plt.close('all')
-
+    plt.close(fig)
 ################################################################################
 def plot_mesa_file(profile_file, x_value, y_value, ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None):
     """
