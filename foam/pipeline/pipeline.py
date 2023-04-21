@@ -11,13 +11,13 @@ importlib.import_module('foam.pipeline.pipe0_extract_puls_and_spectro')
 importlib.import_module('foam.pipeline.pipe1_construct_pattern')
 
 # Change the current working directory for nested grids
-if pipelineConfig.config.fixed_parameters is not None:
-    Path(pipelineConfig.config.nested_grid_dir).mkdir(parents=True, exist_ok=True)
-    os.chdir(pipelineConfig.config.nested_grid_dir)
+if pipeline_config.config.fixed_parameters is not None:
+    Path(pipeline_config.config.nested_grid_dir).mkdir(parents=True, exist_ok=True)
+    os.chdir(pipeline_config.config.nested_grid_dir)
 
 importlib.import_module('foam.pipeline.pipe2_calculate_likelihood')
 importlib.import_module('foam.pipeline.pipe3_spectro_constraints')
 importlib.import_module('foam.pipeline.pipe4_AICc')
 importlib.import_module('foam.pipeline.pipe5_best_model_errors')
-importlib.import_module('foam.pipeline.pipe6_correlation_plots')
+importlib.import_module('foam.pipeline.pipe6_corner_plots')
 importlib.import_module('foam.pipeline.pipe7_table_best_models')

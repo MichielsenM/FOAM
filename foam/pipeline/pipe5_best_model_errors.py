@@ -40,7 +40,7 @@ def likelihood_chi2(chi2):
 def likelihood_MD(MD):
     """ Likelihood function of the mahalanobis distance """
     df_AICc_MD = pd.read_table(f'V_matrix/{config.star}_determinant_conditionNr.tsv', delim_whitespace=True, header=0)
-    lndetV = float( df_AICc_MD.loc[df_AICc_MD['method'] == f'{config.star}_{analysis}', 'ln(det(V))'] )
+    lndetV = float( (df_AICc_MD.loc[df_AICc_MD['method'] == f'{config.star}_{analysis}', 'ln(det(V))']).iloc[0] )
     return np.exp(-0.5*( MD + config.k*np.log(2*np.pi) + lndetV ))
 
 ################################################################################
@@ -125,7 +125,7 @@ for merit in config.merit_functions:
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
                     # Write all models enclosed within the error ellips to a separate file
-                    df.iloc[:i+1].to_csv(Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse'), '\t')
+                    df.iloc[:i+1].to_hdf(Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse'), 'models_in_2sigma_error_ellipse', format='table', mode='w')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
 
@@ -158,3 +158,4 @@ for merit in config.merit_functions:
         leftspace = 0.22-0.015*config.k
         fig.subplots_adjust(left=leftspace, right=0.98, bottom=0.25, top=0.98, wspace=0.2)
         fig.savefig(f'{output_folder}/{config.star}_errors_{merit}_{obs}.png', dpi=300)
+        plt.close(fig)

@@ -1,4 +1,5 @@
 """Make the correlation plots of the grid for the different modelling methodologies."""
+import matplotlib
 from pathlib import Path
 import glob, multiprocessing
 from functools import partial
@@ -24,6 +25,7 @@ for file in files:
     if not Path(f'{directory_prefix}figures_correlation/{title}.png').is_file():
         args.append((file, file_ErrorEllips, title))
 
+matplotlib.use('Agg') # Use this backend for matplotlib to make plots via multiprocessing, otherwise the default gives XIO errors
 with multiprocessing.Pool() as p:
     func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox  )
     p.starmap(func, args)
