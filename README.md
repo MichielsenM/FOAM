@@ -5,7 +5,7 @@ Contains useful functions to make figures, MESA/GYRE grids, and help with data a
 
 ## Installation
 <details>
- <summary> <b><u><font size="+1"> Installation (click to expand) </font></u></b> </summary>
+ <summary> <b><u><font size="+4"> Installation </font></u></b> (click to expand) </summary>
 
 Git clone this repository, and install using poetry (https://python-poetry.org/docs/) with command `poetry install` in the folder with the `pyproject.toml` file. This will install the package with all its dependencies, using the dependency versions as specified in the `poetry.lock` file. (The package will be installed in editable mode, so it will link the package to the original location, meaning any changes to the original package will be reflected directly in your environment.)
 
