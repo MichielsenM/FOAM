@@ -326,7 +326,7 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
     ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     label_size, alpha: float
-        The size of the labels in the figure, and KHDtransparency of the plot
+        The size of the labels in the figure, and transparency of the plot
     colour, linestyle, label: float
         Settings for the plot
     legend: boolean
@@ -351,7 +351,7 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
     # generate the plot, in which colour will not be specified
     if colour == '':
         ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle)
-    # generate the plot, in which colour will be sKHDpecified
+    # generate the plot, in which colour will be specified
     else:
         ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle, color=colour)
     # generate a legend if true
@@ -368,7 +368,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     ------- Parameters -------
     hist_file: String
         The path to the profile file to be used for the plot.
-    ax: an axis objectKHD
+    ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     colour, linestyle, label: strings
         Specify the colour, linestyle and label of the plotted data.
@@ -398,7 +398,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     if Teff_logscale:
         T = log_Teff
         ax.set_xlabel(r'log(T$_{\mathrm{eff}}$)', size=label_size)
-    # Plot the x-axis in linear scaleKHD
+    # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff
         ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
@@ -415,7 +415,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     # Plot Kiel diagram (log_g vs log_Teff)
     elif diagram == 'kiel':
         y_axis = log_g
-        ax.set_ylabel(r'log g [dex]', size=label_sKHDize)
+        ax.set_ylabel(r'log g [dex]', size=label_size)
 
     # Start plotting from Xc value
     if start_track_from_Xc!= None:
