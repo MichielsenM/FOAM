@@ -69,7 +69,7 @@ class PipelineConfig:
         N_pattern_parts: int
             In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
 
-        --- For modelling binaries and enfocring constraints of the companion star. ---
+        --- For modelling binaries and enforcing constraints of the companion star. ---
         spectro_companion: dictionary
             Dictionary with the following keys holding all binary Information (q = Mass_secondary/Mass_primary)
             e.g. {'q': <float>, 'q_err': <float>,'Teff': <float>, 'Teff_err': <float>,
@@ -78,7 +78,7 @@ class PipelineConfig:
             Defaults to None instead of a dictionary to not include any constraints from binarity.
 
         isocloud_grid_directory: string
-            path to directory with files containing the isocloud grid summary files
+            The path to the isocloud grid directory.
         """
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')

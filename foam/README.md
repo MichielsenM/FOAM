@@ -13,11 +13,3 @@
 9. `lambda.csv`: List with lambda (eigenvalue of laplace tidal equations) and nu (spin parameter) for modes up to degree 3. (TAR approximation)
 10. `maximum_likelihood_estimator.py`: Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make corner plots.
 11. `support_functions.py` : Helpful functions for making figures, reading HDF5, processing strings.
-
-### Author
-Developed by Mathias Michielsen
-```
-mathias.michielsen@kuleuven.be
-Instituut voor Sterrenkunde
-KU Leuven, Belgium
-```

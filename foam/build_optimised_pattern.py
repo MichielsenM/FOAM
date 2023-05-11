@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger('logger.bop')
 ################################################################################
 def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
-                                        output_file=f'theoretical_frequency_patterns.tsv', asymptotic_object=None, estimated_rotation=None):
+                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsationGrid_file'.)
@@ -365,9 +365,6 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     return Theo_sequence
 
 ################################################################################
-################################################################################
-# Function adapted from Cole Johnston
-################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False):
     """
     Method to extract the theoretical pattern that best matches the observed one.
@@ -476,7 +473,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             ordered_theoretical_periods.append(tper)
             corresponding_orders.append(ordr)
 
-        #final_theoretical_periods = np.sort(np.hstack([ordered_theoretical_periods_a,ordered_theoretical_periods_b]))[::-1]
         final_theoretical_periods = np.array(ordered_theoretical_periods)
 
         obs_series,obs_series_errors = ffg.generate_spacing_series(operiods,operiods_errors)
@@ -492,8 +488,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             fig = plt.figure(2,figsize=(6.6957,6.6957))
             fig.suptitle('$\mathrm{Longest \\ Sequence}$',fontsize=20)
             axT = fig.add_subplot(211)
-            # axT.errorbar(operiods[1:],obs_series,yerr=obs_series_errors,marker='x',color='black',label='Obs')
-            # axT.plot(final_theoretical_periods[1:],thr_series,'rx-',label='Theory')
             axT.errorbar(list(range(len(obs_series))),obs_series,yerr=obs_series_errors,marker='x',color='black',label='Obs')
             axT.plot(list(range(len(thr_series))),thr_series,'rx-',label='Theory')
             axT.set_ylabel('$\mathrm{Period \\ Spacing \\ (s)}$',fontsize=20)

@@ -8,7 +8,7 @@ if __name__ == '__main__':
     pipeline_config.config = pipeline_config.PipelineConfig()
 
     # Run the pipeline
-    importlib.import_module('foam.pipeline.pipe0_extract_puls_and_spectro')
+    importlib.import_module('foam.pipeline.pipe0_extract_grid')
     importlib.import_module('foam.pipeline.pipe1_construct_pattern')
 
     # Change the current working directory for nested grids

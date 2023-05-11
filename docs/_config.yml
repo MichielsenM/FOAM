@@ -1,0 +1,7 @@
+title: FoAM
+description: FOrward Asteroseismic Modelling of gravity modes
+remote_theme: pages-themes/slate@v0.2.0
+
+url: https://michielsenm.github.io/FoAM/
+aux_links:
+  Template Repository: https://github.com/MichielsenM/FoAM
