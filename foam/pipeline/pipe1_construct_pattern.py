@@ -31,6 +31,6 @@ for grid in config.grids:
         # Merge spectro and pulsation info into one file
         output_name = f'{Path(puls_file).parent}/spectro+{Path(puls_file).name}'
         if not Path(output_name).is_file():
-            ffm.add_spectro_to_puls_grid(puls_file, spectro, output_name)
+            ffm.add_spectro_to_puls_grid(puls_file, spectro, output_name, model_parameters=config.grid_parameters)
         else:
             config.logger.warning(f'file already existed: {output_name}')

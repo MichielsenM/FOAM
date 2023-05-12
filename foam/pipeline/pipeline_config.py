@@ -20,7 +20,7 @@ class PipelineConfig:
         star: string
             Name of the star, used for generating filenames
         observations: string
-            Name of (or full path to) the file with the observational data
+            Full path to the file with the observational data
         periods_or_frequencies_observed: string
             options: 'period' or 'frequency'
             Use the observed periods or frequencies, be consistent in observable_list later.
@@ -79,6 +79,10 @@ class PipelineConfig:
 
         isocloud_grid_directory: string
             The path to the isocloud grid directory.
+
+        --- For plotting purposes ---
+        conerplot_axis_labels: dictionary, its keys and values are strings
+            keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis
         """
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -114,18 +118,27 @@ class PipelineConfig:
         self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)
         self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
         self.fixed_parameters = kwargs.pop("fixed_parameters", None)
+
+        if self.fixed_parameters is None:   # keep track of all relevant parameters, free and fixed, in the grid
+            self.grid_parameters = self.free_parameters
+        else:
+            self.grid_parameters = self.free_parameters+list(self.fixed_parameters.keys())
+
         self.k = len(self.free_parameters) # Number of free parameters
         self.N_periods = kwargs.pop("N_periods", None)
         self.N_pattern_parts = kwargs.pop("N_pattern_parts", 1)
         # Number of observables, calculated from the number of periods
         # Number of period spacings is number of periods minus amount of separated patterns.
         # E.g. uninterrupted pattern: 36 periods, so 35 period spacings
-        self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts}
+        self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods,}
 
         # Binarity
         self.spectro_companion = kwargs.pop("spectro_companion", None)
         self.isocloud_grid_directory = kwargs.pop("isocloud_grid_directory", None)
 
+        # Plotting
+        self.conerplot_axis_labels = kwargs.pop("conerplot_axis_labels", {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
+                                                'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'})
         # Check for errors in input arguments
         self._check_init_arguments(kwargs)
 

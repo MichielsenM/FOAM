@@ -25,7 +25,7 @@ All keyword arguments are listed below, grouped in categories.
 - observations
 >   type: string <br>
     default: None <br>
-    Path to the file with the observational data
+    Full path to the file with the observational data
 
 - periods_or_frequencies_observed
 >   type: string <br>
@@ -168,3 +168,8 @@ All keyword arguments are listed below, grouped in categories.
 >   type: boolean <br>
     default: False <br>
     Set to True to set logger level to debug    
+
+- conerplot_axis_labels
+>   type: dictionary, keys and values are strings <br>
+    default: ` {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ` <br>
+    keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis

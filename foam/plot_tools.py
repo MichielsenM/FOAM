@@ -7,6 +7,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.ticker import AutoMinorLocator
 from pathlib import Path
 from foam import functions_for_mesa as ffm
+from foam.pipeline.pipeline_config import config
 ################################################################################
 def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', label_size=22, xlim=[],
                         left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8]):
@@ -71,7 +72,9 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
 
 ################################################################################
 def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
-                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3):
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3,
+                      axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
+                      'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -98,6 +101,8 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
         String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
     mark_best_model: boolean
         Indicate the best model with a marker
+    axis_labels_dict: dictionary
+        Keys are grid paramters, values are strings how those values should be shown on the axis labels
     """
     # Define custom colormap
     cdict = {'red':((0.0, 1.0, 1.0),
@@ -126,13 +131,13 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
         df_EE = df_Theo_EE.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
         df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
         # Remove models in the error ellips from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=config.grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
 
     else: # rotation was varied, include it in the plots
         df_EE = df_Theo_EE.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
         df = df_Theo.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
         # Remove models in the error ellips from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=config.grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
@@ -141,8 +146,6 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
 
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
-    # proper label format on figures
-    axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
 
     if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 

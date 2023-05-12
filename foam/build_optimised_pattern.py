@@ -10,6 +10,7 @@ from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters
 from foam import functions_for_gyre as ffg
+from foam.pipeline.pipeline_config import config
 import logging
 
 logger = logging.getLogger('logger.bop')
@@ -57,21 +58,17 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
                                 method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation,
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
+    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
     with multiprocessing.Pool() as p:
         freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
-        # Make the output file directory and write the file  TODO, this should be hdf and not hard coded
-        Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-
-        header_parameters = ['rot', 'rot_err']
-        filtered_header = filter(lambda param: 'n_pg' not in param and 'rot' not in param, Theo_dFrame.columns)
-        header_parameters.extend(list(filtered_header))
+        header_parameters = ['rot', 'rot_err'] + config.grid_parameters
 
         for i in range(1, Obs_dFrame.shape[0]+1):
             if i-1 in np.where(Obs_dFrame.index == 'f_missing')[0]:
-                f='f_missing'
+                f = 'freq_missing'
             else:
-                f = 'f'+str(i)
+                f = 'freq'+str(i)
             header_parameters.append(f.strip())
 
         data = []
@@ -121,12 +118,12 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     freqs=freqs[~np.isnan(freqs)]  # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
 
     missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
-    Obs=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
-    ObsErr=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
+    Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
+    ObsErr_without_missing=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
     missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
 
-    Obs_pattern_parts = np.split(Obs, missing_puls)    # split into different parts of the interrupted pattern
-    ObsErr_pattern_parts = np.split(ObsErr, missing_puls)
+    Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
+    ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
 
     if len(Obs_pattern_parts) != len (highest_amp_puls):   # Check if highest_amp_puls has enough entries to not truncate other parts in the zip function.
         if method_build_series == 'highest_amplitude':
@@ -139,7 +136,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls)
 
         list_out=[estimated_rotation, 0]
-        for parameter in summary_grid_row[1][:'Xc'].drop('rot').index:
+        for parameter in config.grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
 
         selected_pulsations = Obs + residual
@@ -173,7 +170,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         if result_minimizer.message != 'Fit succeeded.':
             logger.warning(f"""Fitting rotation did not succeed: {result_minimizer.message}
-                            for model {summary_grid_row[1][:'Xc'].drop('rot').to_dict()} using method: {method_build_series}
+                            for model {summary_grid_row[1].drop(summary_grid_row[1].filter(regex='n_pg').index).drop('rot').to_dict()} using method: {method_build_series}
                             rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}""")
 
         if plot_rotation_optimisation:
@@ -204,7 +201,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
         list_out=[result_minimizer.params['rotation'].value, result_minimizer.params['rotation'].stderr]
-        for parameter in summary_grid_row[1][:'Xc'].drop('rot').index:
+        for parameter in config.grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
         list_out.extend(optimised_pulsations)
 
@@ -262,7 +259,8 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         v = params.valuesdict()
         if estimated_rotation ==0:  # To avoid division by zero in scale_pattern
             estimated_rotation=1E-99
-        freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d) *u.d
+        freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d)*u.d
+        freqs = np.asarray(freqs, dtype = np.float64) # convert astropy quantities back to floats
     else:
         freqs = freqs_input
 

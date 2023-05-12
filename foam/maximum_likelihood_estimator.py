@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
+from foam.pipeline.pipeline_config import config
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 
@@ -25,7 +26,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Path to the hdf5 file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Can contain 'frequencies' or 'periods', and 'period_spacing', which will be computed for the period pattern.
+        Can contain 'frequencies', 'periods', or 'period_spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
@@ -52,13 +53,14 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
-    Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
-    Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
-    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
-    missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+config.grid_parameters ))
+    Theo_puls = np.asarray(Theo_dFrame.filter(like='freq'))
+
+    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('freq_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
+    missing_relative = np.where(Theo_dFrame.filter(like='freq').columns.to_series().str.contains('freq_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
-    missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
+    missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ] # Adjust indices for removed lines of missing frequencies
 
     # Make new list of theoretical models without entries with value -1
     newTheo = []
@@ -89,29 +91,10 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
     merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}', star_name=star_name)
 
-    # Print smallest and highest values
-    idx2 = np.argsort(merit_values)
-    Parameters = Theo_dFrame.loc[:,:'Xc'].columns  # Parameter names
-    logger.info(f'Smallest {merit_function} : {merit_values[np.argsort(merit_values)][0]}')
-    logger.info(f'Highest {merit_function}  : {merit_values[np.argsort(merit_values)][-1]}')
-    logger.info(f'meritValue & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
-    logger.info('-------------------------------------------------------')
-    # Print the ten models with the smallest values
-    for i in range(10):
-        row = f'{merit_values[np.argsort(merit_values)][i]:.4f}'
-        for k in range(np.shape(Thetas[idx2,:])[1]):
-            row += f' & {Thetas[idx2,:][i,k]:.3f}'
-        logger.info(row)
-
-    # Save the results
+    # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
-    Parameters= Parameters.insert(0, 'meritValue') # add an additional parameter name
-
-    df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
-
-    for spectro in ['logTeff', 'logL', 'logg']:
-        if spectro in Theo_dFrame.columns:
-            df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
+    df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+config.grid_parameters) # put the data in a pandas DataFrame
+    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+config.grid_parameters)
     df.to_hdf(f'{DataOut}', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -135,17 +118,17 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         The values of the specified observables for the model.
     """
     observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
-    observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
+    observables_out = np.asarray(Theo_dFrame.filter(like='freq').loc[index])  # add the periods or frequencies to the output list
 
     if 'period' in observables:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
+        periods = np.asarray(Theo_dFrame.filter(like='freq').loc[index])      # a separate list of periods that is preserved after adding other observables
         observables.remove('period')
 
     elif 'frequency' in observables:
-        periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
+        periods = 1/np.asarray(Theo_dFrame.filter(like='freq').loc[index])      # a separate list of periods that is preserved after adding other observables
         observables.remove('frequency')
     else:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the file was in periods if nothing was specified
+        periods = np.asarray(Theo_dFrame.filter(like='freq').loc[index])  # Assume the file was in periods if nothing was specified
         observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
 
     if 'period_spacing' in observables:
@@ -310,7 +293,7 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
     fig_title: string
         The name of the figure to be created.
     """
-    if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigencalues are >0, it is positive definite
+    if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigenvalues are >0, it is positive definite
         sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
 
     logger.info(f'max(V) = {np.max(V)}')
@@ -328,12 +311,6 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
         im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
         plt.ylabel(rf'Obs {V.shape[0]}  $\leftarrow$ Obs 1', size=14)
         plt.xlabel(rf'Obs 1 $\rightarrow$ Obs {V.shape[0]} ', size=14)
-        # if (V.shape[0]==36):
-        #     plt.ylabel(rf'Mode Period {V.shape[0]}  $\leftarrow$ Mode Period 1', size=14)
-        #     plt.xlabel(rf'Mode Period 1 $\rightarrow$ Mode Period {V.shape[0]} ', size=14)
-        # else:
-        #     plt.ylabel(rf'$\Delta P_{ {V.shape[0]} }  \leftarrow \Delta P_{1}$', size=14)
-        #     plt.xlabel(rf'$\Delta P_{1} \rightarrow \Delta P_{ {V.shape[0]} }$', size=14)
 
         cbar = plt.colorbar(im)
         cbar.ax.set_ylabel(r'[d$^{2} 10^{-4}$]', rotation=90, labelpad=15, size=14)
