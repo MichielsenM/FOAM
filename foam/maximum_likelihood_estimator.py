@@ -8,12 +8,11 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from foam import support_functions as sf
 from foam import functions_for_gyre as ffg
-from foam.pipeline.pipeline_config import config
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None):
+def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None, grid_parameters=None):
     """
     Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
@@ -35,6 +34,8 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     fixed_params: dictionary
         Only select and analyse the part of the theoretical grid with the specified parameter values.
         The keys specify for which parameters only the specified value should be selected.
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
     """
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
@@ -54,7 +55,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
 
-    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+config.grid_parameters ))
+    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
     Theo_puls = np.asarray(Theo_dFrame.filter(like='freq'))
 
     missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('freq_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
@@ -93,8 +94,8 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
 
     # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
-    df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+config.grid_parameters) # put the data in a pandas DataFrame
-    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+config.grid_parameters)
+    df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+grid_parameters) # put the data in a pandas DataFrame
+    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
     df.to_hdf(f'{DataOut}', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

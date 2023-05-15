@@ -199,7 +199,7 @@ def spectro_from_profiles(mesa_profile, parameters):
     return line
 
 ################################################################################
-def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.hdf', model_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
     Combine the output files with the frequencies and spectroscopy of the grid in one new file,
     only keeping models that have entries in both the frequency and specto files.
@@ -208,13 +208,13 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
         Paths to the files containing the model input parameters and corresponding frequency/spectroscopy of the model.
     output_name: string
         Name of the generated file containing the combined info.
-    model_parameters: list of string
+    grid_parameters: list of string
         List of the model parameters to use for matching the entries in the freq/spectro file.
     """
     freq_df    = pd.read_hdf(grid_frequencies)
     spectro_df = pd.read_hdf(grid_spectroscopy)
     # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
-    df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
+    df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=grid_parameters)
 
     col = df_merged.pop("age") # Don't add the age in the combined file
 

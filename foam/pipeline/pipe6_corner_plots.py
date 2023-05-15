@@ -27,5 +27,5 @@ for file in files:
 
 matplotlib.use('Agg') # Use this backend for matplotlib to make plots via multiprocessing, otherwise the default gives XIO errors
 with multiprocessing.Pool() as p:
-    func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox, axis_labels_dict=config.conerplot_axis_labels )
+    func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}figures_correlation/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox, grid_parameters=config.grid_parameters, axis_labels_dict=config.conerplot_axis_labels )
     p.starmap(func, args)

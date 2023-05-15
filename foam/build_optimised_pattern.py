@@ -10,13 +10,12 @@ from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters
 from foam import functions_for_gyre as ffg
-from foam.pipeline.pipeline_config import config
 import logging
 
 logger = logging.getLogger('logger.bop')
 ################################################################################
 def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
-                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None):
+                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsationGrid_file'.)
@@ -45,6 +44,8 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         Object to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     estimated_rotation: float
         Estimation of the rotation rate of the star, used as initial value in the optimisation problem.
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
@@ -55,14 +56,14 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
 
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
     theo_pattern_func = partial(theoretical_pattern_from_dfrow, Obs=Obs, ObsErr=ObsErr, which_observable=which_observable,
-                                method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation,
+                                method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation, grid_parameters=grid_parameters,
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
     with multiprocessing.Pool() as p:
         freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
-        header_parameters = ['rot', 'rot_err'] + config.grid_parameters
+        header_parameters = ['rot', 'rot_err'] + grid_parameters
 
         for i in range(1, Obs_dFrame.shape[0]+1):
             if i-1 in np.where(Obs_dFrame.index == 'f_missing')[0]:
@@ -80,7 +81,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,
-    highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False):
+    highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False, grid_parameters=None):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
     ------- Parameters -------
@@ -107,7 +108,8 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         Object to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     estimated_rotation: float
         Estimation of the rotation rate of the star, used as initial value in the optimisation problem.
-
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
     ------- Returns -------
     list_out: list
         The input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
@@ -136,7 +138,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls)
 
         list_out=[estimated_rotation, 0]
-        for parameter in config.grid_parameters:
+        for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
 
         selected_pulsations = Obs + residual
@@ -201,7 +203,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
         list_out=[result_minimizer.params['rotation'].value, result_minimizer.params['rotation'].stderr]
-        for parameter in config.grid_parameters:
+        for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
         list_out.extend(optimised_pulsations)
 
