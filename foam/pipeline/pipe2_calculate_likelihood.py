@@ -7,7 +7,7 @@ from foam.pipeline.pipeline_config import config
 ###############################################################################
 file_Path = Path(f'V_matrix/{config.star}_determinant_conditionNr.tsv')
 if file_Path.is_file(): file_Path.unlink()  #remove file if it exists to avoid duplicate entries on successive runs
-with multiprocessing.Pool() as p:	# Multiprocessing pool, NR CORES = nr items in obeservables list
+with multiprocessing.Pool(config.nr_cpu) as p:	# Multiprocessing pool, NR CORES = nr items in obeservables list
     for grid in config.grids:
         for method in config.pattern_methods:
             for merit_function in config.merit_functions:

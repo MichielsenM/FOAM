@@ -169,6 +169,11 @@ All keyword arguments are listed below, grouped in categories.
     default: False <br>
     Set to True to set logger level to debug    
 
+- nr_cpu
+>   type:int <br>
+    default: None <br>
+    Number of worker processes to use in multiprocessing. The default 'None' will cause the pools to use the number returned by os.cpu_count().
+
 - conerplot_axis_labels
 >   type: dictionary, keys and values are strings <br>
     default: ` {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ` <br>

@@ -51,7 +51,7 @@ if config.n_sigma_spectrobox != None:
                 config.logger.warning(f'file already existed: {output_file}')
         files_to_analyse.extend(files_kept)
 
-    with multiprocessing.Pool(4) as p: # For some reason 4 is fastest, find out why more becomes slower
+    with multiprocessing.Pool(min(config.nr_cpu, 4)) as p: # For some reason 4 processes is faster than more, find out why more becomes slower
         func = partial( ac.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
                             spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
         p.map(func, files_to_analyse)

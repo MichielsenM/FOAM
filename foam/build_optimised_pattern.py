@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger('logger.bop')
 ################################################################################
 def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
-                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None):
+                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None, nr_cpu=None):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsationGrid_file'.)
@@ -46,6 +46,8 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         Estimation of the rotation rate of the star, used as initial value in the optimisation problem.
     grid_parameters: list of string
         List of the parameters in the theoretical grid.
+    nr_cpu: int
+        Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
@@ -61,7 +63,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
 
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
-    with multiprocessing.Pool() as p:
+    with multiprocessing.Pool(nr_cpu) as p:
         freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
         header_parameters = ['rot', 'rot_err'] + grid_parameters
 

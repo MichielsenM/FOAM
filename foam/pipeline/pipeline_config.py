@@ -14,8 +14,6 @@ class PipelineConfig:
         Initialising the instance of the configuration.
 
         ------- Parameters -------
-        debugging: boolean
-            Set to True to set logger level to debug
         --- Settings about observational data ---
         star: string
             Name of the star, used for generating filenames
@@ -80,15 +78,21 @@ class PipelineConfig:
         isocloud_grid_directory: string
             The path to the isocloud grid directory.
 
-        --- For plotting purposes ---
+        --- Other settings ---
         conerplot_axis_labels: dictionary, its keys and values are strings
             keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis
+        debugging: boolean
+            Set to True to set logger level to debug
+        nr_cpu: int
+            Number of worker processes to use in multiprocessing. The default 'None' will cause the pools to use the number returned by os.cpu_count().
         """
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger('logger')
         if kwargs.pop("debugging", False):
             self.logger.setLevel(logging.DEBUG)
+
+        self.nr_cpu = kwargs.pop("nr_cpu", None)
 
         # Set the main top-level directory
         self.main_directory = os.getcwd()

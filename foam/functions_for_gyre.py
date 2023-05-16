@@ -39,7 +39,7 @@ def generate_spacing_series(periods, errors=None):
     return spacings, spacings_errors
 
 ################################################################################
-def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
     """
     Extract frequencies from each globbed GYRE file and write them to 1 large file.
     ------- Parameters -------
@@ -50,12 +50,14 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', paramete
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
         name of the summary files, and included in the 1 file containing all the info of the whole grid.
+    nr_cpu: int
+        Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     MP_list = multiprocessing.Manager().list()    # make empty MultiProcessing listProxy
 
     # Glob all the files, then iteratively send them to a pool of processors
     summary_files = glob.iglob(gyre_files)
-    with multiprocessing.Pool() as p:
+    with multiprocessing.Pool(nr_cpu) as p:
         extract_func = partial(all_freqs_from_summary, parameters=parameters)
         dictionaries = p.imap(extract_func, summary_files)
         for new_row in dictionaries:

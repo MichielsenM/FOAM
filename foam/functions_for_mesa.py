@@ -137,7 +137,7 @@ def convert_units(quantity, input, convertto='cgs'):
         return input / to_cgs[quantity]
 
 ################################################################################
-def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
     """
     Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
@@ -148,11 +148,13 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf',
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
         name of the profile files, and included in the ouput file containing the info of the whole grid.
+    nr_cpu: int
+        Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     extract_func = partial(spectro_from_profiles, parameters=parameters)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
-    with multiprocessing.Pool() as p:
+    with multiprocessing.Pool(nr_cpu) as p:
         spectro = p.imap(extract_func, profiles)
 
         # Generate the directory for the output file and write the file afterwards

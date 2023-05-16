@@ -17,7 +17,9 @@ for grid in config.grids:
         puls_file = f'extracted_freqs/{observable}_{config.star}_{grid}_{method}.hdf'
 
         if not Path(puls_file).is_file():
-            bop.construct_theoretical_freq_pattern(f'../grid_summary/pulsationGrid_{grid}_rot{config.rotation_gyre}_k{config.kval}m{config.mval}.hdf', config.observations, method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file, asymptotic_object=asymp_obj, estimated_rotation=config.rotation_gyre, grid_parameters=config.grid_parameters)
+            bop.construct_theoretical_freq_pattern(f'../grid_summary/pulsationGrid_{grid}_rot{config.rotation_gyre}_k{config.kval}m{config.mval}.hdf', config.observations,
+                                                method, highest_amplitude_pulsation=config.highest_amplitude_pulsation[observable], which_observable=observable, output_file=puls_file,
+                                                asymptotic_object=asymp_obj, estimated_rotation=config.rotation_gyre, grid_parameters=config.grid_parameters, nr_cpu=config.nr_cpu)
         else:
             config.logger.warning(f'file already existed: {puls_file}')
 
