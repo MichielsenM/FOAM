@@ -23,7 +23,7 @@ class PipelineConfig:
             options: 'period' or 'frequency'
             Use the observed periods or frequencies, be consistent in observable_list later.
         highest_amplitude_pulsation: dictionary of lists
-            Pulsation with the highest amplitude to build pattern from when using 'highest_amplitude' method.
+            Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method.
             List with highest amplitudes per part of the split pattern,
             ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
 
@@ -115,9 +115,9 @@ class PipelineConfig:
         self.gyre_dir = kwargs.pop("gyre_dir", os.environ.get('GYRE_DIR'))
 
         # Modelling methodology
-        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq_longest_sequence','highest_amplitude', 'highest_frequency'])
+        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','highest-amplitude', 'highest-frequency'])
         self.merit_functions = kwargs.pop("merit_functions", ['chi2', 'mahalanobis'])
-        self.observable_list = kwargs.pop("observable_list", [['period'], ['period_spacing']])
+        self.observable_list = kwargs.pop("observable_list", [['period'], ['period-spacing']])
         self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
         self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)
         self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])

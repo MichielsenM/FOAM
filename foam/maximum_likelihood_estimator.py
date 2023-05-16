@@ -25,7 +25,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Path to the hdf5 file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Can contain 'frequencies', 'periods', or 'period_spacing', which will be computed for the period pattern.
+        Can contain 'frequencies', 'periods', or 'period-spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
         The type of merit function to use. Currently supports "chi2" and "mahalanobis".
@@ -110,7 +110,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Row index in the dataFrame of the theoretical model to make the array for.
     observables_in: list of strings
         Which observables are included in the returned array.
-        Can contain 'frequency', 'period', and/or 'period_spacing', which will be computed for the period pattern.
+        Can contain 'frequency', 'period', and/or 'period-spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
@@ -132,12 +132,12 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         periods = np.asarray(Theo_dFrame.filter(like='freq').loc[index])  # Assume the file was in periods if nothing was specified
         observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
 
-    if 'period_spacing' in observables:
+    if 'period-spacing' in observables:
         for periods_part in np.split(periods,missing_indices):
             spacing, _ = ffg.generate_spacing_series(periods_part)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
             observables_out = np.append(observables_out, spacing)   # Include dP as observables
-        observables.remove('period_spacing')
+        observables.remove('period-spacing')
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:
@@ -155,7 +155,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     observables: list of strings
         Which observables are included in the returned array, must contain 'frequency' or 'period'.
-        Can contain 'period_spacing', which will be computed for the period pattern.
+        Can contain 'period-spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
 
     ------- Returns -------
@@ -191,7 +191,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
         observables_out = np.asarray([])
         observablesErr_out = np.asarray([])
 
-    if 'period_spacing' in observables:
+    if 'period-spacing' in observables:
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
             spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
             spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
@@ -202,7 +202,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
 
         if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
         filename_suffix+='dP'
-        observables.remove('period_spacing')
+        observables.remove('period-spacing')
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:

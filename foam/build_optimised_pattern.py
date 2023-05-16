@@ -29,11 +29,11 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     method_build_series: string
         way to generate the theoretical frequency pattern from each model to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations (function 'chisq_longest_sequence')
     highest_amplitude_pulsation: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
     which_observable: string
@@ -99,11 +99,11 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     method_build_series: string
         way to generate the theoretical frequency pattern from each model
         to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
     highest_amp_puls: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
     asymptotic_object: asymptotic (see 'gmode_rotation_scaling')
@@ -130,7 +130,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
 
     if len(Obs_pattern_parts) != len (highest_amp_puls):   # Check if highest_amp_puls has enough entries to not truncate other parts in the zip function.
-        if method_build_series == 'highest_amplitude':
+        if method_build_series == 'highest-amplitude':
             sys.exit(logger.error('Amount of pulsations specified to build patterns from is not equal to the amount of split-off parts in the pattern.'))
         else:   # Content of highest_amp_puls doesn't matter if it's not used to build the pattern.
             highest_amp_puls = [None]*len(Obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
@@ -246,11 +246,11 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
     method_build_series: string
         way to generate the theoretical frequency pattern from each model
         to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
     highest_amp_puls: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
 
@@ -300,18 +300,18 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         else:
             sys.exit(logger.error('Unknown observable to fit'))
 
-        if method_build_series == 'highest_amplitude':
+        if method_build_series == 'highest-amplitude':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_amp_puls_part)
-        elif method_build_series == 'highest_frequency':
+        elif method_build_series == 'highest-frequency':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_obs_freq)
-        elif method_build_series == 'chisq_longest_sequence':
+        elif method_build_series == 'chisq-longest-sequence':
             series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
             if which_observable=='frequency':
                 selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
             elif which_observable=='period':
                 selected_theoretical_pulsations = final_theoretical_periods
         else:
-            sys.exit(logger.error('Incorrect method to build pulsational series.'))
+            sys.exit(logger.error(f'Unrecognised method to build pulsational series: {method_build_series}'))
 
         output_pulsations.extend(selected_theoretical_pulsations)
 
