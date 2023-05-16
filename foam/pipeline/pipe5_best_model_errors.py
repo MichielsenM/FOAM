@@ -8,8 +8,6 @@ from foam import support_functions as sf
 from foam.pipeline.pipeline_config import config
 ################################################################################
 N_dict = config.N_dict  # number of observables
-merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
-
 sigma = 2
 percentile = {1 : 0.68, 2:0.95, 3:0.997}
 ################################################################################
@@ -35,7 +33,7 @@ with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMarg
 for merit in config.merit_functions:
     for obs in config.observable_aic:
 
-        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit_abbrev[merit]}_{obs}.hdf')
+        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
@@ -43,8 +41,8 @@ for merit in config.merit_functions:
             df = df.sort_values('meritValue', ascending=True)
 
             # Dictionary containing different likelihood functions
-            switcher={ 'chi2': likelihood_chi2,
-                       'mahalanobis' : likelihood_MD }
+            switcher={'CS': likelihood_chi2,
+                      'MD': likelihood_MD }
             # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
             likelihood_function = switcher.get(merit, lambda x : sys.exit(config.logger.error(f'invalid type of maximum likelihood estimator:{merit}')))
 

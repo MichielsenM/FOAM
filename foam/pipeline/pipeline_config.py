@@ -116,7 +116,7 @@ class PipelineConfig:
 
         # Modelling methodology
         self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','highest-amplitude', 'highest-frequency'])
-        self.merit_functions = kwargs.pop("merit_functions", ['chi2', 'mahalanobis'])
+        self.merit_functions = kwargs.pop("merit_functions", ['CS', 'MD'])
         self.observable_list = kwargs.pop("observable_list", [['period'], ['period-spacing']])
         self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
         self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)

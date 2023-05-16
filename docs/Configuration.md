@@ -98,12 +98,12 @@ All keyword arguments are listed below, grouped in categories.
 
 - merit_functions
 >   type: list of strings <br>
-    options: 'chi2', 'mahalanobis' <br>
-    default: ['chi2', 'mahalanobis'] <br>
+    options: 'CS', 'MD' <br>
+    default: ['CS', 'MD'] <br>
     List of merit functions (repeats modelling for each merit function).
-    >> 'chi2' uses a reduced chi-squared function
+    >> 'CS' uses a reduced chi-squared function.
     >
-    >> 'mahalanobis' uses Mahalanobis distances, see [Aerts et al. 2018](https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract)
+    >> 'MD' uses Mahalanobis distances, see [Aerts et al. 2018](https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract)
     for its application in the context of asteroseismology.
 
 - observable_list

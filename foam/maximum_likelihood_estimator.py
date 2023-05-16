@@ -28,7 +28,7 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Can contain 'frequencies', 'periods', or 'period-spacing', which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
-        The type of merit function to use. Currently supports "chi2" and "mahalanobis".
+        The type of merit function to use. Currently supports "CS and "MD" ("chi-squared" and "mahalanobis distance").
     star_name: string
         Name of the star, used in file naming.
     fixed_params: dictionary
@@ -42,15 +42,12 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
     Path_theo   = Path(Theo_file)
-    #suffix for filename to indicate the merit funtion used
-    suffix = {'chi2'       : 'CS',
-              'mahalanobis': 'MD'}
 
     # set the name of the output file and make it's directory if needed
     head, tail = sf.split_line(Path_theo.stem, star_name)
     DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
     Path(DataOutDir).mkdir(parents=True, exist_ok=True)
-    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.hdf'
+    DataOut = f'{DataOutDir}/{star_name}{tail}_{merit_function}_{file_suffix_observables}.hdf'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
@@ -85,12 +82,12 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     Thetas           = np.asarray(newThetas)
 
     # Dictionary containing different merit functions
-    switcher={ 'chi2': merit_chi2,
-                'mahalanobis' : merit_mahalanobis}
+    switcher={'CS': merit_chi2,
+              'MD' : merit_mahalanobis}
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}', star_name=star_name)
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{merit_function}_{file_suffix_observables}', star_name=star_name)
 
     # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'

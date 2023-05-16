@@ -7,7 +7,6 @@ from foam import support_functions as sf
 from foam.pipeline.pipeline_config import config
 ################################################################################
 k = config.k            # number of free paramters in the grid
-merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
 if config.n_sigma_spectrobox != None:
     directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
 else:
@@ -18,7 +17,6 @@ Path(output_folder).mkdir(parents=True, exist_ok=True)
 ################################################################################
 # Get the condition numbers file to use its listed values of ln(det(V)) with V the variance-covariance matrix.
 for merit in config.merit_functions:
-    merit = merit_abbrev[merit]
     if merit == 'CS':
         df_AICc = pd.DataFrame( data = [], columns=['method', 'AICc'] )
     elif merit == 'MD':

@@ -8,8 +8,6 @@ else:
     directory_prefix = f''
 
 LaTeX_format = False
-merit_abbrev = {'chi2': 'CS', 'mahalanobis': 'MD'}
-
 
 with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'w') as outfile:
     # outfile.write(r' Grid & Observables & Pattern construction & $M_{ini}$ & $Z_{ini}$ & $\alpha_{\text{CBM}}$ & $\fcbm$ & log($\D[env]$) & $X_c$ & $\Omega_{rot}$ & $\chi^2_{\text{red}}$ & MD & AICc($\chi^2_{\text{red}}$) \vspace{1pt} \\'+'\n')
@@ -31,7 +29,6 @@ endresult_MD_dict = {}
 # Make a dictionary of the best models for each grid and observable combo, according to each merit function
 for pattern in config.pattern_methods:
     for merit in config.merit_functions:
-        merit = merit_abbrev[merit]
         for grid in config.grids:
             for obs in config.observable_aic:
                 MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
@@ -49,7 +46,6 @@ df_AICc_Chi2 = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AIC
 df_AICc_MD   = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_MD.tsv', delim_whitespace=True, header=0)
 # Print both the chi2 and MD values of those best models
 for merit in config.merit_functions:
-    merit = merit_abbrev[merit]
     for grid in config.grids:
         for obs in config.observable_aic:
             for pattern in config.pattern_methods:
