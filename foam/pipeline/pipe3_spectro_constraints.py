@@ -42,7 +42,7 @@ if config.n_sigma_spectrobox != None:
 
     files_to_analyse = []
     for grid in config.grids:
-        files = glob.glob(f'extracted_freqs/{config.star}_{grid}*.hdf')
+        files = glob.glob(f'meritvalues/{config.star}_{grid}*.hdf')
         files_kept = list(files)
         for file in files:
             output_file = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'

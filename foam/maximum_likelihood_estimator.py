@@ -45,7 +45,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
 
     # set the name of the output file and make it's directory if needed
     head, tail = sf.split_line(Path_theo.stem, star_name)
-    DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
+    DataOutDir = Path(f'{os.getcwd()}/meritvalues')
     Path(DataOutDir).mkdir(parents=True, exist_ok=True)
     DataOut = f'{DataOutDir}/{star_name}{tail}_{merit_function}_{file_suffix_observables}.hdf'
 

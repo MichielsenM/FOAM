@@ -31,7 +31,7 @@ for pattern in config.pattern_methods:
     for merit in config.merit_functions:
         for grid in config.grids:
             for obs in config.observable_aic:
-                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
+                MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
                 df = pd.read_hdf(MLE_values_file)
                 best_model = df.loc[df['meritValue'].idxmin()]
                 best_model_dict.update({f'{grid} {merit} {obs} {pattern}': best_model})
@@ -49,7 +49,7 @@ for merit in config.merit_functions:
     for grid in config.grids:
         for obs in config.observable_aic:
             for pattern in config.pattern_methods:
-                MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
+                MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
                 df = pd.read_hdf(MLE_values_file)
 
                 if 'CS' in config.merit_functions:

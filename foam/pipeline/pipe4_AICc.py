@@ -25,7 +25,7 @@ for merit in config.merit_functions:
     for grid in config.grids:
         for method in config.pattern_methods:
             for obs in config.observable_aic:
-                df = pd.read_hdf(f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{method}_{merit}_{obs}.hdf')
+                df = pd.read_hdf(f'{directory_prefix}meritvalues/{config.star}_{grid}_{method}_{merit}_{obs}.hdf')
                 df = df.sort_values('meritValue', ascending=True)
 
                 # Calculate the AICc

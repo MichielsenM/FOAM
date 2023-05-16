@@ -33,7 +33,7 @@ with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMarg
 for merit in config.merit_functions:
     for obs in config.observable_aic:
 
-        files = glob.glob(f'{directory_prefix}extracted_freqs/*{merit}_{obs}.hdf')
+        files = glob.glob(f'{directory_prefix}meritvalues/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
             star_name, analysis = sf.split_line(Path_file.stem, '_')
