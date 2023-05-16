@@ -7,12 +7,14 @@ from foam.pipeline.pipeline_config import config
 ###############################################################################
 file_Path = Path(f'V_matrix/{config.star}_determinant_conditionNr.tsv')
 if file_Path.is_file(): file_Path.unlink()  #remove file if it exists to avoid duplicate entries on successive runs
-with multiprocessing.Pool(config.nr_cpu) as p:	# Multiprocessing pool, NR CORES = nr items in obeservables list
-    for grid in config.grids:
-        for method in config.pattern_methods:
-            for merit_function in config.merit_functions:
-                Theo_path = f'{config.main_directory}/extracted_freqs/spectro+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.hdf'
+args = []
+for grid in config.grids:
+    for method in config.pattern_methods:
+        Theo_path = f'{config.main_directory}/extracted_freqs/spectro+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.hdf'
+        for merit_function in config.merit_functions:
+            for obs in config.observable_list:
+                args.append(( Theo_path, obs, merit_function ))
 
-                func = partial(mle.calculate_likelihood, config.observations, Theo_path, merit_function = merit_function, star_name=config.star, fixed_params=config.fixed_parameters, grid_parameters=config.grid_parameters)
-                for result in p.imap(func, config.observable_list):
-                    item=result
+with multiprocessing.Pool(config.nr_cpu) as p:
+    func = partial(mle.calculate_likelihood, Obs_path=config.observations, star_name=config.star, fixed_params=config.fixed_parameters, grid_parameters=config.grid_parameters)
+    p.starmap(func, args)

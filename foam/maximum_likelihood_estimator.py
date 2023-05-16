@@ -12,11 +12,11 @@ from foam import functions_for_gyre as ffg
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None, grid_parameters=None):
+def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_path=None, star_name=None, fixed_params=None, grid_parameters=None):
     """
-    Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
+    Perform a maximum likelihood estimation using the provided type of merit function on the list of observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
-    Can also select and continue the analysis of nested grids through the keyword 'fixed_params'.
+    Can select and continue the analysis of nested grids through the keyword 'fixed_params'.
     ------- Parameters -------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
