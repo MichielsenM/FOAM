@@ -42,7 +42,7 @@ for pattern in config.pattern_methods:
                     endresult_MD_dict.update({f'{grid} {obs} {pattern} {best_model["M"]} {best_model["Z"]} {best_model["aov"]} {best_model["fov"]} {best_model["logD"]} {best_model["Xc"]}' : {'rot': best_model["rot"]}})
 
 
-df_AICc_Chi2 = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_Chi2.tsv', delim_whitespace=True, header=0)
+df_AICc_Chi2 = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_CS.tsv', delim_whitespace=True, header=0)
 df_AICc_MD   = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_MD.tsv', delim_whitespace=True, header=0)
 # Print both the chi2 and MD values of those best models
 for merit in config.merit_functions:
@@ -52,7 +52,7 @@ for merit in config.merit_functions:
                 MLE_values_file = f'{directory_prefix}extracted_freqs/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
                 df = pd.read_hdf(MLE_values_file)
 
-                if 'chi2' in config.merit_functions:
+                if 'CS' in config.merit_functions:
                     best_CS = best_model_dict[f'{grid} CS {obs} {pattern}']  # best model according to chi square
                     row_best_CSmodel = df.loc[(df['rot']==best_CS["rot"]) & (df['Z']==best_CS["Z"])
                                 & (df['M']==best_CS["M"]) & (df['logD']==best_CS["logD"])
@@ -67,7 +67,7 @@ for merit in config.merit_functions:
                     reduced = config.N_dict[obs]-config.k
                 else:
                     reduced = 1
-                if 'chi2' in config.merit_functions:
+                if 'CS' in config.merit_functions:
                     endresult_CS_dict[f'{grid} {obs} {pattern} {best_CS["M"]} {best_CS["Z"]} {best_CS["aov"]} {best_CS["fov"]} {best_CS["logD"]} {best_CS["Xc"]}'].update({f'{merit}' : row_best_CSmodel['meritValue'].iloc[0]/reduced })
                 endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'{merit}' : row_best_MDmodel['meritValue'].iloc[0]/reduced })
 
@@ -81,7 +81,7 @@ for merit in config.merit_functions:
                     endresult_MD_dict[f'{grid} {obs} {pattern} {best_MD["M"]} {best_MD["Z"]} {best_MD["aov"]} {best_MD["fov"]} {best_MD["logD"]} {best_MD["Xc"]}'].update({f'AICc' : AICc_MD})
 
 # Write everything as a LaTeX tables to a file
-if 'chi2' in config.merit_functions:
+if 'CS' in config.merit_functions:
     with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'a') as outfile:
         for key in sorted(endresult_CS_dict.keys()):
             if LaTeX_format:
