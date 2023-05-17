@@ -1,4 +1,4 @@
-"""Ignore all the models that fall outside an n-sigma spectroscopic error box."""
+"""Ignore all the models that fall outside an n-sigma error box."""
 import glob
 from pathlib import Path
 import pandas as pd
@@ -9,12 +9,12 @@ from foam import model_grid as mg
 from foam.pipeline.pipeline_config import config
 
 ################################################################################
-# Copy of the list of models, and keep only the models that fall within the specified spectroscopic error box
-if config.n_sigma_spectrobox != None:
+# Copy of the list of models, and keep only the models that fall within the specified error box
+if config.n_sigma_box != None:
     observations = config.observations
 
     isocloud_summary_dict = None
-    if config.spectro_companion is not None:
+    if config.constraint_companion is not None:
         if not Path(f'{config.main_directory}/isocloud_grid.h5').is_file():
             params = list(config.free_parameters) # To make a copy and not remove Xc from the config
             params.remove('Xc')
@@ -45,13 +45,16 @@ if config.n_sigma_spectrobox != None:
         files = glob.glob(f'meritvalues/{config.star}_{grid}*.hdf')
         files_kept = list(files)
         for file in files:
-            output_file = f'{config.n_sigma_spectrobox}sigmaSpectro_{file}'
+            output_file = f'{config.n_sigma_box}sigmaBox_{file}'
             if Path(output_file).is_file():
                 files_kept.remove(file)
                 config.logger.warning(f'file already existed: {output_file}')
         files_to_analyse.extend(files_kept)
 
-    with multiprocessing.Pool(min(config.nr_cpu, 4)) as p: # For some reason 4 processes is faster than more, find out why more becomes slower
-        func = partial( ac.spectro_constraint,  observations_file=observations, nsigma=config.n_sigma_spectrobox, spectroGrid_file=f'{config.main_directory}/../grid_summary/spectroGrid_{grid}.hdf',
-                            spectro_companion=config.spectro_companion, isocloud_grid_summary=isocloud_summary_dict)
+    nr_cpu = 4
+    if config.nr_cpu is not None:
+        nr_cpu = min(config.nr_cpu, 4)
+    with multiprocessing.Pool( nr_cpu ) as p: # For some reason 4 processes is faster than more, find out why more becomes slower
+        func = partial( ac.surface_constraint,  observations_file=observations, nsigma=config.n_sigma_box, surfaceGrid_file=f'{config.main_directory}/../grid_summary/surfaceGrid_{grid}.hdf',
+                            constraint_companion=config.constraint_companion, isocloud_grid_summary=isocloud_summary_dict)
         p.map(func, files_to_analyse)
