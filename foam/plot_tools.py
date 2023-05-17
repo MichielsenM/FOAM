@@ -71,7 +71,7 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
 
 ################################################################################
 def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
-                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3, grid_parameters = None,
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_box=3, grid_parameters = None,
                       axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
                       'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ):
     """
@@ -129,14 +129,14 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
     if df_Theo.iloc[0]['rot'] == df_Theo.iloc[1]['rot'] == df_Theo.iloc[2]['rot'] == df_Theo.iloc[-1]['rot']: # rotation is fixed, don't plot it
-        df_EE = df_Theo_EE.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
-        df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df_EE = df_Theo_EE.filter(['meritValue']+grid_parameters ) # make new dataframe with only needed info
+        df = df_Theo.filter(['meritValue']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellips from the regular dataframe.
         df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
 
     else: # rotation was varied, include it in the plots
-        df_EE = df_Theo_EE.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
-        df = df_Theo.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df_EE = df_Theo_EE.filter(['meritValue']+['rot']+grid_parameters ) # make new dataframe with only needed info
+        df = df_Theo.filter(['meritValue']+['rot']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellips from the regular dataframe.
         df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
 
@@ -234,16 +234,16 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     ax_hrd.tick_params(which='minor', length=4)
 
     # observations
-    if n_sigma_spectrobox != None:
+    if n_sigma_box != None:
         Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
         # Observed spectroscopic error bar
         # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
         width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0])
+        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
         errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
                     width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                    width_logTeff_nsigma, 2*n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
+        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                    width_logTeff_nsigma, 2*n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
         ax_hrd.add_patch(errorbox_1s)
         ax_hrd.add_patch(errorbox_ns)
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')

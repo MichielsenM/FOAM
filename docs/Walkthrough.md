@@ -68,7 +68,7 @@ The profiles should at least contain the following information in their header: 
 Note that the choice of parameters, and the way they are named, can be changed. The only requirements are that the parameter name is followed by it's numerical value, the different parameters are divided by underscores, and the files have the correct suffix. The parameters and names of your choice should then later be provided to the configuration of the pipeline. (See [Pipeline configuration](./Configuration.md) for more information.)
 
 #### GYRE grid with stellar pulsations
-For each MESA profile, a GYRE summary file needs to be calculated containing at least the output columns 'freq' and 'n_pg', and written in HDF format. These GYRE summary files are stored in folders indicating the rotation frequency (in cycles per day) that was used during the GYRE computations, and the mode ID (k,m) (e.g. `rot0.63_k0m1`).
+For each MESA profile, a GYRE summary file needs to be calculated containing at least the output columns 'freq' and 'n_pg', and written in HDF format. These GYRE summary files are stored in folders indicating the rotation frequency (in cycles per day) and the mode ID (k,m) that were used during the GYRE computations (e.g. `rot0.63_k0m1`).
 
 Similar to the MESA grid, the GYRE grid is divided in subfolders per initial mass-metallicity combination. The naming scheme gives Zini and Mini, followed by their respective values, divided by an underscore.
 

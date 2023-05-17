@@ -2,8 +2,8 @@
 import pandas as pd
 from foam.pipeline.pipeline_config import config
 ################################################################################
-if config.n_sigma_spectrobox != None:
-    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+if config.n_sigma_box != None:
+    directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
     directory_prefix = f''
 

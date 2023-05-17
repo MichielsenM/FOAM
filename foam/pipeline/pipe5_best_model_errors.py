@@ -22,8 +22,8 @@ def likelihood_MD(MD):
     return np.exp(-0.5*( MD + config.k*np.log(2*np.pi) + lndetV ))
 
 ################################################################################
-if config.n_sigma_spectrobox != None:
-    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+if config.n_sigma_box != None:
+    directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
     directory_prefix = f''
 

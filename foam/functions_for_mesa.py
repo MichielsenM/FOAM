@@ -137,9 +137,9 @@ def convert_units(quantity, input, convertto='cgs'):
         return input / to_cgs[quantity]
 
 ################################################################################
-def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
+def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
     """
-    Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
+    Extract requested info for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -151,31 +151,31 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf',
     nr_cpu: int
         Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
-    extract_func = partial(spectro_from_profiles, parameters=parameters)
+    extract_func = partial(info_from_profiles, parameters=parameters)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     with multiprocessing.Pool(nr_cpu) as p:
-        spectro = p.imap(extract_func, profiles)
+        surface = p.imap(extract_func, profiles)
 
         # Generate the directory for the output file and write the file afterwards
         Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-        # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
+        # make a new list, so 'parameters' is not extended before passing it on to 'info_from_profiles'
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
 
         # Make list of lists, put it in a dataframe, and write to a file
         data = []
-        for line in spectro:
+        for line in surface:
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
+    df.to_hdf(f'{output_file}', 'surfaceGrid', format='table', mode='w')
 
 
 ################################################################################
-def spectro_from_profiles(mesa_profile, parameters):
+def info_from_profiles(mesa_profile, parameters):
     """
-    Extract spectroscopic info and age from a MESA profile and the model parameters from its filename.
+    Extract requested info from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
@@ -184,7 +184,7 @@ def spectro_from_profiles(mesa_profile, parameters):
 
     ------- Returns -------
     line: string
-        Line containing all the model- and spectroscopic parameters of the MESA profile.
+        Line containing all the model- and surface parameters of the MESA profile.
     """
     param_dict = sf.get_param_from_filename(mesa_profile, parameters,values_as_float=True)
     prof_header, prof_data = read_mesa_file(mesa_profile)
@@ -201,22 +201,22 @@ def spectro_from_profiles(mesa_profile, parameters):
     return line
 
 ################################################################################
-def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_surface+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Combine the output files with the frequencies and spectroscopy of the grid in one new file,
-    only keeping models that have entries in both the frequency and specto files.
+    Combine the output files with the frequencies and surface info of the grid in one new file,
+    only keeping models that have entries in both the grid files.
     ------- Parameters -------
-    grid_frequencies, grid_spectroscopy: string
-        Paths to the files containing the model input parameters and corresponding frequency/spectroscopy of the model.
+    grid_frequencies, grid_surface: string
+        Paths to the files containing the model input parameters and corresponding frequency/surface info of the model.
     output_name: string
         Name of the generated file containing the combined info.
     grid_parameters: list of string
-        List of the model parameters to use for matching the entries in the freq/spectro file.
+        List of the model parameters to use for matching the entries in the freq/surface file.
     """
     freq_df    = pd.read_hdf(grid_frequencies)
-    spectro_df = pd.read_hdf(grid_spectroscopy)
-    # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
-    df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=grid_parameters)
+    surface_df = pd.read_hdf(grid_surface)
+    # Merge with surface info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
+    df_merged  = pd.merge(surface_df, freq_df, how='inner', on=grid_parameters)
 
     col = df_merged.pop("age") # Don't add the age in the combined file
 
@@ -226,4 +226,4 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     col = df_merged.pop("rot_err")
     df_merged.insert(1, col.name, col)
     # write the merged dataFrame to a new file
-    df_merged.to_hdf(f'{output_name}', 'puls_spectro_grid', format='table', mode='w')
+    df_merged.to_hdf(f'{output_name}', 'puls_surface_grid', format='table', mode='w')

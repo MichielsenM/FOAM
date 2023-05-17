@@ -79,7 +79,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
+    df.to_hdf(f'{output_file}', 'selected_puls_grid', format='table', mode='w')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,

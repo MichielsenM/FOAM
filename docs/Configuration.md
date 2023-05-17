@@ -119,10 +119,10 @@ All keyword arguments are listed below, grouped in categories.
     default: ['P', 'dP'] <br>
     calculate AICc for these observables (abbreviated names) #TODO
 
-- n_sigma_spectrobox
+- n_sigma_box
 >   type: int <br>
     default: 3 <br>
-    Ignore models outside of the n-sigma spectroscopic error box, set to None to include all models.
+    Ignore models outside of an n-sigma error box on the surface properties in the observational data, set to None to include all models.
 
 - free_parameters
 >   type: list <br>

@@ -6,8 +6,8 @@ from functools import partial
 from foam import plot_tools
 from foam.pipeline.pipeline_config import config
 ################################################################################
-if config.n_sigma_spectrobox != None:
-    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+if config.n_sigma_box != None:
+    directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
     directory_prefix = f''
 
@@ -27,5 +27,5 @@ for file in files:
 
 matplotlib.use('Agg') # Use this backend for matplotlib to make plots via multiprocessing, otherwise the default gives XIO errors
 with multiprocessing.Pool(config.nr_cpu) as p:
-    func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}cornerplots/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_spectrobox=config.n_sigma_spectrobox, grid_parameters=config.grid_parameters, axis_labels_dict=config.conerplot_axis_labels )
+    func = partial(plot_tools.corner_plot, observations_file=config.observations, fig_outputDir=f'{directory_prefix}cornerplots/', percentile_to_show=0.5, logg_or_logL='logL', n_sigma_box=config.n_sigma_box, grid_parameters=config.grid_parameters, axis_labels_dict=config.conerplot_axis_labels )
     p.starmap(func, args)

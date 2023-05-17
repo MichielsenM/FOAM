@@ -10,7 +10,7 @@ if file_Path.is_file(): file_Path.unlink()  #remove file if it exists to avoid d
 args = []
 for grid in config.grids:
     for method in config.pattern_methods:
-        Theo_path = f'{config.main_directory}/extracted_freqs/spectro+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.hdf'
+        Theo_path = f'{config.main_directory}/extracted_freqs/surface+{config.periods_or_frequencies_observed}_{config.star}_{grid}_{method}.hdf'
         for merit_function in config.merit_functions:
             for obs in config.observable_list:
                 args.append(( Theo_path, obs, merit_function ))

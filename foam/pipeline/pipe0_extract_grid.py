@@ -1,4 +1,4 @@
-""" From the grid location, extract all spectroscopic info from MESA profiles and all frequencies from GYRE models."""
+""" From the grid location, extract all relevant info from MESA profiles and all frequencies from GYRE models."""
 from pathlib import Path
 from foam import functions_for_gyre as ffg
 from foam import functions_for_mesa as ffm
@@ -6,9 +6,9 @@ from foam.pipeline.pipeline_config import config
 ################################################################################
 
 for grid in config.grids:
-    output_file = f'../grid_summary/spectroGrid_{grid}.hdf'
+    output_file = f'../grid_summary/surfaceGrid_{grid}.hdf'
     if not Path(output_file).is_file():
-        ffm.grid_extract_spectroscopy(f'{config.grid_parent_directory}/{grid}/MESA_out/Zini*/profiles/*{config.subgrid}*prof', output_file=output_file, nr_cpu=config.nr_cpu)
+        ffm.extract_surface_grid(f'{config.grid_parent_directory}/{grid}/MESA_out/Zini*/profiles/*{config.subgrid}*prof', output_file=output_file, nr_cpu=config.nr_cpu)
     else:
         config.logger.warning(f'file already existed: {output_file}')
 

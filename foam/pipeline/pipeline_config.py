@@ -53,8 +53,8 @@ class PipelineConfig:
             e.g. ['period'] can be expanded to ['period', 'logg'] to include more observables in the likelihood estimation
         observable_aic: list of strings
             calculate AICc for these observables (abbreviated names)
-        n_sigma_spectrobox: int
-            Ignore models outside of the n-sigma spectroscopic error box, set to None to include all models.
+        n_sigma_box: int
+            Ignore models outside of the n-sigma error box on the surface properties, set to None to include all models.
         free_parameters: list
             List of varied parameters in the grid, as written in grid filenames,
             that remain free parameters in the modelling.
@@ -68,11 +68,11 @@ class PipelineConfig:
             In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
 
         --- For modelling binaries and enforcing constraints of the companion star. ---
-        spectro_companion: dictionary
+        constraint_companion: dictionary
             Dictionary with the following keys holding all binary Information (q = Mass_secondary/Mass_primary)
             e.g. {'q': <float>, 'q_err': <float>,'Teff': <float>, 'Teff_err': <float>,
                   'logg': <float>, 'logg_err': <float>, 'logL': <float>, 'logL_err':<float>, 'primary_pulsates':<boolean>}
-            set a spectroscopic observable to None to not use that observable.
+            set surface observable to None to not use that observable.
             Defaults to None instead of a dictionary to not include any constraints from binarity.
 
         isocloud_grid_directory: string
@@ -119,7 +119,7 @@ class PipelineConfig:
         self.merit_functions = kwargs.pop("merit_functions", ['CS', 'MD'])
         self.observable_list = kwargs.pop("observable_list", [['period'], ['period-spacing']])
         self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
-        self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)
+        self.n_sigma_box = kwargs.pop("n_sigma_box", 3)
         self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
         self.fixed_parameters = kwargs.pop("fixed_parameters", None)
 
@@ -137,7 +137,7 @@ class PipelineConfig:
         self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods,}
 
         # Binarity
-        self.spectro_companion = kwargs.pop("spectro_companion", None)
+        self.constraint_companion = kwargs.pop("constraint_companion", None)
         self.isocloud_grid_directory = kwargs.pop("isocloud_grid_directory", None)
 
         # Plotting

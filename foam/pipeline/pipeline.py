@@ -17,7 +17,7 @@ if __name__ == '__main__':
         os.chdir(pipeline_config.config.nested_grid_dir)
 
     importlib.import_module('foam.pipeline.pipe2_calculate_likelihood')
-    importlib.import_module('foam.pipeline.pipe3_spectro_constraints')
+    importlib.import_module('foam.pipeline.pipe3_add_constraints')
     importlib.import_module('foam.pipeline.pipe4_AICc')
     importlib.import_module('foam.pipeline.pipe5_best_model_errors')
     importlib.import_module('foam.pipeline.pipe6_corner_plots')

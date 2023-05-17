@@ -7,8 +7,8 @@ from foam import support_functions as sf
 from foam.pipeline.pipeline_config import config
 ################################################################################
 k = config.k            # number of free paramters in the grid
-if config.n_sigma_spectrobox != None:
-    directory_prefix = f'{config.n_sigma_spectrobox}sigmaSpectro_'
+if config.n_sigma_box != None:
+    directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
     directory_prefix = f''
 
