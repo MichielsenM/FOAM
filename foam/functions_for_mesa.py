@@ -1,5 +1,4 @@
 """A few helpful functions to process MESA output."""
-# from foam import functions_for_mesa as ffm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -48,39 +47,6 @@ def read_mesa_file(file_path, index_col=None):
         return header, data
 
 ################################################################################
-def check_hydro_eq(profile_file, treshold_for_plot=5E-8):
-    """
-    Calculates the normalised differences between the terms on both sides of the hydrostatic equilibrium equation.
-    Makes a plot if the values exceed a given treshold.
-    This shows how well hydrostatic equilibrium has been fulfilled in the MESA model.
-    ------- Parameters -------
-    profile_file: String
-        The path to the profile file to be checked.
-    treshold_for_plot: float
-        Make a plot if the max difference between the left and right hand side of the equation is greater than this number.
-    """
-    header, data = read_mesa_file(profile_file)
-    # Compute the hydrostatic equilibrium quality factor q - See e.g. Aerts et al. (2010)
-    lhs=np.delete(data['hyeq_lhs'], 0)  # remove the values at the surface, since these are 0
-    rhs=np.delete(data['hyeq_rhs'], 0)
-
-    norm = np.max(np.vstack([lhs, rhs]), axis=0)
-    hyeq = np.abs(lhs - rhs) / np.abs(norm)
-
-    # Make the plot if the treshold criterion is met
-    if max(hyeq) > treshold_for_plot:
-        # print the maximal deviation and profile name
-        print(max(hyeq))
-        print(profile_file)
-        # make a semilog plot
-        fig=plt.figure()
-        ax = fig.add_subplot(111)
-        ax.semilogy(np.delete(data['radius'], 0), hyeq, 'ko-') #also remove surface value, to have same amount of datapoints
-        plt.show()
-        plt.clf()
-        plt.close('all')
-
-################################################################################
 def calculate_number_densities(hist_file):
     '''
     Calculate surface number densities for all isotopes in the MESA grid.
@@ -107,34 +73,6 @@ def calculate_number_densities(hist_file):
         number_densities.update({ key.replace('_per_Mass_tot', '_per_N_tot') : element_list[key]*average_atomic_mass})
 
     return number_densities
-
-################################################################################
-def convert_units(quantity, input, convertto='cgs'):
-    '''
-    Converts from solar units to cgs and vice versa.
-    ------- Parameters -------
-    input: list of float
-        Numbers to convert.
-    quantity: string
-        The quantity you want to convert. Options are: {radius, mass, luminosity}.
-    convertto: string
-        The unit system to convert to. Options are: {cgs,solar} with default: 'cgs'.
-    ------- Returns -------
-    out: list of float
-        converted numbers
-    '''
-    # conversion factors used in MESA see $MESA_DIR/const/public/const_def.f90
-    to_cgs = {'mass': 1.9892E33,
-              'luminosity': 3.8418E33,
-              'radius': 6.9598E10,
-              'cgrav': 6.67428E-8} # gravitational constant (g^-1 cm^3 s^-2)
-
-    # convert to cgs
-    if convertto == 'cgs':
-        return input * to_cgs[quantity]
-    # convert to solar units
-    elif convertto == 'solar':
-        return input / to_cgs[quantity]
 
 ################################################################################
 def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):

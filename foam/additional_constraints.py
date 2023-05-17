@@ -1,3 +1,4 @@
+""" Extra constraints based on e.g. surface properties of the star, or a binary companion. """
 import sys
 from functools import partial
 import numpy as np

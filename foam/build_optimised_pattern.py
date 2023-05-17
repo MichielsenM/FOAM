@@ -1,6 +1,5 @@
 """Selection of the theoretical pulsation patterns that best match the observations,
    with the possibility to optimise the rotation rate in the process through rescaling."""
-# from foam import build_optimised_pattern as bop
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

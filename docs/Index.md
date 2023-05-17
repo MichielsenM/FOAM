@@ -26,6 +26,3 @@ from foam import plot_tools
 plot_tools.plot_hrd('PATH_TO_MESA_HISTORY')
 plot_tools.plot_khd('PATH_TO_MESA_HISTORY')
 plt.show()</code></pre>
-
-### Building grids
-The functions in `foam/grid_building_vsc` are an example of how to quickly make a setup for MESA and GYRE grids on the VSC (Vlaams Supercomputer Centrum).
