@@ -1,10 +1,13 @@
 """Calculate the likelihood of all the theoretical patterns according to the specified merit functions."""
 from foam import maximum_likelihood_estimator as mle
 from functools import partial
-import multiprocessing
+import multiprocessing, os
 from pathlib import Path
 from foam.pipeline.pipeline_config import config
 ###############################################################################
+DataOutDir = Path(f'{os.getcwd()}/meritvalues')
+Path(DataOutDir).mkdir(parents=True, exist_ok=True)
+
 file_Path = Path(f'V_matrix/{config.star}_determinant_conditionNr.tsv')
 if file_Path.is_file(): file_Path.unlink()  #remove file if it exists to avoid duplicate entries on successive runs
 args = []

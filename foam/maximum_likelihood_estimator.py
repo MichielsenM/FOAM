@@ -40,13 +40,10 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
-    Path_theo   = Path(Theo_file)
-
-    # set the name of the output file and make it's directory if needed
-    head, tail = sf.split_line(Path_theo.stem, star_name)
+    # set the name of the output file
+    head, tail = sf.split_line(Path(Theo_file).stem, star_name)
     DataOutDir = Path(f'{os.getcwd()}/meritvalues')
-    Path(DataOutDir).mkdir(parents=True, exist_ok=True)
-    DataOut = f'{DataOutDir}/{star_name}{tail}_{merit_function}_{file_suffix_observables}.hdf'
+    filename = f'{star_name}{tail}_{merit_function}_{file_suffix_observables}'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
@@ -86,13 +83,13 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{merit_function}_{file_suffix_observables}', star_name=star_name)
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{filename}', star_name=star_name)
 
     # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
     df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+grid_parameters) # put the data in a pandas DataFrame
     df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
-    df.to_hdf(f'{DataOut}', 'merit_values', format='table', mode='w')
+    df.to_hdf(f'{os.getcwd()}/meritvalues/{filename}.hdf', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_indices):

@@ -36,6 +36,11 @@ for merit in config.merit_functions:
         files = glob.glob(f'{directory_prefix}meritvalues/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
+            output_name = Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse')
+            if output_name.is_file(): # Don't duplicate if file is already present
+                config.logger.warning(f'file already existed: {output_name}')
+                continue
+
             star_name, analysis = sf.split_line(Path_file.stem, '_')
             df = pd.read_hdf(file)
             df = df.sort_values('meritValue', ascending=True)
@@ -84,7 +89,7 @@ for merit in config.merit_functions:
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
                     # Write all models enclosed within the error ellips to a separate file
-                    df.iloc[:i+1].to_hdf(Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse'), 'models_in_2sigma_error_ellipse', format='table', mode='w')
+                    df.iloc[:i+1].to_hdf( output_name , 'models_in_2sigma_error_ellipse', format='table', mode='w')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
 
