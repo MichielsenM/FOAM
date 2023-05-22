@@ -1,4 +1,4 @@
-"""Calculate the 2 sigma uncertainty region of the maximum likelihood solution."""
+"""Calculate the 2 sigma uncertainty region of the maximum likelihood solution using Bayes' theorem."""
 
 import glob, sys
 import pandas as pd
@@ -27,9 +27,6 @@ if config.n_sigma_box != None:
 else:
     directory_prefix = f''
 
-with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'w') as outfile:
-    outfile.write(f'{config.free_parameters}'+'\n')
-
 for merit in config.merit_functions:
     for obs in config.observable_aic:
 
@@ -52,18 +49,14 @@ for merit in config.merit_functions:
             likelihood_function = switcher.get(merit, lambda x : sys.exit(config.logger.error(f'invalid type of maximum likelihood estimator:{merit}')))
 
             probabilities = {}
-            error_region = {}
-
             for column_name in config.free_parameters:
                 probabilities.update({column_name:{}})
-                error_region.update({column_name:[]})
                 for value in df[column_name].unique():     # construct dictionary
                     probabilities[column_name].update({value:0})
                 for value in df[column_name]:              # sum over all occurences of parameter values
                     probabilities[column_name][value]+=1
                 for value in df[column_name].unique():     # divide by total number of models to get probabilities
                     probabilities[column_name][value] = probabilities[column_name][value] / len(df)
-
 
             total_probability=0
             for i in range(len(df)):    # calculate the denominator
@@ -82,21 +75,9 @@ for merit in config.merit_functions:
                     value = df.iloc[i][column_name]
                     prob = prob*probabilities[column_name][value]
 
-                    if value not in error_region[column_name]:
-                        error_region[column_name].append(value)
-                        error_region[column_name] = sorted(error_region[column_name])
-
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
                     # Write all models enclosed within the error ellips to a separate file
                     df.iloc[:i+1].to_hdf( output_name , 'models_in_2sigma_error_ellipse', format='table', mode='w')
                     config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break
-
-            config.logger.info(error_region)
-
-            with open(f'{directory_prefix}output_tables/{config.star}_{sigma}sigma_errorMargins.txt', 'a') as outfile:
-                outfile.write(f'{analysis} ')
-                for column_name in config.free_parameters:
-                    outfile.write(f'{error_region[column_name]} ')
-                outfile.write(f'  \\\\ \n')
