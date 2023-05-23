@@ -94,6 +94,5 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
         elif abs(n_pg) < 100:
             n_pg = f'{sf.sign(n_pg)}0{abs(n_pg)}'
         param_dict.update({f'n_pg{n_pg}':data['freq'][j][0]})
-        # param_dict.update({f'n_pg{data["n_pg"][j]}':data['freq'][j][0]})
 
     return param_dict

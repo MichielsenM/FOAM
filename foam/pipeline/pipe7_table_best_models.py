@@ -31,7 +31,7 @@ for pattern in config.pattern_methods:
     for merit in config.merit_functions:
         for grid in config.grids:
             for obs in config.observable_aic:
-                MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
+                MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}_2sigma-error-ellipse.hdf'
                 df = pd.read_hdf(MLE_values_file)
                 best_model = df.loc[df['meritValue'].idxmin()]
                 best_model_dict.update({f'{grid} {merit} {obs} {pattern}': best_model})
@@ -44,7 +44,7 @@ for pattern in config.pattern_methods:
 
 df_AICc_Chi2 = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_CS.tsv', delim_whitespace=True, header=0)
 df_AICc_MD   = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AICc_values_MD.tsv', delim_whitespace=True, header=0)
-# Print both the chi2 and MD values of those best models
+# Print both the chi2 and MD values of those best models (read file with all models, since model in error ellipse of one merit function can fall outside of ellipse of the other)
 for merit in config.merit_functions:
     for grid in config.grids:
         for obs in config.observable_aic:

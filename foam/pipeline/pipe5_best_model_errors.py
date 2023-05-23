@@ -33,7 +33,7 @@ for merit in config.merit_functions:
         files = glob.glob(f'{directory_prefix}meritvalues/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)
-            output_name = Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma_error_ellipse')
+            output_name = Path_file.with_stem(f'{Path_file.stem}_{sigma}sigma-error-ellipse')
             if output_name.is_file(): # Don't duplicate if file is already present
                 config.logger.warning(f'file already existed: {output_name}')
                 continue
