@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger('logger.bop')
 ################################################################################
-def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
+def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
                                         output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None, nr_cpu=None):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
@@ -36,7 +36,7 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
     which_observable: string
-        Observable used in the theoretical pattern construction.
+        Observable used in the theoretical pattern construction, options are 'frequency' or 'period'.
     output_file: string
         Name (can include a path) for the file containing all the pulsation frequencies of the grid.
     asymptotic_object: asymptotic (see 'gmode_rotation_scaling')
@@ -68,9 +68,9 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
 
         for i in range(1, Obs_dFrame.shape[0]+1):
             if i-1 in np.where(Obs_dFrame.index == 'f_missing')[0]:
-                f = 'freq_missing'
+                f = f'{which_observable}_missing'
             else:
-                f = 'freq'+str(i)
+                f = f'{which_observable}{i}'
             header_parameters.append(f.strip())
 
         data = []
@@ -340,7 +340,7 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     diff = abs(TheoIn - Obs_to_build_from)    # search theoretical freq closest to the given observed one
     index = np.where(diff==min(diff))[0][0]   # get index of this theoretical frequency
 
-    # Insert a value of -1 if observations miss a theoretical counterpart in the begining
+    # Insert a value of -1 if observations miss a theoretical counterpart in the beginning
     Theo_sequence = []
     if (index-nth_obs)<0:
         for i in range(abs((index-nth_obs))):

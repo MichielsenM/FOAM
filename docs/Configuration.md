@@ -27,12 +27,6 @@ All keyword arguments are listed below, grouped in categories.
     default: None <br>
     Full path to the file with the observational data
 
-- periods_or_frequencies_observed
->   type: string <br>
-    default: 'period' <br>
-    options: 'period' or 'frequency' <br>
-    Use the observed periods or frequencies, be consistent in observable_list later.
-
 - highest_amplitude_pulsation
 >   type: dictionary of list <br>
     default: None <br>
@@ -106,18 +100,16 @@ All keyword arguments are listed below, grouped in categories.
     >> 'MD' uses Mahalanobis distances, see [Aerts et al. 2018](https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract)
     for its application in the context of asteroseismology.
 
-- observable_list
->   type: list of list of strings <br>
-    default: [['period'], ['period_spacing']] <br>
-    Lists of observables to fit (repeats modelling for each list) <br>
-    e.g. ['period'] can be expanded to ['period', 'logg'] to include more observables in the likelihood estimation
-    Needs to include 'period' or 'period_spacing' if 'period' is used in keyword
-    'periods_or_frequencies_observed', and needs to include 'frequency' if 'frequency' is used in that keyword.
-
-- observable_aic
+- observable_seismic
 >   type: list of strings <br>
     default: ['P', 'dP'] <br>
-    calculate AICc for these observables (abbreviated names) #TODO
+    List of asteroseismic observables to fit in the merit function (repeats modelling for each observable) options are 'P' (period), 'dP' (period-spacing), and 'f' frequency.
+
+- observable_additional
+>   type: list of strings <br>
+    default: None <br>
+    List of additional observables to use in the merit function (e.g. logTeff, logg, logL ...).
+    Set to None to just use the asteroseismic observables.
 
 - n_sigma_box
 >   type: int <br>

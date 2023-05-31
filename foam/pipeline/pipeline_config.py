@@ -19,9 +19,6 @@ class PipelineConfig:
             Name of the star, used for generating filenames
         observations: string
             Full path to the file with the observational data
-        periods_or_frequencies_observed: string
-            options: 'period' or 'frequency'
-            Use the observed periods or frequencies, be consistent in observable_list later.
         highest_amplitude_pulsation: dictionary of lists
             Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method.
             List with highest amplitudes per part of the split pattern,
@@ -48,11 +45,12 @@ class PipelineConfig:
             List of methods to construct the theoretical frequency pattern (repeats modelling for each method)
         merit_functions: list of strings
             List of merit functions (repeats modelling for each merit function)
-        observable_list: list of list of strings
-            Lists of observables to fit (repeats modelling for each list)
-            e.g. ['period'] can be expanded to ['period', 'logg'] to include more observables in the likelihood estimation
-        observable_aic: list of strings
-            calculate AICc for these observables (abbreviated names)
+        observable_seismic: list of strings
+            List of asteroseismic observables to fit in the merit function (repeats modelling for each observable)
+            options are 'P' (period), 'dP' (period-spacing), and 'f' frequency.
+        observable_additional: list of strings
+            List of additional observables to use in the merit function (e.g. logTeff, logg, logL ...)
+            Set to None to just use the asteroseismic observables.
         n_sigma_box: int
             Ignore models outside of the n-sigma error box on the surface properties, set to None to include all models.
         free_parameters: list
@@ -100,7 +98,6 @@ class PipelineConfig:
         # Settings about observational data
         self.star = kwargs.pop("star", None)
         self.observations = kwargs.pop("observations", None)
-        self.periods_or_frequencies_observed = kwargs.pop("periods_or_frequencies_observed", 'period')
         self.highest_amplitude_pulsation = kwargs.pop("highest_amplitude_pulsation", None)
 
         # Simulated theoretical model grid
@@ -117,8 +114,9 @@ class PipelineConfig:
         # Modelling methodology
         self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','highest-amplitude', 'highest-frequency'])
         self.merit_functions = kwargs.pop("merit_functions", ['CS', 'MD'])
-        self.observable_list = kwargs.pop("observable_list", [['period'], ['period-spacing']])
-        self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
+        self.observable_seismic = kwargs.pop("observable_seismic", ['P', 'dP'])
+        self.observable_additional = kwargs.pop("observable_additional", None)
+
         self.n_sigma_box = kwargs.pop("n_sigma_box", 3)
         self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
         self.fixed_parameters = kwargs.pop("fixed_parameters", None)
@@ -134,7 +132,10 @@ class PipelineConfig:
         # Number of observables, calculated from the number of periods
         # Number of period spacings is number of periods minus amount of separated patterns.
         # E.g. uninterrupted pattern: 36 periods, so 35 period spacings
-        self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods,}
+        if self.observable_additional is None:
+            self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods}
+        else:
+            self.N_dict = {'P+extra' : self.N_periods+len(self.observable_additional),'dP+extra': self.N_periods-self.N_pattern_parts+len(self.observable_additional), 'f+extra' : self.N_periods+len(self.observable_additional)}
 
         # Binarity
         self.constraint_companion = kwargs.pop("constraint_companion", None)
@@ -197,17 +198,6 @@ class PipelineConfig:
         if self.grids is None:
             self.logger.error(f'PipelineConfig: Name of theoretical grid not specified')
             input_error = True
-
-        # Check that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.
-        match_obsAndTheory = False
-        for obs_list in self.observable_list:
-            for obs in obs_list:
-                if (self.periods_or_frequencies_observed) in obs:
-                    match_obsAndTheory = True
-            if match_obsAndTheory is False:
-                self.logger.error(f'The observables that are analysed {self.observable_list} do not all include the observational data that is used: {self.periods_or_frequencies_observed}')
-                input_error = True
-            match_obsAndTheory = False
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
         if self.fixed_parameters is not None:

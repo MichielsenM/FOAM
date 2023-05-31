@@ -7,8 +7,13 @@ if config.n_sigma_box != None:
 else:
     directory_prefix = f''
 
-LaTeX_format = False
+if config.observable_additional is not None:
+    extra_obs = '+extra'
+else:
+    extra_obs = ''
 
+LaTeX_format = False
+################################################################################
 with open(f'{directory_prefix}output_tables/{config.star}_bestModel_table_CS.txt', 'w') as outfile:
     # outfile.write(r' Grid & Observables & Pattern construction & $M_{ini}$ & $Z_{ini}$ & $\alpha_{\text{CBM}}$ & $\fcbm$ & log($\D[env]$) & $X_c$ & $\Omega_{rot}$ & $\chi^2_{\text{red}}$ & MD & AICc($\chi^2_{\text{red}}$) \vspace{1pt} \\'+'\n')
     if LaTeX_format:
@@ -30,7 +35,8 @@ endresult_MD_dict = {}
 for pattern in config.pattern_methods:
     for merit in config.merit_functions:
         for grid in config.grids:
-            for obs in config.observable_aic:
+            for obs in config.observable_seismic:
+                obs+=extra_obs
                 MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}_2sigma-error-ellipse.hdf'
                 df = pd.read_hdf(MLE_values_file)
                 best_model = df.loc[df['meritValue'].idxmin()]
@@ -47,7 +53,8 @@ df_AICc_MD   = pd.read_table(f'{directory_prefix}output_tables/{config.star}_AIC
 # Print both the chi2 and MD values of those best models (read file with all models, since model in error ellipse of one merit function can fall outside of ellipse of the other)
 for merit in config.merit_functions:
     for grid in config.grids:
-        for obs in config.observable_aic:
+        for obs in config.observable_seismic:
+            obs+=extra_obs
             for pattern in config.pattern_methods:
                 MLE_values_file = f'{directory_prefix}meritvalues/{config.star}_{grid}_{pattern}_{merit}_{obs}.hdf'
                 df = pd.read_hdf(MLE_values_file)

@@ -10,6 +10,11 @@ from foam.pipeline.pipeline_config import config
 N_dict = config.N_dict  # number of observables
 sigma = 2
 percentile = {1 : 0.68, 2:0.95, 3:0.997}
+
+if config.observable_additional is not None:
+    extra_obs = '+extra'
+else:
+    extra_obs = ''
 ################################################################################
 def likelihood_chi2(chi2):
     """ Likelihood function of reduced chi-squared """
@@ -28,8 +33,8 @@ else:
     directory_prefix = f''
 
 for merit in config.merit_functions:
-    for obs in config.observable_aic:
-
+    for obs in config.observable_seismic:
+        obs+=extra_obs
         files = glob.glob(f'{directory_prefix}meritvalues/*{merit}_{obs}.hdf')
         for file in sorted(files):
             Path_file = Path(file)

@@ -24,7 +24,8 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
         Path to the hdf5 file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Can contain 'frequencies', 'periods', or 'period-spacing', which will be computed for the period pattern.
+        Which observables are included in the merit function.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
         The type of merit function to use. Currently supports "CS and "MD" ("chi-squared" and "mahalanobis distance").
@@ -36,6 +37,10 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     grid_parameters: list of string
         List of the parameters in the theoretical grid.
     """
+    if 'f' in observables:
+        observed_quantity = 'frequency'
+    elif 'P' or 'dP' in observables:
+        observed_quantity = 'period'
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
@@ -49,10 +54,10 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
 
     Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
-    Theo_puls = np.asarray(Theo_dFrame.filter(like='freq'))
+    Theo_puls = np.asarray(Theo_dFrame.filter(like=f'{observed_quantity}'))
 
     missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('freq_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
-    missing_relative = np.where(Theo_dFrame.filter(like='freq').columns.to_series().str.contains('freq_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    missing_relative = np.where(Theo_dFrame.filter(like=f'{observed_quantity}').columns.to_series().str.contains('freq_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
     missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ] # Adjust indices for removed lines of missing frequencies
 
@@ -103,7 +108,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Row index in the dataFrame of the theoretical model to make the array for.
     observables_in: list of strings
         Which observables are included in the returned array.
-        Can contain 'frequency', 'period', and/or 'period-spacing', which will be computed for the period pattern.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
@@ -112,25 +117,21 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         The values of the specified observables for the model.
     """
     observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
-    observables_out = np.asarray(Theo_dFrame.filter(like='freq').loc[index])  # add the periods or frequencies to the output list
 
-    if 'period' in observables:
-        periods = np.asarray(Theo_dFrame.filter(like='freq').loc[index])      # a separate list of periods that is preserved after adding other observables
-        observables.remove('period')
+    if 'P' in observables:
+        observables_out = np.asarray(Theo_dFrame.filter(like='period').loc[index])  # add the periods to the output list
+        observables.remove('P')
 
-    elif 'frequency' in observables:
-        periods = 1/np.asarray(Theo_dFrame.filter(like='freq').loc[index])      # a separate list of periods that is preserved after adding other observables
-        observables.remove('frequency')
-    else:
-        periods = np.asarray(Theo_dFrame.filter(like='freq').loc[index])  # Assume the file was in periods if nothing was specified
-        observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
+    elif 'f' in observables:
+        observables_out = np.asarray(Theo_dFrame.filter(like='frequency').loc[index])  # add the frequencies to the output list
+        observables.remove('f')
 
-    if 'period-spacing' in observables:
+    elif 'dP' in observables:
+        periods = np.asarray(Theo_dFrame.filter(like='period').loc[index])
         for periods_part in np.split(periods,missing_indices):
             spacing, _ = ffg.generate_spacing_series(periods_part)
-            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-            observables_out = np.append(observables_out, spacing)   # Include dP as observables
-        observables.remove('period-spacing')
+            observables_out = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+        observables.remove('dP')
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:
@@ -147,8 +148,8 @@ def create_obs_observables_array(Obs_dFrame, observables):
         DataFrame containing the theoretical frequencies, periods, and any additional observables as columns, as well as columns with their errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     observables: list of strings
-        Which observables are included in the returned array, must contain 'frequency' or 'period'.
-        Can contain 'period-spacing', which will be computed for the period pattern.
+        Which observables are included in the returned array.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
 
     ------- Returns -------
@@ -162,41 +163,35 @@ def create_obs_observables_array(Obs_dFrame, observables):
     if len(missing_indices)!=0: Obs_dFrame = Obs_dFrame.drop(index='f_missing')  # remove lines indicating missing frequencies (if they are present)
 
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
-    period = np.asarray(Obs_dFrame['period'])
-    periodErr = np.asarray(Obs_dFrame['period_err'])
     filename_suffix = ''
 
-    periods_parts = np.split(period,missing_indices)
-    periodsErr_parts = np.split(periodErr,missing_indices)
-
-    if 'period' in observables:
+    if 'P' in observables:
         observables_out = np.asarray(Obs_dFrame['period'])
         observablesErr_out = np.asarray(Obs_dFrame['period_err'])
         filename_suffix = 'P'
-        observables.remove('period')
+        observables.remove('P')
 
-    elif 'frequency' in observables:
+    elif 'f' in observables:
         observables_out = np.asarray(Obs_dFrame['frequency'])
         observablesErr_out = np.asarray(Obs_dFrame['frequency_err'])
         filename_suffix = 'f'
-        observables.remove('frequency')
-    else:
-        observables_out = np.asarray([])
-        observablesErr_out = np.asarray([])
+        observables.remove('f')
 
-    if 'period-spacing' in observables:
+    elif 'dP' in observables:
+        period = np.asarray(Obs_dFrame['period'])
+        periodErr = np.asarray(Obs_dFrame['period_err'])
+        periods_parts = np.split(period,missing_indices)
+        periodsErr_parts = np.split(periodErr,missing_indices)
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
             spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
-            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-            spacing_errs = np.asarray(spacing_errs)/86400
+            observables_out = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
+            observablesErr_out = np.asarray(spacing_errs)/86400
 
-            observables_out = np.append(observables_out, spacing)   # Include dP as observables
-            observablesErr_out = np.append(observablesErr_out, spacing_errs)
+        filename_suffix = 'dP'
+        observables.remove('dP')
 
-        if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
-        filename_suffix+='dP'
-        observables.remove('period-spacing')
-
+    if len(observables) > 0:
+        filename_suffix+='+extra'
     # Add all other observables in the list from the dataFrame
     for observable in observables:
         if observable == 'logTeff': observable = 'Teff' # To read it as Teff from the observations datafile
@@ -205,10 +200,14 @@ def create_obs_observables_array(Obs_dFrame, observables):
         ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
         ObsErr = ObsErr[~np.isnan(ObsErr)]
 
-        if observable == 'Teff': observable = 'logTeff' # To write it as logTeff in the filename
-        observables_out = np.append(observables_out, Obs)
-        observablesErr_out = np.append(observablesErr_out, ObsErr)
-        filename_suffix+=f'-{observable}'
+        if observable == 'Teff':
+            logT = np.log10(Obs)
+            logT_err = ObsErr / (Obs * np.log(10))
+            observables_out = np.append(observables_out, logT)
+            observablesErr_out = np.append(observablesErr_out, logT_err)
+        else:
+            observables_out = np.append(observables_out, Obs)
+            observablesErr_out = np.append(observablesErr_out, ObsErr)
 
     return observables_out, observablesErr_out, filename_suffix
 

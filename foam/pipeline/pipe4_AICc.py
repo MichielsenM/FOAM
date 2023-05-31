@@ -12,6 +12,11 @@ if config.n_sigma_box != None:
 else:
     directory_prefix = f''
 
+if config.observable_additional is not None:
+    extra_obs = '+extra'
+else:
+    extra_obs = ''
+
 output_folder = f'{directory_prefix}output_tables'
 Path(output_folder).mkdir(parents=True, exist_ok=True)
 ################################################################################
@@ -24,7 +29,8 @@ for merit in config.merit_functions:
 
     for grid in config.grids:
         for method in config.pattern_methods:
-            for obs in config.observable_aic:
+            for obs in config.observable_seismic:
+                obs+=extra_obs
                 df = pd.read_hdf(f'{directory_prefix}meritvalues/{config.star}_{grid}_{method}_{merit}_{obs}.hdf')
                 df = df.sort_values('meritValue', ascending=True)
 
