@@ -108,8 +108,9 @@ All keyword arguments are listed below, grouped in categories.
 - observable_additional
 >   type: list of strings <br>
     default: None <br>
-    List of additional observables to use in the merit function (e.g. logTeff, logg, logL ...).
-    Set to None to just use the asteroseismic observables.
+    List of additional observables to use in the merit function.
+    Observables other than 'logTeff', 'logL', and 'logg' must correspond to header items included in the MESA profiles.
+    Set to None to use only the asteroseismic observables.
 
 - n_sigma_box
 >   type: int <br>

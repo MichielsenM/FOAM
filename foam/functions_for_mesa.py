@@ -75,9 +75,9 @@ def calculate_number_densities(hist_file):
     return number_densities
 
 ################################################################################
-def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
+def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None, additional_observables=None):
     """
-    Extract requested info for each globbed MESA profile and write them to 1 large file.
+    Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -88,8 +88,14 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         name of the profile files, and included in the ouput file containing the info of the whole grid.
     nr_cpu: int
         Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
+    additional_observables: list of strings
+        List of observables to add to the surface grid. Must correspond to mesa profile header-item names.
     """
-    extract_func = partial(info_from_profiles, parameters=parameters)
+    # Make list of extra observables requested by the user
+    if additional_observables is None: additional_observables=[]
+    extras_to_be_extracted = [ x for x in additional_observables if x not in ['logTeff', 'logL', 'logg', 'age'] ]
+
+    extract_func = partial(info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     with multiprocessing.Pool(nr_cpu) as p:
@@ -100,6 +106,7 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         # make a new list, so 'parameters' is not extended before passing it on to 'info_from_profiles'
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
+        header_parameters.extend(not_usually_extracted) # Add the extra observables requested by the user
 
         # Make list of lists, put it in a dataframe, and write to a file
         data = []
@@ -111,14 +118,16 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
 
 
 ################################################################################
-def info_from_profiles(mesa_profile, parameters):
+def info_from_profiles(mesa_profile, parameters, extra_header_items):
     """
-    Extract requested info from a MESA profile and the model parameters from its filename.
+    Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
     parameters: list of strings
         List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
+    extra_header_items: list of strings
+        List of extra observables to add to the surface grid. Must correspond to mesa profile header-item names.
 
     ------- Returns -------
     line: string
@@ -136,6 +145,11 @@ def info_from_profiles(mesa_profile, parameters):
     for p in parameters:
         line.append(param_dict[p])
     line.extend([logTeff, logL, logg, age])
+
+    for obs in extra_header_items:   # Add the extra observables requested by the user
+        item = float(prof_header[obs])
+        line.append(item)
+
     return line
 
 ################################################################################

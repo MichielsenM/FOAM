@@ -8,7 +8,7 @@ from foam.pipeline.pipeline_config import config
 for grid in config.grids:
     output_file = f'../grid_summary/surfaceGrid_{grid}.hdf'
     if not Path(output_file).is_file():
-        ffm.extract_surface_grid(f'{config.grid_parent_directory}/{grid}/MESA_out/Zini*/profiles/*{config.subgrid}*prof', output_file=output_file, nr_cpu=config.nr_cpu)
+        ffm.extract_surface_grid(f'{config.grid_parent_directory}/{grid}/MESA_out/Zini*/profiles/*{config.subgrid}*prof', output_file=output_file, nr_cpu=config.nr_cpu, additional_observables = config.observable_additional)
     else:
         config.logger.warning(f'file already existed: {output_file}')
 

@@ -59,11 +59,12 @@ All MESA output files are divided in subfolders per initial mass-metallicity com
 In each of these folders, the MESA history files and profiles are divided in folders `history` and `profiles`. The individual filenames are constructed to hold the names of the varied input parameters followed by their numerical values. The different input parameters are divided by underscores.
 In the example below, there were 5 parameters varied per MESA stellar evolution track (Z, M, logD, aov, fov).
 
-The history files, ending with suffix '.hist', will thus be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000.hist`
+The history files, ending with suffix '.hist', will thus be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000.hist`.
 The history files should at least contain the following columns: 'star_age', 'log_Teff', 'log_L', 'log_g'
 
-The profile files will have the same parameters as the history files, with one additional parameter to indicate their evolutionary stage. In our example, we use the central hydrogen mass fraction (Xc) for this purpose. The profile names, ending with '.prof', will hence be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000_Xc0.10.prof`
-The profiles should at least contain the following information in their header: 'age', 'logTeff', 'logL', 'logg'
+The profile files will have the same parameters as the history files, with one additional parameter to indicate their evolutionary stage. In our example, we use the central hydrogen mass fraction (Xc) for this purpose. The profile names, ending with '.prof', will hence be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000_Xc0.10.prof`.
+The profiles should at least contain the data column 'log_g', and the following information in their header: 'star_age', 'Teff', 'photosphere_L'.
+Furthermore, any additional observables that are used in the merit function will need to be present in the MESA profile header information as well.
 
 Note that the choice of parameters, and the way they are named, can be changed. The only requirements are that the parameter name is followed by it's numerical value, the different parameters are divided by underscores, and the files have the correct suffix. The parameters and names of your choice should then later be provided to the configuration of the pipeline. (See [Pipeline configuration](./Configuration.md) for more information.)
 

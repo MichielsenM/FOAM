@@ -200,7 +200,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
         ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
         ObsErr = ObsErr[~np.isnan(ObsErr)]
 
-        if observable == 'Teff':
+        if observable == 'Teff': # Convert observed Teff and error to log values
             logT = np.log10(Obs)
             logT_err = ObsErr / (Obs * np.log(10))
             observables_out = np.append(observables_out, logT)
