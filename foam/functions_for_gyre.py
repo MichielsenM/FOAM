@@ -1,5 +1,4 @@
-"""Helpful functions for GYRE input and output, (e.g. extracting all frequencies in a grid to 1 file,
-   constructing theoretical pulsation patterns, calculate GYRE scanning range to find desired radial orders...)"""
+"""Extract frequencies from a grid of GYRE output, and generate period spacing series."""
 import numpy as np
 import pandas as pd
 from pathlib import Path

@@ -1,5 +1,4 @@
 """A few helpful functions to process MESA output."""
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import multiprocessing, glob, h5py
