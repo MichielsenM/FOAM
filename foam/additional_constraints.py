@@ -20,8 +20,9 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     constraint_companion: dict
         Information on the companion star. Set to None to model single stars,
         or provide this to include binary constraints using isochrone-clouds.
-    isocloud_grid_directory: string
-        Directory holding the grid for the isochrone-cloud modelling.
+    isocloud_grid_summary: nested dictionary
+        Nested dictionary, the keys at its two levels are metallicity and mass.
+        Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     surfaceGrid_file: string
         File with the surface properties and ages of the model-grid.
     """
@@ -40,7 +41,7 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
 
     if constraint_companion is not None:
         if (isocloud_grid_summary is None) or (surfaceGrid_file is None):
-            logger.error('Please supply a directory for the isocloud grid and a path to the file with the grid surface properties and ages.')
+            logger.error('Please supply a summary file for the isocloud grid and a path to the file with the grid surface properties and ages.')
             sys.exit()
 
         surfaceGrid_dataFrame = pd.read_hdf(surfaceGrid_file)
@@ -56,7 +57,7 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     df_Theo.to_hdf(f'{outputFile}', 'surface_constrained_models', format='table', mode='w')
 
 ################################################################################
-def get_age(model, df):
+def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step_size = 1E-2):
     """
     Get the age of the models one step older and younger than the provided model.
     ------- Parameters -------
@@ -70,18 +71,25 @@ def get_age(model, df):
         Age of the model one sep younger and older than the procided model,
         these are the minimum and maximum age to accept models in the isochrone-cloud.
     """
-    unique_xc=pd.unique(df[ np.isclose(df.Z, model.Z) ].Xc)
 
-    if abs(model.Xc-max(unique_xc))<1E-4:
+    params = list(free_parameters) # copy to prevent deletion in the list outside this function
+    params.remove(evolution_parameter)
+    for param in params:
+        df = df.loc[np.isclose( getattr(df, param), getattr(model, param))]
+
+    model_evolution_attr = getattr(model, evolution_parameter)
+    grid_evolution_attr =  getattr(df, evolution_parameter)
+
+    if abs( getattr(model, evolution_parameter)-max(grid_evolution_attr) )< (0.5*evolution_step_size):
         min_age = 0
-        max_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age).iloc[0])
-    elif abs(model.Xc-min(unique_xc))<1E-4:
-        min_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age).iloc[0])
-        age     = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc, 2))].age).iloc[0])
+        max_age = int( (df.loc[np.isclose(model_evolution_attr,grid_evolution_attr-evolution_step_size)].age).iloc[0]] )
+    elif abs( getattr(model, evolution_parameter)-min(grid_evolution_attr) )< (0.5*evolution_step_size):
+        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0]] )
+        age     = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr)].age).iloc[0]] )
         max_age = age+age-min_age
     else:
-        min_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc+0.01, 2))].age).iloc[0])
-        max_age = int((df.loc[np.isclose(df.Z, model.Z) & np.isclose(df.M, model.M) & np.isclose(df.logD, model.logD) & np.isclose(df.aov, model.aov) & np.isclose(df.fov, model.fov) & np.isclose(df.Xc, round(model.Xc-0.01, 2))].age).iloc[0])
+        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0]] )
+        max_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr-evolution_step_size)].age).iloc[0]] )
     return min_age, max_age
 
 ################################################################################
@@ -96,12 +104,13 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
     constraint_companion: dict
         Information on the companion star, including surface parameters, mass ratio (q), the errors,
         and a boolean indicating whether the primary or secondary star is assumed pulsating and hence being modelled.
-    isocloud_grid_directory: string
-        Directory holding the grid for the isochrone-cloud modelling.
+    isocloud_grid_summary: nested dictionary
+        Nested dictionary, the keys at its two levels are metallicity and mass.
+        Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     nsigma: int
         How many sigmas you want to make the interval to accept models.
     surfaceGrid_dataFrame: pandas DataFrame
-        DataFrame with the surface properteis and ages of the model-grid.
+        DataFrame with the surface properties and ages of the model-grid.
     ------- Returns -------
     index: int or None
         Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
