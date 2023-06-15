@@ -82,14 +82,14 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
 
     if abs( getattr(model, evolution_parameter)-max(grid_evolution_attr) )< (0.5*evolution_step_size):
         min_age = 0
-        max_age = int( (df.loc[np.isclose(model_evolution_attr,grid_evolution_attr-evolution_step_size)].age).iloc[0]] )
+        max_age = int( (df.loc[np.isclose(model_evolution_attr,grid_evolution_attr-evolution_step_size)].age).iloc[0] )
     elif abs( getattr(model, evolution_parameter)-min(grid_evolution_attr) )< (0.5*evolution_step_size):
-        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0]] )
-        age     = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr)].age).iloc[0]] )
+        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0] )
+        age     = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr)].age).iloc[0] )
         max_age = age+age-min_age
     else:
-        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0]] )
-        max_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr-evolution_step_size)].age).iloc[0]] )
+        min_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr+evolution_step_size)].age).iloc[0] )
+        max_age = int( (df.loc[np.isclose(model_evolution_attr, grid_evolution_attr-evolution_step_size)].age).iloc[0] )
     return min_age, max_age
 
 ################################################################################
