@@ -73,8 +73,8 @@ def get_param_from_filename(file_path, parameters, values_as_float=False):
                 p = float(p)
             param_dict[parameter] = p
         except:
-            param_dict[parameter] = '0'
-            logger.info(f'In get_param_from_filename: parameter "{parameter}" not found in \'{file_path}\', value set to zero')
+            # param_dict[parameter] = '0'
+            logger.warning(f'In get_param_from_filename: parameter "{parameter}" not found in \'{file_path}\', value not added')
 
     return param_dict
 

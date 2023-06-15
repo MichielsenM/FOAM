@@ -17,14 +17,15 @@ if config.n_sigma_box != None:
     if config.constraint_companion is not None:
         if not Path(f'{config.main_directory}/isocloud_grid.h5').is_file():
             params = list(config.free_parameters) # To make a copy and not remove Xc from the config
-            params.remove('Xc')
             params.extend(config.fixed_parameters)
+            params.remove('Xc')
             summary = mg.GridSummary(params)
             summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name=f'{config.main_directory}/isocloud_grid.h5', file_ending='hist', files_directory_name='history')
         else:
             summary = mg.GridSummary(None)
             summary.read_summary_file(f'{config.main_directory}/isocloud_grid.h5')
 
+        # Create dictionary with all the 'star_age','log_L','log_Teff','log_g' values of the whole isocloud per mass-metallicity combination
         isocloud_summary_dict = {}
         for Z in summary.Z_array:
             isocloud_summary_dict.update({Z:{}})
@@ -34,8 +35,7 @@ if config.n_sigma_box != None:
                 for logD in summary.logD_array:
                     for aov in summary.aov_array:
                         for fov in summary.fov_array:
-
-                            df = pd.DataFrame( data = summary.grid_data[f'{Z:.3f}'][f'{M:.2f}'][f'{logD:.2f}'][f'{aov:.3f}'][f'{fov:.3f}'])
+                            df = pd.DataFrame( data = summary.grid_data[f'{Z}'][f'{M}'][f'{logD}'][f'{aov}'][f'{fov}'])
                             df_MZ = pd.concat([df_MZ, df], ignore_index=True)
                 isocloud_summary_dict[Z].update({M : df_MZ })
 

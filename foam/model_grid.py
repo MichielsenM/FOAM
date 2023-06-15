@@ -136,6 +136,6 @@ class GridSummary:
         dictionary = self.grid_data
         for parameter in self.grid_parameters:
             dictkeys = sorted(list(dictionary.keys()))
-            values = np.array([float(x) for x in dictkeys])
+            values = np.array([x for x in dictkeys])
             dictionary = dictionary[dictkeys[-1]] # Highest mass values have largest range in logDext, hence use highest key of each parameter
             setattr(self, f'{parameter}_array', values)

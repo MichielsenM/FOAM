@@ -118,9 +118,9 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
         M2_min = round(model.M/(q+q_err), 1)
         M2_max = round(model.M/(q-q_err), 1)
 
-    isocloud_dict = isocloud_grid_summary[model.Z]
-
+    isocloud_dict = isocloud_grid_summary[f'{model.Z}']
     for key_Mass, df in zip(isocloud_dict.keys(), isocloud_dict.values()):
+        key_Mass = float(key_Mass) #Convert from string to float for the comparisons
         if key_Mass < M2_min or key_Mass > M2_max:
             continue    # Only keep models that fall within mass range
         else:
