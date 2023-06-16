@@ -60,6 +60,10 @@ class PipelineConfig:
             Dictionary with varied parameters in the grid (dict keys) that are fixed to a certain value (dict value)
             to consider nested grids with fewer free parameters. Defaults to None to not fix any parameters.
             (E.g. {'aov': 0.0, 'fov': 0.0} to fix both these mixing parameters to zero.)
+        evolution_parameter: string
+            Name of the parameter that is used to track the evolutionary steps of the model.
+        evolution_step: float
+            Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)       
         N_periods: int
             Number of periods in the observed pattern
         N_pattern_parts: int
@@ -126,6 +130,9 @@ class PipelineConfig:
         else:
             self.grid_parameters = self.free_parameters+list(self.fixed_parameters.keys())
 
+        self.evolution_parameter = kwargs.pop("evolution_parameter", 'Xc')
+        self.evolution_step = kwargs.pop("evolution_step", -0.01)
+        
         self.k = len(self.free_parameters) # Number of free parameters
         self.N_periods = kwargs.pop("N_periods", None)
         self.N_pattern_parts = kwargs.pop("N_pattern_parts", 1)

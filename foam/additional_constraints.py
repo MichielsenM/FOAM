@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 ################################################################################
-def surface_constraint(merit_values_file, observations_file=None, nsigma=3, constraint_companion=None, isocloud_grid_summary=None, surfaceGrid_file=None):
+def surface_constraint(merit_values_file, observations_file=None, nsigma=3, constraint_companion=None, isocloud_grid_summary=None, surfaceGrid_file=None, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """
     Enforce an n-sigma constraint on the models based on the surface observables.
     Save this as a file with prefix indicating how many sigma the error box was.
@@ -25,6 +25,12 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
         Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     surfaceGrid_file: string
         File with the surface properties and ages of the model-grid.
+    free_parameters: list of strings
+        List of all the parameters varied in the model grid.
+    evolution_parameter: string
+        Name of the parameter that is used to track the evolutionary steps of the model.
+    evolution_step: float
+        Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
     """
     Obs_dFrame = pd.read_table(observations_file, delim_whitespace=True, header=0)
     df_Theo = pd.read_hdf(merit_values_file)
@@ -46,7 +52,7 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
 
         surfaceGrid_dataFrame = pd.read_hdf(surfaceGrid_file)
 
-        func = partial(enforce_binary_constraints, constraint_companion=constraint_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, surfaceGrid_dataFrame=surfaceGrid_dataFrame)
+        func = partial(enforce_binary_constraints, constraint_companion=constraint_companion, isocloud_grid_summary=isocloud_grid_summary, nsigma=nsigma, surfaceGrid_dataFrame=surfaceGrid_dataFrame, free_parameters=free_parameters, evolution_parameter=evolution_parameter, evolution_step=evolution_step)
         indices_to_drop = df_Theo.apply(func, axis=1)
         for index_to_drop in indices_to_drop:
             if (index_to_drop is not None) and (index_to_drop==index_to_drop):
@@ -57,7 +63,7 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     df_Theo.to_hdf(f'{outputFile}', 'surface_constrained_models', format='table', mode='w')
 
 ################################################################################
-def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step_size = 1E-2):
+def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """
     Get the age of the models one step older and younger than the provided model.
     ------- Parameters -------
@@ -65,6 +71,12 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
             Parameters of the model.
         df: pandas dataframe
             Dataframe with the model parameters and age (and surface info) of the theoretical models.
+        free_parameters: list of strings
+            List of all the parameters varied in the model grid.
+        evolution_parameter: string
+            Name of the parameter that is used to track the evolutionary steps of the model.
+        evolution_step: float
+            Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
 
     ------- Returns -------
     min_age, max_age: tuple of integers
@@ -80,22 +92,23 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
     model_evolution_attr = getattr(model, evolution_parameter)
     grid_evolution_attr =  getattr(df, evolution_parameter)
 
-    if abs( model_evolution_attr-max(grid_evolution_attr) )< (0.5*evolution_step_size):
+    if abs( model_evolution_attr-max(grid_evolution_attr) )< abs(0.5*evolution_step):
         min_age = 0
-        max_age = int( (df.loc[np.isclose(grid_evolution_attr,model_evolution_attr-evolution_step_size)].age).iloc[0] )
-    elif abs( model_evolution_attr-min(grid_evolution_attr) )< (0.5*evolution_step_size):
-        min_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr+evolution_step_size)].age).iloc[0] )
+        max_age = int( (df.loc[np.isclose(grid_evolution_attr,model_evolution_attr+evolution_step)].age).iloc[0] )
+    elif abs( model_evolution_attr-min(grid_evolution_attr) )< abs(0.5*evolution_step):
+        min_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr-evolution_step)].age).iloc[0] )
         age     = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr)].age).iloc[0] )
         max_age = age+age-min_age
     else:
-        min_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr+evolution_step_size)].age).iloc[0] )
-        max_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr-evolution_step_size)].age).iloc[0] )
+        min_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr-evolution_step)].age).iloc[0] )
+        max_age = int( (df.loc[np.isclose(grid_evolution_attr, model_evolution_attr+evolution_step)].age).iloc[0] )
     return min_age, max_age
 
 ################################################################################
-def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_grid_summary=None, nsigma=3, surfaceGrid_dataFrame=None):
+def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_grid_summary=None, nsigma=3, surfaceGrid_dataFrame=None, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """
     Enforce an n-sigma constraint on the models based on spectoscopic observations of the binary companion employing isochrone-clouds.
+    Assumes the same metallicity 'Z' for both primary and secondary, masses 'M' compatible with oberved mass ratio 'q', and ages similar within 1 gridstep.
     ------- Parameters -------
     df_Theo_row: tuple, made of (int, pandas series)
         tuple retruned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
@@ -111,13 +124,19 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
         How many sigmas you want to make the interval to accept models.
     surfaceGrid_dataFrame: pandas DataFrame
         DataFrame with the surface properties and ages of the model-grid.
+    free_parameters: list of strings
+        List of all the parameters varied in the model grid.
+    evolution_parameter: string
+        Name of the parameter that is used to track the evolutionary steps of the model.
+    evolution_step: float
+        Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
     ------- Returns -------
     index: int or None
         Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
         Returns None if the binary constraints do not discard the model.
     """
     model = df_Theo_row
-    min_age, max_age = get_age(model, surfaceGrid_dataFrame)
+    min_age, max_age = get_age(model, surfaceGrid_dataFrame, free_parameters=free_parameters, evolution_parameter=evolution_parameter, evolution_step=evolution_step)
     q= constraint_companion['q']
     q_err= constraint_companion['q_err']
     if constraint_companion['primary_pulsates']:
