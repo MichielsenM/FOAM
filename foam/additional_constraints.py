@@ -80,7 +80,7 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
 
     ------- Returns -------
     min_age, max_age: tuple of integers
-        Age of the model one sep younger and older than the procided model,
+        Age of the model one step younger and older than the procided model,
         these are the minimum and maximum age to accept models in the isochrone-cloud.
     """
 
