@@ -219,6 +219,25 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
     ax_hrd.invert_xaxis()
+
+    # Observations
+    if n_sigma_box != None:
+        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+        if (('logL' in Obs_dFrame.columns) or ('logg' in Obs_dFrame.columns)) and ('Teff' in Obs_dFrame.columns)  :
+            if not 'logL' in Obs_dFrame.columns:
+                logg_or_logL = 'logg'
+
+            # Observed spectroscopic error bar, only added if observational constraints were provided.
+            # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
+            width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+            width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
+            errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_nsigma, 2*n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            ax_hrd.add_patch(errorbox_1s)
+            ax_hrd.add_patch(errorbox_ns)
+
     if logg_or_logL=='logg': ax_hrd.invert_yaxis()
 
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
@@ -234,19 +253,6 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     ax_hrd.tick_params(which='major', length=6)
     ax_hrd.tick_params(which='minor', length=4)
 
-    # observations
-    if n_sigma_box != None:
-        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-        # Observed spectroscopic error bar
-        # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
-        width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
-        errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                    width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                    width_logTeff_nsigma, 2*n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-        ax_hrd.add_patch(errorbox_1s)
-        ax_hrd.add_patch(errorbox_ns)
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
