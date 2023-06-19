@@ -54,8 +54,9 @@ class PipelineConfig:
         n_sigma_box: int
             Ignore models outside of the n-sigma error box on the surface properties, set to None to include all models.
         free_parameters: list
-            List of varied parameters in the grid, as written in grid filenames,
-            that remain free parameters in the modelling.
+            List of varied parameters in the grid, as written in grid filenames, that remain free parameters in the modelling.
+            In case of a binary system where additional constraints from the companion should be taken into account, 
+            this list should start with the first two entries being 'Z', 'M' representing metallicity and mass.
         fixed_parameters: dict
             Dictionary with varied parameters in the grid (dict keys) that are fixed to a certain value (dict value)
             to consider nested grids with fewer free parameters. Defaults to None to not fix any parameters.
@@ -205,6 +206,12 @@ class PipelineConfig:
         if self.grids is None:
             self.logger.error(f'PipelineConfig: Name of theoretical grid not specified')
             input_error = True
+
+        if self.constraint_companion is not None:
+            if not (self.free_parameters[0] == 'Z' and self.free_parameters[1] == 'M'):
+                self.logger.error(f'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '+
+                                  f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".')
+                input_error = True
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
         if self.fixed_parameters is not None:

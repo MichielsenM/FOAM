@@ -9,6 +9,26 @@ from foam import model_grid as mg
 from foam.pipeline.pipeline_config import config
 
 ################################################################################
+def concat_isocloud_data(d):
+    """
+    Combines isocloud data from a nested dictionary. 
+    The data for all evolutionary tracks per mass(M)-metallicity(Z) combination is combined into a single dataframe.
+    Workflow of the recursive function: checks if the argument is a nested dictionary. If it is, continue recursion.
+    If it's not nested, convert the dictionary to a dataframe and concat it with 
+    the global dataframe that is created for each mass-metallicity combination.
+
+    ------- Parameters -------
+    d: nested dictionary
+    """
+    for k, v in d.items():
+        if any(isinstance(i,dict) for i in v.values()): # Check if it is a nested dictionary
+            concat_isocloud_data(v)
+        else:
+            df = pd.DataFrame( data = v)
+            global df_MZ
+            df_MZ = pd.concat([df_MZ, df], ignore_index=True)
+################################################################################
+
 # Copy of the list of models, and keep only the models that fall within the specified error box
 if config.n_sigma_box != None:
     observations = config.observations
@@ -17,8 +37,8 @@ if config.n_sigma_box != None:
     if config.constraint_companion is not None:
         if not Path(f'{config.main_directory}/isocloud_grid.h5').is_file():
             params = list(config.free_parameters) # To make a copy and not remove Xc from the config
-            params.extend(config.fixed_parameters)
-            params.remove('Xc')
+            params.extend(config.fixed_parameters) 
+            params.remove(config.evolution_parameter)
             summary = mg.GridSummary(params)
             summary.create_summary_file(config.isocloud_grid_directory, columns=['star_age','log_L','log_Teff','log_g'], magnitudes=False, output_name=f'{config.main_directory}/isocloud_grid.h5', file_ending='hist', files_directory_name='history')
         else:
@@ -31,14 +51,10 @@ if config.n_sigma_box != None:
             isocloud_summary_dict.update({Z:{}})
         for Z in summary.Z_array:
             for M in summary.M_array:
+                global df_MZ
                 df_MZ = pd.DataFrame()
-                for logD in summary.logD_array:
-                    for aov in summary.aov_array:
-                        for fov in summary.fov_array:
-                            df = pd.DataFrame( data = summary.grid_data[f'{Z}'][f'{M}'][f'{logD}'][f'{aov}'][f'{fov}'])
-                            df_MZ = pd.concat([df_MZ, df], ignore_index=True)
+                concat_isocloud_data( summary.grid_data[f'{Z}'][f'{M}'] )
                 isocloud_summary_dict[Z].update({M : df_MZ })
-
 
     files_to_analyse = []
     for grid in config.grids:
