@@ -20,12 +20,12 @@ All keyword arguments are listed below, grouped in categories.
 - star
 >   type: string <br>
     default: None <br>
-    Name of the star, used for generating filenames
+    Name of the star, used for generating filenames.
 
 - observations
 >   type: string <br>
     default: None <br>
-    Full path to the file with the observational data
+    Full path to the file with the observational data.
 
 - highest_amplitude_pulsation
 >   type: dictionary of list <br>
@@ -39,12 +39,12 @@ All keyword arguments are listed below, grouped in categories.
 - grid_parent_directory
 >   type: string <br>
     default: None <br>
-    Parent directory of the computed grids
+    Parent directory of the computed grids.
 
 - grids
 >   type: list of strings <br>
     default: None <br>
-    Names of the subdirectories of the grids with different physics
+    Names of the subdirectories of the grids with different physics.
 
 - subgrid
 >   type: string <br>
@@ -57,17 +57,17 @@ All keyword arguments are listed below, grouped in categories.
 - kval
 >   type: int <br>
     default: 0 <br>
-    meridional degree (k value) of the mode ID (k,m) of the g-mode pattern
+    Meridional degree (k value) of the mode ID (k,m) of the g-mode pattern.
 
 - mval
 >   type: int <br>
     default: 1 <br>
-    azimuthal order (m value) of the mode ID (k,m) of the g-mode pattern
+    Azimuthal order (m value) of the mode ID (k,m) of the g-mode pattern.
 
 - rotation_gyre
 >   type: float <br>
     default: 0.0 <br>
-    Rotation rate in d^-1 (CYC_PER_DAY of GYRE) that was used in GYRE to calculate the pulsation frequencies
+    Rotation rate in d^-1 (CYC_PER_DAY of GYRE) that was used in GYRE to calculate the pulsation frequencies.
 
 - gyre_dir
 >   type: string <br>
@@ -139,12 +139,12 @@ All keyword arguments are listed below, grouped in categories.
 - evolution_step
 >   type: float <br>
     default: -0.01 <br>
-    Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)       
+    Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc).
 
 - N_periods
 >   type: int <br>
     default: None <br>
-    Number of periods in the observed pattern
+    Number of periods in the observed pattern.
 
 - N_pattern_parts
 >   type: int <br>
@@ -156,7 +156,7 @@ All keyword arguments are listed below, grouped in categories.
 >   type: dictionary <br>
     default: None <br>
     Defaults to None instead of a dictionary to not include any constraints from binarity.
-    Dictionary with the following keys holding all binary Information (q = Mass_secondary/Mass_primary) e.g.  <br> {'q': \<float\>, 'q_err': \<float\>,'Teff': \<float\>, 'Teff_err': \<float\>,
+    Dictionary with the following keys holding all binary Information (q = Mass_secondary/Mass_primary): <br> {'q': \<float\>, 'q_err': \<float\>,'Teff': \<float\>, 'Teff_err': \<float\>,
           'logg': \<float\>, 'logg_err': \<float\>, 'logL': \<float\>, 'logL_err':\<float\>, 'primary_pulsates':\<boolean\>}  <br>
     Set one of the observables Teff, logg, logL to None to not use that observable.
 
@@ -169,7 +169,7 @@ All keyword arguments are listed below, grouped in categories.
 - debugging
 >   type: boolean <br>
     default: False <br>
-    Set to True to set logger level to debug    
+    Set to True to set logger level to debug.
 
 - nr_cpu
 >   type:int <br>
@@ -179,4 +179,4 @@ All keyword arguments are listed below, grouped in categories.
 - conerplot_axis_labels
 >   type: dictionary, keys and values are strings <br>
     default: ` {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ` <br>
-    keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis
+    keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis.
