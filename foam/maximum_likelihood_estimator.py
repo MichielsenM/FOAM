@@ -56,8 +56,8 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
     Theo_puls = np.asarray(Theo_dFrame.filter(like=f'{observed_quantity}'))
 
-    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('freq_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
-    missing_relative = np.where(Theo_dFrame.filter(like=f'{observed_quantity}').columns.to_series().str.contains('freq_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
+    missing_relative = np.where(Theo_dFrame.filter(like=f'{observed_quantity}').columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
     missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ] # Adjust indices for removed lines of missing frequencies
 
@@ -194,13 +194,16 @@ def create_obs_observables_array(Obs_dFrame, observables):
         filename_suffix+='+extra'
     # Add all other observables in the list from the dataFrame
     for observable in observables:
-        if observable == 'logTeff': observable = 'Teff' # To read it as Teff from the observations datafile
+        logTeff=False
+        if observable == 'logTeff': 
+            observable = 'Teff' # To read it as Teff from the observations datafile
+            logTeff = True
         Obs = np.asarray(Obs_dFrame[observable]) # since these columns have less entries, the dataFrame has NaNs in the empty rows
         Obs = Obs[~np.isnan(Obs)]                # remove all entries that are NaN in the numpy array
         ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
         ObsErr = ObsErr[~np.isnan(ObsErr)]
 
-        if observable == 'Teff': # Convert observed Teff and error to log values
+        if logTeff: # Convert observed Teff and error to log values
             logT = np.log10(Obs)
             logT_err = ObsErr / (Obs * np.log(10))
             observables_out = np.append(observables_out, logT)

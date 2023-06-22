@@ -431,7 +431,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             if abs(sett[2]) == abs(pairs_orders[ii+1][2])+increase_or_decrease:
                 current.append(sett)
             else:   # If not consecutive radial order, save the current sequence and start a new one.
-               	current.append(sett)
+                current.append(sett)
                 sequences.append(np.array(current).reshape(len(current),4))
                 current = []
             if (ii==lp-1):

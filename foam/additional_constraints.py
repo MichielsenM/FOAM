@@ -4,6 +4,9 @@ from functools import partial
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import logging
+
+logger = logging.getLogger('logger.ac')
 ################################################################################
 def surface_constraint(merit_values_file, observations_file=None, nsigma=3, constraint_companion=None, isocloud_grid_summary=None, surfaceGrid_file=None, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """

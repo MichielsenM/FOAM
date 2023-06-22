@@ -105,7 +105,7 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         # make a new list, so 'parameters' is not extended before passing it on to 'info_from_profiles'
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
-        header_parameters.extend(not_usually_extracted) # Add the extra observables requested by the user
+        header_parameters.extend(extras_to_be_extracted) # Add the extra observables requested by the user
 
         # Make list of lists, put it in a dataframe, and write to a file
         data = []
