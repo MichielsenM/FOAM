@@ -116,8 +116,10 @@ Creates folder `{n_sigma_box}sigmaBox_cornerplots/` to store
 </details>
 
 ## pipe7_table_best_models
-Write a table with for each different modelling choice the best model of the grid.
+Write a table with the best model of the grid for each combination of different modelling choices.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
+In folder `{n_sigma_box}sigmaBox_output_tables/` 
+- `{star}_best-model-table_{merit_function}.txt`: text file containing the best model parameters for each combination of the chosen theoretical grid, seismic observables, and pattern construction methods. These three things are listed first, followed by the grid parameters, the optimal rotation rate of this model, the value of the merit function, and the value of the AICc for this merit function.
 </details>
