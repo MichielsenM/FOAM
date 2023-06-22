@@ -45,4 +45,4 @@ for merit in config.merit_functions:
                     AICc = df["meritValue"].iloc[0] + k*np.log(2*np.pi) + lndetV + (2*k*N)/(N-k-1)
                     df_AICc.loc[df_AICc.method == f'{config.star}_{grid}_{method}_MD_{obs}', 'AICc'] = AICc
 
-    df_AICc.to_csv(f'{output_folder}/{config.star}_AICc_values_{merit}.tsv', sep='\t',index=False)
+    df_AICc.to_csv(f'{output_folder}/{config.star}_AICc-values_{merit}.tsv', sep='\t',index=False)

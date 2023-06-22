@@ -11,7 +11,7 @@ if config.n_sigma_box != None:
 else:
     directory_prefix = f''
 
-files = glob.glob(f'meritvalues/*[!error_ellips].hdf')
+files = glob.glob(f'meritvalues/*[!error].hdf')
 
 args = []
 for file in files:
