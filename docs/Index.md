@@ -5,7 +5,7 @@ permalink: /
 ---
 
 The main functionality of FoAM is to perform forwards asteroseismic modelling of gravity modes via a modelling pipeline.
-There is also some additional functionality outside of the modelling pipeline, mostly in the form of plotting tools, check `foam/plot_tools` for all available functions. An example to quickly make a Kippenhahn plot or Hertzsprung–Russell diagram from a given MESA file in the following way:
+There is also some additional functionality outside of the modelling pipeline, mostly in the form of plotting tools, check `foam/plot_tools` for all available functions. An example to quickly make a Kippenhahn plot or Hertzsprung–Russell diagram from a given [MESA](https://docs.mesastar.org/en/latest/index.html) file in the following way:
 
 <pre><code>import matplotlib.pyplot as plt
 from foam import plot_tools

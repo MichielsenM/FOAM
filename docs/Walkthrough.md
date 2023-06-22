@@ -52,7 +52,7 @@ The pipeline will first create summary files that contain all the relevant infor
 
 To do this, the grid of theoretical models should adhere to a certain structure.
 Starting off, your folder with model grids can contain multiple grids with different sets of physics. In our example below, we have two grids, each in their own folder, with different temperature structures. We'll call them `Diffusive` and `Peclet`.
-For each grid, we will have a MESA grid of stellar equilibrium models, stored in `MESA_out`, and a GYRE grid with all the pulsation frequencies of those models, stored in `GYRE_out`.
+For each grid, we will have a [MESA](https://docs.mesastar.org/en/latest/index.html) grid of stellar equilibrium models, stored in `MESA_out`, and a [GYRE](https://gyre.readthedocs.io/en/stable/) grid with all the pulsation frequencies of those models, stored in `GYRE_out`.
 
 #### MESA grid of stellar equilibrium models
 All MESA output files are divided in subfolders per initial mass-metallicity combination. The naming scheme gives Zini and Mini, followed by their respective values, divided by an underscore.
