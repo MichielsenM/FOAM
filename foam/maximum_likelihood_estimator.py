@@ -227,7 +227,9 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
         Array of all theoretical patterns to calculate the chi squared value for.
-
+    fig_title, star_name: None
+        Should not be used in this function, but is to make it analogous to merit_mahalanobis()
+        and enable the use of the lambda function.
     ------- Returns -------
     chi2: numpy array of floats
         chi squared values for the given theoretical values
@@ -236,7 +238,7 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     return chi2
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
+def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None, star_name=None):
     """
     Calculate mahalanobis distance (MD) values for the given theoretical patterns.
     ------- Parameters -------
@@ -244,14 +246,19 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
         Array of all theoretical patterns to calculate the MD value for.
-
+    generate_output: boolean
+        Flag to write output and plot the variance-covariance matrix
+    fig_title: string
+        The name of the figure to be created.
+    star_name: string
+        The name of the analysed star, for file naming purposes.
     ------- Returns -------
     MD: numpy array of floats
         Mahalanobis distances for the given theoretical patterns.
     """
-    # Convert to matrix format
-    YObsMat = np.matrix(YObs).T
-    YTheoMat = np.matrix(YTheo).T
+    # Convert to matrix format (np.matrix is not recommended, use array and nexaxis instead)
+    YObsMat = np.array(YObs)[np.newaxis].T
+    YTheoMat = np.array(YTheo)[np.newaxis].T
 
     # Calculate the average on the theoretical values (e.g. frequencies)
     # over the entire grid. Returns a vector of dimension N x 1
@@ -268,7 +275,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 
     # Include observational errors in the variance-covariance matrix
     V = V + np.diag(ObsErr**2.)
-    check_matrix(V, fig_title=fig_title, star_name=star_name)     # check if positive definite and make figure
+    check_matrix(V, generate_output=generate_output, fig_title=fig_title, star_name=star_name)     # check if positive definite and make figure
     # Calculate Mahalanobis distances
     MD = np.zeros(q)
     Vinv = np.linalg.inv(V)
@@ -279,7 +286,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     return MD
 
 ################################################################################
-def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
+def check_matrix(V, generate_output=True, fig_title='Vmatrix', star_name=None):
     """
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
     since this means the matrix is positive definite. Compute its determinant and condition number,
@@ -287,26 +294,29 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
     ------- Parameters -------
     V: 2D np array
         Variance-covariance matrix
-    plot: boolean
-        Flag to make a plot of the variance-covariance matrix
+    output: boolean
+        Flag to write output and plot the variance-covariance matrix
     fig_title: string
         The name of the figure to be created.
+    star_name: string
+        The name of the analysed star, for file naming purposes.
     """
     if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigenvalues are >0, it is positive definite
-        sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
-
+        logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)')
+        sys.exit(1)
     logger.info(f'max(V) = {np.max(V)}')
     kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
-    file_Path = Path(f'{os.getcwd()}/V_matrix/{star_name}_determinant_conditionNr.tsv')
-    file_Path.parent.mkdir(parents=True, exist_ok=True)
 
-    if not file_Path.is_file():
-        with file_Path.open("w") as file:
-            file.write(f'method \t ln(det(V)) \t condition_number \n')
-    with file_Path.open("a") as file:
-        file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
+    if generate_output is True:
+        file_Path = Path(f'{os.getcwd()}/V_matrix/{star_name}_determinant_conditionNr.tsv')
+        file_Path.parent.mkdir(parents=True, exist_ok=True)
+        if not file_Path.is_file():
+            with file_Path.open("w") as file:
+                file.write(f'method \t ln(det(V)) \t condition_number \n')
+        with file_Path.open("a") as file:
+            file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
 
-    if plot is True:
+
         im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
         plt.ylabel(rf'Obs {V.shape[0]}  $\leftarrow$ Obs 1', size=14)
         plt.xlabel(rf'Obs 1 $\rightarrow$ Obs {V.shape[0]} ', size=14)
