@@ -206,12 +206,18 @@ class PipelineConfig:
         if self.grids is None:
             self.logger.error(f'PipelineConfig: Name of theoretical grid not specified')
             input_error = True
-
+        
+        # Check if "Z" and "M" are first free parameters when constraints from binary companion are used.
         if self.constraint_companion is not None:
             if not (self.free_parameters[0] == 'Z' and self.free_parameters[1] == 'M'):
                 self.logger.error(f'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '+
                                   f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".')
                 input_error = True
+
+        # Check if the amount of highest amplitude pulsations provided is equal to the amount of parts the pattern is split into.
+        if 'highest-amplitude' in self.pattern_methods and not (len(self.highest_amplitude_pulsation) == self.N_pattern_parts):
+            self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern.')
+            input_error = True
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
         if self.fixed_parameters is not None:
