@@ -100,6 +100,16 @@ All keyword arguments are listed below, grouped in categories.
     >> 'MD' uses Mahalanobis distances, see [Aerts et al. 2018](https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract)
     for its application in the context of asteroseismology.
 
+- N_periods
+>   type: int <br>
+    default: None <br>
+    Number of periods (or frequencies) in the observed pattern.
+
+- N_pattern_parts
+>   type: int <br>
+    default: 1 <br>
+    In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
+
 - observable_seismic
 >   type: list of strings <br>
     default: ['P', 'dP'] <br>
@@ -115,7 +125,7 @@ All keyword arguments are listed below, grouped in categories.
 - n_sigma_box
 >   type: int <br>
     default: 3 <br>
-    Ignore models outside of an n-sigma error box on the surface properties in the observational data, set to None to include all models.
+    Ignore models outside of an n-sigma error box on the surface properties (Teff, logL, logg) included in the observational data, set to None to include all models.
 
 - free_parameters
 >   type: list <br>
@@ -139,17 +149,7 @@ All keyword arguments are listed below, grouped in categories.
 - evolution_step
 >   type: float <br>
     default: -0.01 <br>
-    Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc).
-
-- N_periods
->   type: int <br>
-    default: None <br>
-    Number of periods in the observed pattern.
-
-- N_pattern_parts
->   type: int <br>
-    default: 1 <br>
-    In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
+    Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc). Only needed when enforcing binary constraints.
 
 ### Modelling binaries and enforcing constraints of the companion star
 - constraint_companion

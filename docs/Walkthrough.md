@@ -35,17 +35,22 @@ title: Walkthrough
 ## The observational data
  Add a file with the observations in a .tsv format (tab-separated values). Its columns are the observables and their errors (suffix '\_err' for the error corresponding to a column). Frequencies, periods, and their errors are required for the full functionality of the pipeline. Teff (effective temperature), log(g) (surface gravity), log(L/Lsun) (luminosity), and their errors can be added to provide additional constraints on the asteroseismic solutions. Note that effective temperature should be added as Teff, but will be processed as logTeff (to be consistent with luminosity 'L' and surfacge gravity 'g' which are used in log scale as well).
 
- Frequencies are preferred to be listed decreasing in value, so increasing in period. The code can handle the other way around if the theoretical grid is also extracted in that way. (If the frequencies are ordered decreasing in value, the highest frequency parts in an interrupted pattern will be matched first, which is preferred since those have a lower relative uncertainty). One or more missing frequencies in the observed pattern can be indicated by 'f_missing' as index and 0 values for the frequency, period, and their errors. This will set the code to model it as an interrupted period spacing pattern.
+ Frequencies are preferred to be listed decreasing in value, so increasing in period. The pipeline can handle the other way around if the theoretical grid is also extracted in that way. (If the frequencies are ordered decreasing in value, the highest frequency parts in an interrupted pattern will be matched first, which is preferred since those have a lower relative uncertainty). One or more missing frequencies in the observed pattern can be indicated by 'f_missing' as index and 0 values for the frequency, period, and their errors. This will set the pipeline to model it as an interrupted period spacing pattern.
 
 An example of what the structure of such a file with the observational data looks like is given in the table below.
 
+  <details>
+  <summary> Example observational data (click to expand) </summary>
+  You can add additional observables that you want to include in the merit function to the observations by adding extra columns like the ones for logL and logL_err.
+
  |    | frequency | frequency_err | period | period_err | Teff | Teff_err | logg | logg_err | logL | logL_err |
  |----|:---------:|--------------:|:------:|:----------:|:----:|:--------:|:----:|:--------:|:----:|:--------:|
- | f1 | 1.11 | 4e-5 | 0.9009 | 3e-5 | 15200 | 150 | 3.8 | 0.1 | 2.21 | 0.04 |
+ | f1 | 1.11 | 4e-5 | 0.9009 | 3e-5 | 15200 | 200 | 3.8 | 0.1 | 2.21 | 0.04 |
  | f2 | 1.04 | 5e-5 | 0.9615 | 4e-5 | | | | | | |
  | f3 | 0.98 | 2e-5 | 1.0204 | 1e-5 | | | | | | |
  | f_missing | 0 | 0 | 0 | 0 | | | | | | |
  | f4 | 0.87 | 2e-5 | 1.1494 | 1e-5 | | | | | | |
+  </details>
 
 ## The theoretical model grid
 The pipeline will first create summary files that contain all the relevant information from the theoretical model grid regarding the pulsations and the general properties of the models.
@@ -60,20 +65,20 @@ In each of these folders, the MESA history files and profiles are divided in fol
 In the example below, there were 5 parameters varied per MESA stellar evolution track (Z, M, logD, aov, fov).
 
 The history files, ending with suffix '.hist', will thus be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000.hist`.
-The history files should at least contain the following columns: 'star_age', 'log_Teff', 'log_L', 'log_g'
+The history files should at least contain the following columns: 'star_age', 'log_Teff', 'log_L', 'log_g'.
 
 The profile files will have the same parameters as the history files, with one additional parameter to indicate their evolutionary stage. In our example, we use the central hydrogen mass fraction (Xc) for this purpose. The profile names, ending with '.prof', will hence be constructed like this: `Z0.008_M3.00_logD0.00_aov0.000_fov0.000_Xc0.10.prof`.
 The profiles should at least contain the data column 'log_g', and the following information in their header: 'star_age', 'Teff', 'photosphere_L'.
-Furthermore, any additional observables that are used in the merit function will need to be present in the MESA profile header information as well.
+Furthermore, any additional observables that you want to include in the merit function will need to be present in the MESA profile header information as well.
 
-Note that the choice of parameters, and the way they are named, can be changed. The only requirements are that the parameter name is followed by it's numerical value, the different parameters are divided by underscores, and the files have the correct suffix. The parameters and names of your choice should then later be provided to the configuration of the pipeline. (See [Pipeline configuration](./Configuration.md) for more information.)
+Note that the choice of parameters, the way they are named, and how many parameters are included, can all be changed. The only requirements are that the parameter name is followed by it's numerical value, the different parameters are divided by underscores, and the files have the correct suffix ('.hist' or '.prof'). The parameters and names of your choice should then later be provided to the configuration of the pipeline. (See [Pipeline configuration](./Configuration.md) for more information.)
 
 #### GYRE grid with stellar pulsations
 For each MESA profile, a GYRE summary file needs to be calculated containing at least the output columns 'freq' and 'n_pg', and written in HDF format. These GYRE summary files are stored in folders indicating the rotation frequency (in cycles per day) and the mode ID (k,m) that were used during the GYRE computations (e.g. `rot0.63_k0m1`).
 
-Similar to the MESA grid, the GYRE grid is divided in subfolders per initial mass-metallicity combination. The naming scheme gives Zini and Mini, followed by their respective values, divided by an underscore.
+Similar to the MESA grid, the GYRE grid is divided in subfolders per initial mass-metallicity combination. The naming scheme gives Zini and Mini, followed by their respective values, divided by an underscore. (But just as for the MESA grid, you can choose the naming of these parameters yourself.)
 
-The naming scheme of the GYRE summary files should be similar to the MESA profiles, with one additional parameter 'rot' indicating the rotation frequency used in the GYRE computations. This results in names like the following:
+The naming scheme of the GYRE summary files should be the same as for the MESA profiles, with one additional parameter 'rot' indicating the rotation frequency used in the GYRE computations. This results in names like the following:
 `rot0.6304_Z0.008_M3.00_logD0.00_aov0.000_fov0.000_Xc0.10.HDF`
 
 <details>

@@ -10,7 +10,7 @@ Later steps can thus be repeated with different settings without having to repea
 By default, most modules will check and skip their execution if the output they would generate is already present. For example output from [grid extraction](#pipe0_extract_grid) is stored in a folder `grid_summary` at the same level as the directories for separate stars, and will only be needed once per (group of) theoretical grid(s). All other output will be stored in the folders for the different modelled stars (see 'Setting up the directory' in [walkthrough](./Walkthrough.md)).
 Additionally, when considering nested subgrids, the steps concerning [pattern construction](#pipe1_construct_pattern) need only be performed once for the full non-nested grid without repeating for each nested subgrid.
 
-A lot of the intermediate output is stored in hdf5 files, these can be easily read using the `pandas.read_hdf()` functionality of the 'pandas' python package.
+A lot of the intermediate output is stored in hdf5 files, these can be easily read using the `pandas.read_hdf()` functionality of the [pandas](https://pandas.pydata.org/docs/reference/api/pandas.read_hdf.html) python package.
 
 An example template script for the pipeline is given by `pipeline.py` in `foam/pipeline/`.
 The different modules of the pipeline are listed below along with a short explanation of their functionality, and the output they produce. The naming scheme for the output is explained below.
@@ -28,7 +28,7 @@ Each word in the filenames enclosed by {} indicates that it is replaced by a val
 - `merit_function` the merit function used to calculate goodness of fit, Mahalanobis Distance is abbreviated to MD, and reduced chi-squared is abbreviated to chi2
 - `method` the method used to generate the theoretical frequency patterns to match the observed pattern.
 - `suffix_observables` the asteroseismic obsevable used in the merit function. Period, period spacing, and frequency will be abbreviated as P, dP, and f, respectively. Contains '+extra' in case more observables are used in addition to the asteroseismic one. 
-- `n_sigma_box` size in standard deviations of the box with models accepted as solutions compatible with the surface properties (logTeff, logL, logg ... ).
+- `n_sigma_box` size in standard deviations of the box with models accepted as solutions compatible with the surface properties (logTeff, logL, logg).
 </details>
 
 ## pipe0_extract_grid
@@ -51,7 +51,7 @@ Construct the theoretical pulsation patterns, select theoretical pulsation patte
 
 Creates folder `extracted_freqs/` to store
 - `{observable}_{star}_{grid}_{method}.hdf`: a table with optimised rotation rate (and its error), model parameters, and theoretical frequencies that are matched to the observations.
-- `surface+{observable}_{star}_{grid}_{method}.hdf`: the same table combined with the surface properties (logTeff, logL, logg ... ) of the models.
+- `surface+{observable}_{star}_{grid}_{method}.hdf`: the same table combined with the surface properties (logTeff, logL, logg ) of the models.
 </details>
 
 After this step, subdirectories will be made in case the pipeline is ran for a nested grid where one or more free parameters are fixed to a certain value.
@@ -85,6 +85,10 @@ Creates folder `{n_sigma_box}sigmaBox_meritvalues/` to store
 - `{star}_{grid}_{method}_{merit_function}_{suffix_observables}.hdf`: same table as in the [previous step](#pipe2_calculate_likelihood), but only listing the selected models that agree with the n-sigma error box.
 (Table with the meritvalue assigned by the used merit function, optimised rotation rate, model parameters, and the surface properties (logTeff, logL, logg ...).)
 
+If constraints of a binary companion are also taken into account, a file `isocloud_grid.h5` will be created holding a nested dictionary.
+The nested dictionary will have the grid parameter values as keys, with the order of the nested levels the same as the order of the grid parameters ('free_parameters' followed by 'fixed_parameters', see [pipeline config](./Configuration.md)).
+The innermost dictionary will hold certain columns of MESA history files, effectively grouping all the data of a grid that is required to construct isoclouds into one nested dictionary.
+
 </details>
 
 ## pipe4_AICc                     
@@ -98,7 +102,7 @@ Creates folder `{n_sigma_box}sigmaBox_output_tables/` to store
 </details>
 
 ## pipe5_best_model_errors        
-Calculate the 2 sigma uncertainty region of the maximum likelihood solution using Bayes' theorem.
+Calculate the 2 sigma uncertainty region of the maximum likelihood solution using [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem).
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
