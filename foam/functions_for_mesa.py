@@ -1,6 +1,4 @@
 """A few helpful functions to process MESA output."""
-# from foam import functions_for_mesa as ffm
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import multiprocessing, glob, h5py
@@ -48,39 +46,6 @@ def read_mesa_file(file_path, index_col=None):
         return header, data
 
 ################################################################################
-def check_hydro_eq(profile_file, treshold_for_plot=5E-8):
-    """
-    Calculates the normalised differences between the terms on both sides of the hydrostatic equilibrium equation.
-    Makes a plot if the values exceed a given treshold.
-    This shows how well hydrostatic equilibrium has been fulfilled in the MESA model.
-    ------- Parameters -------
-    profile_file: String
-        The path to the profile file to be checked.
-    treshold_for_plot: float
-        Make a plot if the max difference between the left and right hand side of the equation is greater than this number.
-    """
-    header, data = read_mesa_file(profile_file)
-    # Compute the hydrostatic equilibrium quality factor q - See e.g. Aerts et al. (2010)
-    lhs=np.delete(data['hyeq_lhs'], 0)  # remove the values at the surface, since these are 0
-    rhs=np.delete(data['hyeq_rhs'], 0)
-
-    norm = np.max(np.vstack([lhs, rhs]), axis=0)
-    hyeq = np.abs(lhs - rhs) / np.abs(norm)
-
-    # Make the plot if the treshold criterion is met
-    if max(hyeq) > treshold_for_plot:
-        # print the maximal deviation and profile name
-        print(max(hyeq))
-        print(profile_file)
-        # make a semilog plot
-        fig=plt.figure()
-        ax = fig.add_subplot(111)
-        ax.semilogy(np.delete(data['radius'], 0), hyeq, 'ko-') #also remove surface value, to have same amount of datapoints
-        plt.show()
-        plt.clf()
-        plt.close('all')
-
-################################################################################
 def calculate_number_densities(hist_file):
     '''
     Calculate surface number densities for all isotopes in the MESA grid.
@@ -109,37 +74,9 @@ def calculate_number_densities(hist_file):
     return number_densities
 
 ################################################################################
-def convert_units(quantity, input, convertto='cgs'):
-    '''
-    Converts from solar units to cgs and vice versa.
-    ------- Parameters -------
-    input: list of float
-        Numbers to convert.
-    quantity: string
-        The quantity you want to convert. Options are: {radius, mass, luminosity}.
-    convertto: string
-        The unit system to convert to. Options are: {cgs,solar} with default: 'cgs'.
-    ------- Returns -------
-    out: list of float
-        converted numbers
-    '''
-    # conversion factors used in MESA see $MESA_DIR/const/public/const_def.f90
-    to_cgs = {'mass': 1.9892E33,
-              'luminosity': 3.8418E33,
-              'radius': 6.9598E10,
-              'cgrav': 6.67428E-8} # gravitational constant (g^-1 cm^3 s^-2)
-
-    # convert to cgs
-    if convertto == 'cgs':
-        return input * to_cgs[quantity]
-    # convert to solar units
-    elif convertto == 'solar':
-        return input / to_cgs[quantity]
-
-################################################################################
-def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None, additional_observables=None):
     """
-    Extract spectroscopic info and age for each globbed MESA profile and write them to 1 large file.
+    Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info for each globbed MESA profile and write them to 1 large file.
     ------- Parameters -------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
@@ -148,41 +85,52 @@ def grid_extract_spectroscopy(mesa_profiles, output_file='gridSpectroscopy.hdf',
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
         name of the profile files, and included in the ouput file containing the info of the whole grid.
+    nr_cpu: int
+        Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
+    additional_observables: list of strings
+        List of observables to add to the surface grid. Must correspond to mesa profile header-item names.
     """
-    extract_func = partial(spectro_from_profiles, parameters=parameters)
+    # Make list of extra observables requested by the user
+    if additional_observables is None: additional_observables=[]
+    extras_to_be_extracted = [ x for x in additional_observables if x not in ['logTeff', 'logL', 'logg', 'age'] ]
+
+    extract_func = partial(info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
-    with multiprocessing.Pool() as p:
-        spectro = p.imap(extract_func, profiles)
+    with multiprocessing.Pool(nr_cpu) as p:
+        surface = p.imap(extract_func, profiles)
 
         # Generate the directory for the output file and write the file afterwards
         Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-        # make a new list, so 'parameters' is not extended before passing it on to 'spectro_from_profiles'
+        # make a new list, so 'parameters' is not extended before passing it on to 'info_from_profiles'
         header_parameters = list(parameters)
         header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
+        header_parameters.extend(extras_to_be_extracted) # Add the extra observables requested by the user
 
         # Make list of lists, put it in a dataframe, and write to a file
         data = []
-        for line in spectro:
+        for line in surface:
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
+    df.to_hdf(f'{output_file}', 'surfaceGrid', format='table', mode='w')
 
 
 ################################################################################
-def spectro_from_profiles(mesa_profile, parameters):
+def info_from_profiles(mesa_profile, parameters, extra_header_items):
     """
-    Extract spectroscopic info and age from a MESA profile and the model parameters from its filename.
+    Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info from a MESA profile and the model parameters from its filename.
     ------- Parameters -------
     mesa_profile: string
         path to the MESA profile
     parameters: list of strings
         List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
+    extra_header_items: list of strings
+        List of extra observables to add to the surface grid. Must correspond to mesa profile header-item names.
 
     ------- Returns -------
     line: string
-        Line containing all the model- and spectroscopic parameters of the MESA profile.
+        Line containing all the model- and surface parameters of the MESA profile.
     """
     param_dict = sf.get_param_from_filename(mesa_profile, parameters,values_as_float=True)
     prof_header, prof_data = read_mesa_file(mesa_profile)
@@ -196,25 +144,30 @@ def spectro_from_profiles(mesa_profile, parameters):
     for p in parameters:
         line.append(param_dict[p])
     line.extend([logTeff, logL, logg, age])
+
+    for obs in extra_header_items:   # Add the extra observables requested by the user
+        item = float(prof_header[obs])
+        line.append(item)
+
     return line
 
 ################################################################################
-def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='grid_spectro+freq.hdf', model_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_surface+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
     """
-    Combine the output files with the frequencies and spectroscopy of the grid in one new file,
-    only keeping models that have entries in both the frequency and specto files.
+    Combine the output files with the frequencies and surface info of the grid in one new file,
+    only keeping models that have entries in both the grid files.
     ------- Parameters -------
-    grid_frequencies, grid_spectroscopy: string
-        Paths to the files containing the model input parameters and corresponding frequency/spectroscopy of the model.
+    grid_frequencies, grid_surface: string
+        Paths to the files containing the model input parameters and corresponding frequency/surface info of the model.
     output_name: string
         Name of the generated file containing the combined info.
-    model_parameters: list of string
-        List of the model parameters to use for matching the entries in the freq/spectro file.
+    grid_parameters: list of string
+        List of the model parameters to use for matching the entries in the freq/surface file.
     """
     freq_df    = pd.read_hdf(grid_frequencies)
-    spectro_df = pd.read_hdf(grid_spectroscopy)
-    # Merge with spectro info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
-    df_merged  = pd.merge(spectro_df, freq_df, how='inner', on=model_parameters)
+    surface_df = pd.read_hdf(grid_surface)
+    # Merge with surface info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
+    df_merged  = pd.merge(surface_df, freq_df, how='inner', on=grid_parameters)
 
     col = df_merged.pop("age") # Don't add the age in the combined file
 
@@ -224,4 +177,4 @@ def add_spectro_to_puls_grid(grid_frequencies, grid_spectroscopy, output_name='g
     col = df_merged.pop("rot_err")
     df_merged.insert(1, col.name, col)
     # write the merged dataFrame to a new file
-    df_merged.to_hdf(f'{output_name}', 'puls_spectro_grid', format='table', mode='w')
+    df_merged.to_hdf(f'{output_name}', 'puls_surface_grid', format='table', mode='w')

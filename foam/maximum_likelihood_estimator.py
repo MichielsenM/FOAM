@@ -1,6 +1,5 @@
 """ Functions to perform different kinds of maximum likelihood estimation for the models in a grid, and make correlation plots.
 Note: The file with observations needs to hold temperature as Teff, although the analysis is done using the logTeff values."""
-# from foam import maximum_likelihood_estimator as mle
 import numpy as np
 import pandas as pd
 import sys, logging, os
@@ -12,11 +11,11 @@ from foam import functions_for_gyre as ffg
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=None, star_name=None, fixed_params=None):
+def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_path=None, star_name=None, fixed_params=None, grid_parameters=None):
     """
-    Perform a maximum likelihood estimation using the provided type of merit function on the list of  observables.
+    Perform a maximum likelihood estimation using the provided type of merit function on the list of observables.
     Writes a data file with the values of the merit funtion and input parameters of each model.
-    Can also select and continue the analysis of nested grids through the keyword 'fixed_params'.
+    Can select and continue the analysis of nested grids through the keyword 'fixed_params'.
     ------- Parameters -------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
@@ -25,40 +24,42 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
         Path to the hdf5 file with the theoretical model input parameters (first set of columns), frequency or period values (last set of columns),
         and possibly extra columns with additional observables (these columns should be in between the input parameters and frequency columns).
     observables: list of strings
-        Can contain 'frequencies' or 'periods', and 'period_spacing', which will be computed for the period pattern.
+        Which observables are included in the merit function.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     merit_function: string
-        The type of merit function to use. Currently supports "chi2" and "mahalanobis".
+        The type of merit function to use. Currently supports "CS and "MD" ("chi-squared" and "mahalanobis distance").
     star_name: string
         Name of the star, used in file naming.
     fixed_params: dictionary
         Only select and analyse the part of the theoretical grid with the specified parameter values.
         The keys specify for which parameters only the specified value should be selected.
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
     """
+    if 'f' in observables:
+        observed_quantity = 'frequency'
+    elif 'P' or 'dP' in observables:
+        observed_quantity = 'period'
     # Read in the observed data and make an array of the observed obervables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
-    Path_theo   = Path(Theo_file)
-    #suffix for filename to indicate the merit funtion used
-    suffix = {'chi2'       : 'CS',
-              'mahalanobis': 'MD'}
-
-    # set the name of the output file and make it's directory if needed
-    head, tail = sf.split_line(Path_theo.stem, star_name)
-    DataOutDir = Path(f'{os.getcwd()}/{str(Path_theo.parent).split("/")[-1]}')
-    Path(DataOutDir).mkdir(parents=True, exist_ok=True)
-    DataOut = f'{DataOutDir}/{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}.hdf'
+    # set the name of the output file
+    head, tail = sf.split_line(Path(Theo_file).stem, star_name)
+    DataOutDir = Path(f'{os.getcwd()}/meritvalues')
+    filename = f'{star_name}{tail}_{merit_function}_{file_suffix_observables}'
 
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
-    Thetas      = np.asarray(Theo_dFrame.loc[:,:'Xc']) # varied parameters in the grid (e.g. Mini, Xini, Xc etc.)
-    Theo_puls   = np.asarray(Theo_dFrame.loc[:,'f1':]) # theoretical pulsations corresponding to the observed ones
 
-    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains('f_missing'))[0]               # get the interruptions in the pattern, absolute index in dataframe
-    missing_relative = np.where(Theo_dFrame.loc[:,'f1':].columns.to_series().str.contains('f_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
+    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
+    Theo_puls = np.asarray(Theo_dFrame.filter(like=f'{observed_quantity}'))
+
+    missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
+    missing_relative = np.where(Theo_dFrame.filter(like=f'{observed_quantity}').columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
-    missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ]         # Adjust indices for removed lines of missing frequencies
+    missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ] # Adjust indices for removed lines of missing frequencies
 
     # Make new list of theoretical models without entries with value -1
     newTheo = []
@@ -82,37 +83,18 @@ def calculate_likelihood(Obs_path, Theo_file, observables=None, merit_function=N
     Thetas           = np.asarray(newThetas)
 
     # Dictionary containing different merit functions
-    switcher={ 'chi2': merit_chi2,
-                'mahalanobis' : merit_mahalanobis}
+    switcher={'CS': merit_chi2,
+              'MD' : merit_mahalanobis}
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{star_name}{tail}_{suffix[merit_function]}_{file_suffix_observables}', star_name=star_name)
+    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{filename}', star_name=star_name)
 
-    # Print smallest and highest values
-    idx2 = np.argsort(merit_values)
-    Parameters = Theo_dFrame.loc[:,:'Xc'].columns  # Parameter names
-    logger.info(f'Smallest {merit_function} : {merit_values[np.argsort(merit_values)][0]}')
-    logger.info(f'Highest {merit_function}  : {merit_values[np.argsort(merit_values)][-1]}')
-    logger.info(f'meritValue & {Parameters[0]}   & {Parameters[1]}  & {Parameters[2]}  &{Parameters[3]}& {Parameters[4]} &  {Parameters[5]} & {Parameters[6]}')
-    logger.info('-------------------------------------------------------')
-    # Print the ten models with the smallest values
-    for i in range(10):
-        row = f'{merit_values[np.argsort(merit_values)][i]:.4f}'
-        for k in range(np.shape(Thetas[idx2,:])[1]):
-            row += f' & {Thetas[idx2,:][i,k]:.3f}'
-        logger.info(row)
-
-    # Save the results
+    # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
-    Parameters= Parameters.insert(0, 'meritValue') # add an additional parameter name
-
-    df = pd.DataFrame(data=CombData, columns=Parameters) # put the data in a pandas DataFrame
-
-    for spectro in ['logTeff', 'logL', 'logg']:
-        if spectro in Theo_dFrame.columns:
-            df = pd.merge(df, Theo_dFrame[['Z', 'M', 'logD', 'aov', 'fov', 'Xc', spectro]], how='inner', on=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
-    df.to_hdf(f'{DataOut}', 'merit_values', format='table', mode='w')
+    df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+grid_parameters) # put the data in a pandas DataFrame
+    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
+    df.to_hdf(f'{os.getcwd()}/meritvalues/{filename}.hdf', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_indices):
@@ -126,7 +108,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Row index in the dataFrame of the theoretical model to make the array for.
     observables_in: list of strings
         Which observables are included in the returned array.
-        Can contain 'frequency', 'period', and/or 'period_spacing', which will be computed for the period pattern.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
@@ -135,25 +117,22 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         The values of the specified observables for the model.
     """
     observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
-    observables_out = np.asarray(Theo_dFrame.loc[index,'f1':])  # add the periods or frequencies to the output list
 
-    if 'period' in observables:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
-        observables.remove('period')
+    if 'P' in observables:
+        observables_out = np.asarray(Theo_dFrame.filter(like='period').loc[index])  # add the periods to the output list
+        observables.remove('P')
 
-    elif 'frequency' in observables:
-        periods = 1/np.asarray(Theo_dFrame.loc[index,'f1':])      # a separate list of periods that is preserved after adding other observables
-        observables.remove('frequency')
-    else:
-        periods = np.asarray(Theo_dFrame.loc[index,'f1':])  # Assume the file was in periods if nothing was specified
-        observables_out = np.asarray([])                    # Don't use period or freq as observables, so overwrite previous list to be empty
+    elif 'f' in observables:
+        observables_out = np.asarray(Theo_dFrame.filter(like='frequency').loc[index])  # add the frequencies to the output list
+        observables.remove('f')
 
-    if 'period_spacing' in observables:
+    elif 'dP' in observables:
+        periods = np.asarray(Theo_dFrame.filter(like='period').loc[index])
+        observables_out = []
         for periods_part in np.split(periods,missing_indices):
             spacing, _ = ffg.generate_spacing_series(periods_part)
-            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-            observables_out = np.append(observables_out, spacing)   # Include dP as observables
-        observables.remove('period_spacing')
+            observables_out = np.append(observables_out, np.asarray(spacing)/86400) # switch back from seconds to days (so both P and dP are in days)
+        observables.remove('dP')
 
     # Add all other observables in the list from the dataFrame
     for observable in observables:
@@ -170,8 +149,8 @@ def create_obs_observables_array(Obs_dFrame, observables):
         DataFrame containing the theoretical frequencies, periods, and any additional observables as columns, as well as columns with their errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     observables: list of strings
-        Which observables are included in the returned array, must contain 'frequency' or 'period'.
-        Can contain 'period_spacing', which will be computed for the period pattern.
+        Which observables are included in the returned array.
+        Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
 
     ------- Returns -------
@@ -185,53 +164,56 @@ def create_obs_observables_array(Obs_dFrame, observables):
     if len(missing_indices)!=0: Obs_dFrame = Obs_dFrame.drop(index='f_missing')  # remove lines indicating missing frequencies (if they are present)
 
     observables=list(observables)  #make a copy of the list, to not alter the one that was given to the function
-    period = np.asarray(Obs_dFrame['period'])
-    periodErr = np.asarray(Obs_dFrame['period_err'])
     filename_suffix = ''
 
-    periods_parts = np.split(period,missing_indices)
-    periodsErr_parts = np.split(periodErr,missing_indices)
-
-    if 'period' in observables:
+    if 'P' in observables:
         observables_out = np.asarray(Obs_dFrame['period'])
         observablesErr_out = np.asarray(Obs_dFrame['period_err'])
         filename_suffix = 'P'
-        observables.remove('period')
+        observables.remove('P')
 
-    elif 'frequency' in observables:
+    elif 'f' in observables:
         observables_out = np.asarray(Obs_dFrame['frequency'])
         observablesErr_out = np.asarray(Obs_dFrame['frequency_err'])
         filename_suffix = 'f'
-        observables.remove('frequency')
-    else:
-        observables_out = np.asarray([])
-        observablesErr_out = np.asarray([])
+        observables.remove('f')
 
-    if 'period_spacing' in observables:
+    elif 'dP' in observables:
+        observables_out = []
+        observablesErr_out = []
+        period = np.asarray(Obs_dFrame['period'])
+        periodErr = np.asarray(Obs_dFrame['period_err'])
+        periods_parts = np.split(period,missing_indices)
+        periodsErr_parts = np.split(periodErr,missing_indices)
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
             spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
-            spacing = np.asarray(spacing)/86400 # switch back from seconds to days (so both P and dP are in days)
-            spacing_errs = np.asarray(spacing_errs)/86400
+            observables_out = np.append(observables_out, np.asarray(spacing)/86400) # switch back from seconds to days (so both P and dP are in days)
+            observablesErr_out = np.append(observablesErr_out, np.asarray(spacing_errs)/86400)
 
-            observables_out = np.append(observables_out, spacing)   # Include dP as observables
-            observablesErr_out = np.append(observablesErr_out, spacing_errs)
+        filename_suffix = 'dP'
+        observables.remove('dP')
 
-        if filename_suffix != '': filename_suffix+='-'     # only add - if dP is not first observable
-        filename_suffix+='dP'
-        observables.remove('period_spacing')
-
+    if len(observables) > 0:
+        filename_suffix+='+extra'
     # Add all other observables in the list from the dataFrame
     for observable in observables:
-        if observable == 'logTeff': observable = 'Teff' # To read it as Teff from the observations datafile
+        logTeff=False
+        if observable == 'logTeff': 
+            observable = 'Teff' # To read it as Teff from the observations datafile
+            logTeff = True
         Obs = np.asarray(Obs_dFrame[observable]) # since these columns have less entries, the dataFrame has NaNs in the empty rows
         Obs = Obs[~np.isnan(Obs)]                # remove all entries that are NaN in the numpy array
         ObsErr = np.asarray(Obs_dFrame[f'{observable}_err'])
         ObsErr = ObsErr[~np.isnan(ObsErr)]
 
-        if observable == 'Teff': observable = 'logTeff' # To write it as logTeff in the filename
-        observables_out = np.append(observables_out, Obs)
-        observablesErr_out = np.append(observablesErr_out, ObsErr)
-        filename_suffix+=f'-{observable}'
+        if logTeff: # Convert observed Teff and error to log values
+            logT = np.log10(Obs)
+            logT_err = ObsErr / (Obs * np.log(10))
+            observables_out = np.append(observables_out, logT)
+            observablesErr_out = np.append(observablesErr_out, logT_err)
+        else:
+            observables_out = np.append(observables_out, Obs)
+            observablesErr_out = np.append(observablesErr_out, ObsErr)
 
     return observables_out, observablesErr_out, filename_suffix
 
@@ -245,7 +227,9 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
         Array of all theoretical patterns to calculate the chi squared value for.
-
+    fig_title, star_name: None
+        Should not be used in this function, but is to make it analogous to merit_mahalanobis()
+        and enable the use of the lambda function.
     ------- Returns -------
     chi2: numpy array of floats
         chi squared values for the given theoretical values
@@ -254,7 +238,7 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     return chi2
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
+def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None, star_name=None):
     """
     Calculate mahalanobis distance (MD) values for the given theoretical patterns.
     ------- Parameters -------
@@ -262,14 +246,19 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
         Array of all theoretical patterns to calculate the MD value for.
-
+    generate_output: boolean
+        Flag to write output and plot the variance-covariance matrix
+    fig_title: string
+        The name of the figure to be created.
+    star_name: string
+        The name of the analysed star, for file naming purposes.
     ------- Returns -------
     MD: numpy array of floats
         Mahalanobis distances for the given theoretical patterns.
     """
-    # Convert to matrix format
-    YObsMat = np.matrix(YObs).T
-    YTheoMat = np.matrix(YTheo).T
+    # Convert to matrix format (np.matrix is not recommended, use array and nexaxis instead)
+    YObsMat = np.array(YObs)[np.newaxis].T
+    YTheoMat = np.array(YTheo)[np.newaxis].T
 
     # Calculate the average on the theoretical values (e.g. frequencies)
     # over the entire grid. Returns a vector of dimension N x 1
@@ -286,7 +275,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 
     # Include observational errors in the variance-covariance matrix
     V = V + np.diag(ObsErr**2.)
-    check_matrix(V, fig_title=fig_title, star_name=star_name)     # check if positive definite and make figure
+    check_matrix(V, generate_output=generate_output, fig_title=fig_title, star_name=star_name)     # check if positive definite and make figure
     # Calculate Mahalanobis distances
     MD = np.zeros(q)
     Vinv = np.linalg.inv(V)
@@ -297,7 +286,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     return MD
 
 ################################################################################
-def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
+def check_matrix(V, generate_output=True, fig_title='Vmatrix', star_name=None):
     """
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
     since this means the matrix is positive definite. Compute its determinant and condition number,
@@ -305,35 +294,32 @@ def check_matrix(V, plot=True, fig_title='Vmatrix', star_name=None):
     ------- Parameters -------
     V: 2D np array
         Variance-covariance matrix
-    plot: boolean
-        Flag to make a plot of the variance-covariance matrix
+    output: boolean
+        Flag to write output and plot the variance-covariance matrix
     fig_title: string
         The name of the figure to be created.
+    star_name: string
+        The name of the analysed star, for file naming purposes.
     """
-    if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigencalues are >0, it is positive definite
-        sys.exit(logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)'))
-
+    if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigenvalues are >0, it is positive definite
+        logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)')
+        sys.exit(1)
     logger.info(f'max(V) = {np.max(V)}')
     kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
-    file_Path = Path(f'{os.getcwd()}/V_matrix/{star_name}_determinant_conditionNr.tsv')
-    file_Path.parent.mkdir(parents=True, exist_ok=True)
 
-    if not file_Path.is_file():
-        with file_Path.open("w") as file:
-            file.write(f'method \t ln(det(V)) \t condition_number \n')
-    with file_Path.open("a") as file:
-        file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
+    if generate_output is True:
+        file_Path = Path(f'{os.getcwd()}/V_matrix/{star_name}_determinant_conditionNr.tsv')
+        file_Path.parent.mkdir(parents=True, exist_ok=True)
+        if not file_Path.is_file():
+            with file_Path.open("w") as file:
+                file.write(f'method \t ln(det(V)) \t condition_number \n')
+        with file_Path.open("a") as file:
+            file.write(f'{fig_title} \t {np.log(np.linalg.det(np.exp(kk)*V))-kk*V.shape[0]:.2f} \t {np.linalg.cond(V):.2f} \n ')
 
-    if plot is True:
+
         im = plt.imshow(V*10**4, aspect='auto', cmap='Reds') # Do *10^4 to get rid of small values, and put this in the colorbar label
         plt.ylabel(rf'Obs {V.shape[0]}  $\leftarrow$ Obs 1', size=14)
         plt.xlabel(rf'Obs 1 $\rightarrow$ Obs {V.shape[0]} ', size=14)
-        # if (V.shape[0]==36):
-        #     plt.ylabel(rf'Mode Period {V.shape[0]}  $\leftarrow$ Mode Period 1', size=14)
-        #     plt.xlabel(rf'Mode Period 1 $\rightarrow$ Mode Period {V.shape[0]} ', size=14)
-        # else:
-        #     plt.ylabel(rf'$\Delta P_{ {V.shape[0]} }  \leftarrow \Delta P_{1}$', size=14)
-        #     plt.xlabel(rf'$\Delta P_{1} \rightarrow \Delta P_{ {V.shape[0]} }$', size=14)
 
         cbar = plt.colorbar(im)
         cbar.ax.set_ylabel(r'[d$^{2} 10^{-4}$]', rotation=90, labelpad=15, size=14)

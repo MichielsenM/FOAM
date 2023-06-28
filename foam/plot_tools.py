@@ -1,3 +1,4 @@
+""" Plotting functionality """
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -71,7 +72,9 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
 
 ################################################################################
 def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
-                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_spectrobox=3):
+                      percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_box=3, grid_parameters = None,
+                      axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
+                      'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ):
     """
     Make a plot of all variables vs each other variable, showing the MLE values as colorscale.
     A kiel/HR diagram is made, depending on if logg_obs or logL_obs is passed as a parameter.
@@ -98,6 +101,10 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
         String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
     mark_best_model: boolean
         Indicate the best model with a marker
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
+    axis_labels_dict: dictionary
+        Keys are grid paramters, values are strings how those values should be shown on the axis labels
     """
     # Define custom colormap
     cdict = {'red':((0.0, 1.0, 1.0),
@@ -123,16 +130,16 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
     if df_Theo.iloc[0]['rot'] == df_Theo.iloc[1]['rot'] == df_Theo.iloc[2]['rot'] == df_Theo.iloc[-1]['rot']: # rotation is fixed, don't plot it
-        df_EE = df_Theo_EE.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
-        df = df_Theo.drop(columns=['rot', 'rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df_EE = df_Theo_EE.filter(['meritValue']+grid_parameters ) # make new dataframe with only needed info
+        df = df_Theo.filter(['meritValue']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellips from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
 
     else: # rotation was varied, include it in the plots
-        df_EE = df_Theo_EE.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
-        df = df_Theo.drop(columns=['rot_err', 'logTeff', 'logL', 'logg'], errors='ignore') # make new dataframe without the spectroscopic info
+        df_EE = df_Theo_EE.filter(['meritValue']+['rot']+grid_parameters ) # make new dataframe with only needed info
+        df = df_Theo.filter(['meritValue']+['rot']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellips from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=['Z', 'M', 'logD', 'fov', 'aov', 'Xc'], suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
@@ -141,8 +148,6 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
 
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
-    # proper label format on figures
-    axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'}
 
     if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
@@ -214,6 +219,25 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
     ax_hrd.invert_xaxis()
+
+    # Observations
+    if n_sigma_box != None:
+        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+        if (('logL' in Obs_dFrame.columns) or ('logg' in Obs_dFrame.columns)) and ('Teff' in Obs_dFrame.columns)  :
+            if not 'logL' in Obs_dFrame.columns:
+                logg_or_logL = 'logg'
+
+            # Observed spectroscopic error bar, only added if observational constraints were provided.
+            # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
+            width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
+            width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
+            errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_nsigma, 2*n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            ax_hrd.add_patch(errorbox_1s)
+            ax_hrd.add_patch(errorbox_ns)
+
     if logg_or_logL=='logg': ax_hrd.invert_yaxis()
 
     im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
@@ -229,19 +253,6 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     ax_hrd.tick_params(which='major', length=6)
     ax_hrd.tick_params(which='minor', length=4)
 
-    # observations
-    if n_sigma_spectrobox != None:
-        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
-        # Observed spectroscopic error bar
-        # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
-        width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-        width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0])
-        errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                    width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-        errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_spectrobox*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                    width_logTeff_nsigma, 2*n_sigma_spectrobox*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none')
-        ax_hrd.add_patch(errorbox_1s)
-        ax_hrd.add_patch(errorbox_ns)
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
@@ -326,7 +337,7 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
     ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     label_size, alpha: float
-        The size of the labels in the figure, and KHDtransparency of the plot
+        The size of the labels in the figure, and transparency of the plot
     colour, linestyle, label: float
         Settings for the plot
     legend: boolean
@@ -351,7 +362,7 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
     # generate the plot, in which colour will not be specified
     if colour == '':
         ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle)
-    # generate the plot, in which colour will be sKHDpecified
+    # generate the plot, in which colour will be specified
     else:
         ax.hist(x, bins=bins, histtype=u'step', label=label, alpha=alpha, linestyle=linestyle, color=colour)
     # generate a legend if true
@@ -368,7 +379,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     ------- Parameters -------
     hist_file: String
         The path to the profile file to be used for the plot.
-    ax: an axis objectKHD
+    ax: an axis object
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     colour, linestyle, label: strings
         Specify the colour, linestyle and label of the plotted data.
@@ -398,7 +409,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     if Teff_logscale:
         T = log_Teff
         ax.set_xlabel(r'log(T$_{\mathrm{eff}}$)', size=label_size)
-    # Plot the x-axis in linear scaleKHD
+    # Plot the x-axis in linear scale
     else:
         T = 10**log_Teff
         ax.set_xlabel(r'T$_{\mathrm{eff}}$ [K]', size=label_size)
@@ -415,7 +426,7 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
     # Plot Kiel diagram (log_g vs log_Teff)
     elif diagram == 'kiel':
         y_axis = log_g
-        ax.set_ylabel(r'log g [dex]', size=label_sKHDize)
+        ax.set_ylabel(r'log g [dex]', size=label_size)
 
     # Start plotting from Xc value
     if start_track_from_Xc!= None:

@@ -1,6 +1,5 @@
 """Selection of the theoretical pulsation patterns that best match the observations,
    with the possibility to optimise the rotation rate in the process through rescaling."""
-# from foam import build_optimised_pattern as bop
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,8 +13,8 @@ import logging
 
 logger = logging.getLogger('logger.bop')
 ################################################################################
-def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
-                                        output_file=f'theoretical_frequency_patterns.tsv', asymptotic_object=None, estimated_rotation=None):
+def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
+                                        output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None, nr_cpu=None):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsationGrid_file'.)
@@ -29,21 +28,25 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     method_build_series: string
         way to generate the theoretical frequency pattern from each model to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations (function 'chisq_longest_sequence')
     highest_amplitude_pulsation: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
     which_observable: string
-        Observable used in the theoretical pattern construction.
+        Observable used in the theoretical pattern construction, options are 'frequency' or 'period'.
     output_file: string
         Name (can include a path) for the file containing all the pulsation frequencies of the grid.
     asymptotic_object: asymptotic (see 'gmode_rotation_scaling')
         Object to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     estimated_rotation: float
         Estimation of the rotation rate of the star, used as initial value in the optimisation problem.
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
+    nr_cpu: int
+        Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
     Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
@@ -54,24 +57,20 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
 
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
     theo_pattern_func = partial(theoretical_pattern_from_dfrow, Obs=Obs, ObsErr=ObsErr, which_observable=which_observable,
-                                method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation,
+                                method_build_series=method_build_series, highest_amp_puls=highest_amplitude_pulsation, grid_parameters=grid_parameters,
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
+    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
-    with multiprocessing.Pool() as p:
+    with multiprocessing.Pool(nr_cpu) as p:
         freqs = p.imap(theo_pattern_func, Theo_dFrame.iterrows())
-        # Make the output file directory and write the file  TODO, this should be hdf and not hard coded
-        Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-
-        header_parameters = ['rot', 'rot_err']
-        filtered_header = filter(lambda param: 'n_pg' not in param and 'rot' not in param, Theo_dFrame.columns)
-        header_parameters.extend(list(filtered_header))
+        header_parameters = ['rot', 'rot_err'] + grid_parameters
 
         for i in range(1, Obs_dFrame.shape[0]+1):
             if i-1 in np.where(Obs_dFrame.index == 'f_missing')[0]:
-                f='f_missing'
+                f = f'{which_observable}_missing'
             else:
-                f = 'f'+str(i)
+                f = f'{which_observable}{i}'
             header_parameters.append(f.strip())
 
         data = []
@@ -79,11 +78,11 @@ def construct_theoretical_freq_pattern(pulsationGrid_file, observations_file, me
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'spectrogrid', format='table', mode='w')
+    df.to_hdf(f'{output_file}', 'selected_puls_grid', format='table', mode='w')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,
-    highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False):
+    highest_amp_puls=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False, grid_parameters=None):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
     ------- Parameters -------
@@ -99,18 +98,19 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     method_build_series: string
         way to generate the theoretical frequency pattern from each model
         to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
     highest_amp_puls: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
     asymptotic_object: asymptotic (see 'gmode_rotation_scaling')
         Object to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     estimated_rotation: float
         Estimation of the rotation rate of the star, used as initial value in the optimisation problem.
-
+    grid_parameters: list of string
+        List of the parameters in the theoretical grid.
     ------- Returns -------
     list_out: list
         The input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
@@ -121,15 +121,15 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     freqs=freqs[~np.isnan(freqs)]  # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
 
     missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
-    Obs=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
-    ObsErr=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
+    Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
+    ObsErr_without_missing=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
     missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
 
-    Obs_pattern_parts = np.split(Obs, missing_puls)    # split into different parts of the interrupted pattern
-    ObsErr_pattern_parts = np.split(ObsErr, missing_puls)
+    Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
+    ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
 
     if len(Obs_pattern_parts) != len (highest_amp_puls):   # Check if highest_amp_puls has enough entries to not truncate other parts in the zip function.
-        if method_build_series == 'highest_amplitude':
+        if method_build_series == 'highest-amplitude':
             sys.exit(logger.error('Amount of pulsations specified to build patterns from is not equal to the amount of split-off parts in the pattern.'))
         else:   # Content of highest_amp_puls doesn't matter if it's not used to build the pattern.
             highest_amp_puls = [None]*len(Obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
@@ -139,7 +139,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls)
 
         list_out=[estimated_rotation, 0]
-        for parameter in summary_grid_row[1][:'Xc'].drop('rot').index:
+        for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
 
         selected_pulsations = Obs + residual
@@ -173,7 +173,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         if result_minimizer.message != 'Fit succeeded.':
             logger.warning(f"""Fitting rotation did not succeed: {result_minimizer.message}
-                            for model {summary_grid_row[1][:'Xc'].drop('rot').to_dict()} using method: {method_build_series}
+                            for model {summary_grid_row[1].drop(summary_grid_row[1].filter(regex='n_pg').index).drop('rot').to_dict()} using method: {method_build_series}
                             rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}""")
 
         if plot_rotation_optimisation:
@@ -204,7 +204,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
         list_out=[result_minimizer.params['rotation'].value, result_minimizer.params['rotation'].stderr]
-        for parameter in summary_grid_row[1][:'Xc'].drop('rot').index:
+        for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
         list_out.extend(optimised_pulsations)
 
@@ -245,11 +245,11 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
     method_build_series: string
         way to generate the theoretical frequency pattern from each model
         to match the observed pattern. Options are:
-            highest_amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
-            highest_frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
-            chisq_longest_sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
+            highest-amplitude: build pattern from the observed highest amplitude    (function 'puls_series_from_given_puls')
+            highest-frequency: build pattern from the observed highest frequency    (function 'puls_series_from_given_puls')
+            chisq-longest-sequence: build pattern based on longest, best matching sequence of pulsations    (function 'chisq_longest_sequence')
     highest_amp_puls: array of floats
-        Only needed if you set method_build_series=highest_amplitude
+        Only needed if you set method_build_series=highest-amplitude
         Value of the pulsation with the highest amplitude, one for each separated part of the pattern.
         The unit of this value needs to be the same as the observable set through which_observable.
 
@@ -262,7 +262,8 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         v = params.valuesdict()
         if estimated_rotation ==0:  # To avoid division by zero in scale_pattern
             estimated_rotation=1E-99
-        freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d) *u.d
+        freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d)*u.d
+        freqs = np.asarray(freqs, dtype = np.float64) # convert astropy quantities back to floats
     else:
         freqs = freqs_input
 
@@ -298,18 +299,18 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         else:
             sys.exit(logger.error('Unknown observable to fit'))
 
-        if method_build_series == 'highest_amplitude':
+        if method_build_series == 'highest-amplitude':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_amp_puls_part)
-        elif method_build_series == 'highest_frequency':
+        elif method_build_series == 'highest-frequency':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_obs_freq)
-        elif method_build_series == 'chisq_longest_sequence':
+        elif method_build_series == 'chisq-longest-sequence':
             series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
             if which_observable=='frequency':
                 selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
             elif which_observable=='period':
                 selected_theoretical_pulsations = final_theoretical_periods
         else:
-            sys.exit(logger.error('Incorrect method to build pulsational series.'))
+            sys.exit(logger.error(f'Unrecognised method to build pulsational series: {method_build_series}'))
 
         output_pulsations.extend(selected_theoretical_pulsations)
 
@@ -339,7 +340,7 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     diff = abs(TheoIn - Obs_to_build_from)    # search theoretical freq closest to the given observed one
     index = np.where(diff==min(diff))[0][0]   # get index of this theoretical frequency
 
-    # Insert a value of -1 if observations miss a theoretical counterpart in the begining
+    # Insert a value of -1 if observations miss a theoretical counterpart in the beginning
     Theo_sequence = []
     if (index-nth_obs)<0:
         for i in range(abs((index-nth_obs))):
@@ -364,9 +365,6 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
 
     return Theo_sequence
 
-################################################################################
-################################################################################
-# Function adapted from Cole Johnston
 ################################################################################
 def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False):
     """
@@ -433,7 +431,7 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             if abs(sett[2]) == abs(pairs_orders[ii+1][2])+increase_or_decrease:
                 current.append(sett)
             else:   # If not consecutive radial order, save the current sequence and start a new one.
-               	current.append(sett)
+                current.append(sett)
                 sequences.append(np.array(current).reshape(len(current),4))
                 current = []
             if (ii==lp-1):
@@ -476,7 +474,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             ordered_theoretical_periods.append(tper)
             corresponding_orders.append(ordr)
 
-        #final_theoretical_periods = np.sort(np.hstack([ordered_theoretical_periods_a,ordered_theoretical_periods_b]))[::-1]
         final_theoretical_periods = np.array(ordered_theoretical_periods)
 
         obs_series,obs_series_errors = ffg.generate_spacing_series(operiods,operiods_errors)
@@ -492,8 +489,6 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             fig = plt.figure(2,figsize=(6.6957,6.6957))
             fig.suptitle('$\mathrm{Longest \\ Sequence}$',fontsize=20)
             axT = fig.add_subplot(211)
-            # axT.errorbar(operiods[1:],obs_series,yerr=obs_series_errors,marker='x',color='black',label='Obs')
-            # axT.plot(final_theoretical_periods[1:],thr_series,'rx-',label='Theory')
             axT.errorbar(list(range(len(obs_series))),obs_series,yerr=obs_series_errors,marker='x',color='black',label='Obs')
             axT.plot(list(range(len(thr_series))),thr_series,'rx-',label='Theory')
             axT.set_ylabel('$\mathrm{Period \\ Spacing \\ (s)}$',fontsize=20)

@@ -14,18 +14,13 @@ class PipelineConfig:
         Initialising the instance of the configuration.
 
         ------- Parameters -------
-        debugging: boolean
-            Set to True to set logger level to debug
         --- Settings about observational data ---
         star: string
             Name of the star, used for generating filenames
         observations: string
-            Name of (or full path to) the file with the observational data
-        periods_or_frequencies_observed: string
-            options: 'period' or 'frequency'
-            Use the observed periods or frequencies, be consistent in observable_list later.
+            Full path to the file with the observational data
         highest_amplitude_pulsation: dictionary of lists
-            Pulsation with the highest amplitude to build pattern from when using 'highest_amplitude' method.
+            Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method.
             List with highest amplitudes per part of the split pattern,
             ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
 
@@ -50,35 +45,49 @@ class PipelineConfig:
             List of methods to construct the theoretical frequency pattern (repeats modelling for each method)
         merit_functions: list of strings
             List of merit functions (repeats modelling for each merit function)
-        observable_list: list of list of strings
-            Lists of observables to fit (repeats modelling for each list)
-            e.g. ['period'] can be expanded to ['period', 'logg'] to include more observables in the likelihood estimation
-        observable_aic: list of strings
-            calculate AICc for these observables (abbreviated names)
-        n_sigma_spectrobox: int
-            Ignore models outside of the n-sigma spectroscopic error box, set to None to include all models.
+        observable_seismic: list of strings
+            List of asteroseismic observables to fit in the merit function (repeats modelling for each observable)
+            options are 'P' (period), 'dP' (period-spacing), and 'f' frequency.
+        observable_additional: list of strings
+            List of additional observables to use in the merit function (e.g. logTeff, logg, logL ...)
+            Set to None to just use the asteroseismic observables.
+        n_sigma_box: int
+            Ignore models outside of the n-sigma error box on the surface properties, set to None to include all models.
         free_parameters: list
-            List of varied parameters in the grid, as written in grid filenames,
-            that remain free parameters in the modelling.
+            List of varied parameters in the grid, as written in grid filenames, that remain free parameters in the modelling.
+            In case of a binary system where additional constraints from the companion should be taken into account, 
+            this list should start with the first two entries being 'Z', 'M' representing metallicity and mass.
         fixed_parameters: dict
             Dictionary with varied parameters in the grid (dict keys) that are fixed to a certain value (dict value)
             to consider nested grids with fewer free parameters. Defaults to None to not fix any parameters.
             (E.g. {'aov': 0.0, 'fov': 0.0} to fix both these mixing parameters to zero.)
+        evolution_parameter: string
+            Name of the parameter that is used to track the evolutionary steps of the model.
+        evolution_step: float
+            Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)       
         N_periods: int
             Number of periods in the observed pattern
         N_pattern_parts: int
             In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
 
-        --- For modelling binaries and enfocring constraints of the companion star. ---
-        spectro_companion: dictionary
+        --- For modelling binaries and enforcing constraints of the companion star. ---
+        constraint_companion: dictionary
             Dictionary with the following keys holding all binary Information (q = Mass_secondary/Mass_primary)
             e.g. {'q': <float>, 'q_err': <float>,'Teff': <float>, 'Teff_err': <float>,
                   'logg': <float>, 'logg_err': <float>, 'logL': <float>, 'logL_err':<float>, 'primary_pulsates':<boolean>}
-            set a spectroscopic observable to None to not use that observable.
+            set surface observable to None to not use that observable.
             Defaults to None instead of a dictionary to not include any constraints from binarity.
 
         isocloud_grid_directory: string
-            path to directory with files containing the isocloud grid summary files
+            The path to the isocloud grid directory.
+
+        --- Other settings ---
+        conerplot_axis_labels: dictionary, its keys and values are strings
+            keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis
+        debugging: boolean
+            Set to True to set logger level to debug
+        nr_cpu: int
+            Number of worker processes to use in multiprocessing. The default 'None' will cause the pools to use the number returned by os.cpu_count().
         """
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -86,13 +95,14 @@ class PipelineConfig:
         if kwargs.pop("debugging", False):
             self.logger.setLevel(logging.DEBUG)
 
+        self.nr_cpu = kwargs.pop("nr_cpu", None)
+
         # Set the main top-level directory
         self.main_directory = os.getcwd()
 
         # Settings about observational data
         self.star = kwargs.pop("star", None)
         self.observations = kwargs.pop("observations", None)
-        self.periods_or_frequencies_observed = kwargs.pop("periods_or_frequencies_observed", 'period')
         self.highest_amplitude_pulsation = kwargs.pop("highest_amplitude_pulsation", None)
 
         # Simulated theoretical model grid
@@ -107,25 +117,41 @@ class PipelineConfig:
         self.gyre_dir = kwargs.pop("gyre_dir", os.environ.get('GYRE_DIR'))
 
         # Modelling methodology
-        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq_longest_sequence','highest_amplitude', 'highest_frequency'])
-        self.merit_functions = kwargs.pop("merit_functions", ['chi2', 'mahalanobis'])
-        self.observable_list = kwargs.pop("observable_list", [['period'], ['period_spacing']])
-        self.observable_aic = kwargs.pop("observable_aic", ['P', 'dP'])
-        self.n_sigma_spectrobox = kwargs.pop("n_sigma_spectrobox", 3)
+        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','highest-amplitude', 'highest-frequency'])
+        self.merit_functions = kwargs.pop("merit_functions", ['CS', 'MD'])
+        self.observable_seismic = kwargs.pop("observable_seismic", ['P', 'dP'])
+        self.observable_additional = kwargs.pop("observable_additional", None)
+
+        self.n_sigma_box = kwargs.pop("n_sigma_box", 3)
         self.free_parameters = kwargs.pop("free_parameters", ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'])
         self.fixed_parameters = kwargs.pop("fixed_parameters", None)
+
+        if self.fixed_parameters is None:   # keep track of all relevant parameters, free and fixed, in the grid
+            self.grid_parameters = self.free_parameters
+        else:
+            self.grid_parameters = self.free_parameters+list(self.fixed_parameters.keys())
+
+        self.evolution_parameter = kwargs.pop("evolution_parameter", 'Xc')
+        self.evolution_step = kwargs.pop("evolution_step", -0.01)
+        
         self.k = len(self.free_parameters) # Number of free parameters
         self.N_periods = kwargs.pop("N_periods", None)
         self.N_pattern_parts = kwargs.pop("N_pattern_parts", 1)
         # Number of observables, calculated from the number of periods
         # Number of period spacings is number of periods minus amount of separated patterns.
         # E.g. uninterrupted pattern: 36 periods, so 35 period spacings
-        self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts}
+        if self.observable_additional is None:
+            self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods}
+        else:
+            self.N_dict = {'P+extra' : self.N_periods+len(self.observable_additional),'dP+extra': self.N_periods-self.N_pattern_parts+len(self.observable_additional), 'f+extra' : self.N_periods+len(self.observable_additional)}
 
         # Binarity
-        self.spectro_companion = kwargs.pop("spectro_companion", None)
+        self.constraint_companion = kwargs.pop("constraint_companion", None)
         self.isocloud_grid_directory = kwargs.pop("isocloud_grid_directory", None)
 
+        # Plotting
+        self.conerplot_axis_labels = kwargs.pop("conerplot_axis_labels", {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
+                                                'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'})
         # Check for errors in input arguments
         self._check_init_arguments(kwargs)
 
@@ -180,17 +206,18 @@ class PipelineConfig:
         if self.grids is None:
             self.logger.error(f'PipelineConfig: Name of theoretical grid not specified')
             input_error = True
-
-        # Check that you don't use observed periods whilst looking at the theoretical values as if they are frequencies, and vice versa.
-        match_obsAndTheory = False
-        for obs_list in self.observable_list:
-            for obs in obs_list:
-                if (self.periods_or_frequencies_observed) in obs:
-                    match_obsAndTheory = True
-            if match_obsAndTheory is False:
-                self.logger.error(f'The observables that are analysed {self.observable_list} do not all include the observational data that is used: {self.periods_or_frequencies_observed}')
+        
+        # Check if "Z" and "M" are first free parameters when constraints from binary companion are used.
+        if self.constraint_companion is not None:
+            if not (self.free_parameters[0] == 'Z' and self.free_parameters[1] == 'M'):
+                self.logger.error(f'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '+
+                                  f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".')
                 input_error = True
-            match_obsAndTheory = False
+
+        # Check if the amount of highest amplitude pulsations provided is equal to the amount of parts the pattern is split into.
+        if 'highest-amplitude' in self.pattern_methods and not (len(self.highest_amplitude_pulsation) == self.N_pattern_parts):
+            self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern.')
+            input_error = True
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
         if self.fixed_parameters is not None:
