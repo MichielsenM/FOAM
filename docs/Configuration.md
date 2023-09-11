@@ -113,7 +113,7 @@ All keyword arguments are listed below, grouped in categories.
 - observable_seismic
 >   type: list of strings <br>
     default: ['P', 'dP'] <br>
-    List of asteroseismic observables to fit in the merit function (repeats modelling for each observable) options are 'P' (period), 'dP' (period-spacing), and 'f' frequency.
+    List of asteroseismic observables to fit in the merit function (repeats modelling for each observable) options are 'P' (period), 'dP' (period-spacing), and 'f' (frequency).
 
 - observable_additional
 >   type: list of strings <br>

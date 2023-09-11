@@ -215,9 +215,13 @@ class PipelineConfig:
                 input_error = True
 
         # Check if the amount of highest amplitude pulsations provided is equal to the amount of parts the pattern is split into.
-        if 'highest-amplitude' in self.pattern_methods and not (len(self.highest_amplitude_pulsation) == self.N_pattern_parts):
-            self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern.')
-            input_error = True
+        if 'highest-amplitude' in self.pattern_methods:
+            if ('P' or 'dP' in self.observable_seismic) and not (len(self.highest_amplitude_pulsation['period']) == self.N_pattern_parts):
+                self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of periods provided.')
+                input_error = True
+            if ('f' in self.observable_seismic) and not (len(self.highest_amplitude_pulsation['frequency']) == self.N_pattern_parts):
+                self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of frequencies provided.')
+                input_error = True
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
         if self.fixed_parameters is not None:

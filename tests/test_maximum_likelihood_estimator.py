@@ -29,7 +29,6 @@ def test_merit_mahalanobis():
 class test_matrix(unittest.TestCase):
     def test_check_matrix_exit(self):
         matrix = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
-        # matrix = np.asarray([[2, 1, 1], [1, 2, 1], [1, 1, 2]])
         with self.assertRaises(SystemExit) as cm:
             mle.check_matrix(matrix, generate_output=False)
         self.assertEqual(cm.exception.code, 1)
