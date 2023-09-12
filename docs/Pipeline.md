@@ -75,7 +75,7 @@ Select all the models that fall inside an n-sigma error box on the provided Teff
 <details>
 <summary> <b>Isochrone-clouds</b> (click to expand) </summary> <br>
 An isochrone-cloud of a model is made up of all models that have the same metallicity, an age equal within 1 timestep, and whose mass is compatible witin the error margin of the observed mass ratio. (However other parameters can differ between models, e.g. internal mixing processes).
-The model of the pulsating star must be compatible with it's observed Teff, logg and logL, while the at least one of the models in its isochrone-cloud must be compatible with the companion's observed Teff, logg and logL.
+The model of the pulsating star must be compatible with it's observed Teff, logg and logL, while at least one of the models in its isochrone-cloud must be compatible with the companion's observed Teff, logg and logL.
 </details>
 <details>
 
