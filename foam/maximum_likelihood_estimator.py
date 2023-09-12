@@ -78,8 +78,8 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     if len(neg_value)>0:
         logger.warning(f"""{len(neg_value)} models were discarded due to mismatches during the selection of theoretical frequencies.
                         This is likely due to the frequency range used for the theoretical calculations being too narrow.""")
-    Theo_observables = np.asarray(newTheo)
-    Thetas           = np.asarray(newThetas)
+    newTheo = np.asarray(newTheo)
+    newThetas = np.asarray(newThetas)
 
     # Dictionary containing different merit functions
     switcher={'CS': merit_chi2,
@@ -87,10 +87,10 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
 
     # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
     selected_merit_function = switcher.get(merit_function, lambda x, y, z: sys.exit(logger.error('invalid type of maximum likelihood estimator')))
-    merit_values = selected_merit_function(Obs, ObsErr, Theo_observables, fig_title=f'{filename}', star_name=star_name)
+    merit_values = selected_merit_function(Obs, ObsErr, newTheo, fig_title=f'{filename}', star_name=star_name)
 
     # Combine values and save the results
-    CombData = np.concatenate((np.matrix(merit_values).T,Thetas),axis=1)  # add an additional column for MLE 'meritValues'
+    CombData = np.concatenate((np.matrix(merit_values).T,newThetas),axis=1)  # add an additional column for MLE 'meritValues'
     df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+grid_parameters) # put the data in a pandas DataFrame
     df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
     df.to_hdf(f'{os.getcwd()}/meritvalues/{filename}.hdf', 'merit_values', format='table', mode='w')
@@ -117,12 +117,12 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
     """
     observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
 
-    if 'P' in observables:
-        observables_out = np.asarray(Theo_dFrame.filter(like='period').loc[index])  # add the periods to the output list
+    if 'P' in observables:   # Cast to list before using asarray to prevent memory leak
+        observables_out = np.asarray(list(Theo_dFrame.filter(like='period').loc[index]))  # add the periods to the output list
         observables.remove('P')
 
-    elif 'f' in observables:
-        observables_out = np.asarray(Theo_dFrame.filter(like='frequency').loc[index])  # add the frequencies to the output list
+    elif 'f' in observables: # Cast to list before using asarray to prevent memory leak
+        observables_out = np.asarray(list(Theo_dFrame.filter(like='frequency').loc[index]))  # add the frequencies to the output list
         observables.remove('f')
 
     elif 'dP' in observables:
