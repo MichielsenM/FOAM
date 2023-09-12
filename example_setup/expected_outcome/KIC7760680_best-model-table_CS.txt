@@ -1,0 +1,4 @@
+Grid Observables Pattern_construction Z M logD aov fov Xc Omega_rot CS AICc_CS
+DO dP chisq-longest-sequence 0.023 3.2 0.5 0.25 0.025 0.48 0.4834 12359.92 441.2
+DO dP highest-amplitude 0.023 3.2 0.5 0.25 0.025 0.48 0.4834 12359.92 441.2
+DO dP highest-frequency 0.015 3.1 0.0 0.2 0.025 0.5 0.4702 12322.28 439.91

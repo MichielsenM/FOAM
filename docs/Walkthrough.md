@@ -158,3 +158,18 @@ Model_grids
 
 </pre>
 </details>
+
+
+## Example setup
+
+A practical example of the setup can be found in the following directory <a href="https://github.com/MichielsenM/foam/example_setup" target="_blank"> example_setup</a>.
+The folder `KIC7760680` contains an example of a file with observational data (`data_KIC7760680.tsv`), and two setups for the modelling pipeline. One for modelling the full grid, and one setup to perform the modelling for a subgrid of nested models (in this case for both Convective Boundary Mixing parameters fixed at 0). Some print statements have been included to keep you informed how far the pipeline has progressed, but these can easily be removed or adjusted.
+
+If you calculated your own theoretical grids, you should set their path properly in the `pipeline` files with the function argument `grid_parent_directory`. However, for this walkthrough the folder `grid_summary` already contains the outputs of step 0 of the modelling pipeline. You can unpack these compressed files using terminal commands `tar -xf surfaceGrid_DO.tar.xz` and `tar -xf pulsationGrid_DO_rot0.4805_k0m1.tar.xz`.
+The theoretical grid summary that is included here is the radiative grid from [Michielsen et al. (2021)](https://doi.org/10.1051/0004-6361/202039926). If you were to run the pipelines, you would find similar results to the paper, but slight differences would be present. These differences occur since the near-core rotation rate of the star was assumed to be fixed in the paper. Meanwhile the modelling pipeline has undergone numerous updates, one of which is the optimisation of the stellar rotation rate for each theoretical equilibrium model separately. 
+This optimisation is explained in more detail in Michielsen et al. (2023) (currently under revision).
+
+Starting the modelling with this pre-made setup is now as easy as running `python pipeline.py` from your terminal (after making sure the right python environment is activated).
+Note that you will see warnings `WARNING  file already existed: ../grid_summary/surfaceGrid_DO.hdf` and `WARNING  file already existed: ../grid_summary/pulsationGrid_DO_rot0.4805_k0m1.hdf`. This is normal since the code detects that the summary files are already present, and don't need to be extracted a second time. Step 0 of the modelling pipeline will therefore skip creating these files and notify you that they already existed. 
+
+As explained before, the expected results are slightly different from those published by [Michielsen et al. (2021)](https://doi.org/10.1051/0004-6361/202039926). The expected results of this pipeline are therefore included in directory <a href="https://github.com/MichielsenM/foam/expected_outcome" target="_blank"> expected_outcome</a>. This folder contains the results for modelling the full grid and the nested subgrid. It contains the output of the last step (step 7), which is a table with the best model parameters for each combination of the chosen theoretical grid, seismic observables, and pattern construction methods. One table holds these for a chi-squared (CS) merit function, whilst the other holds these for a Mahalanobis Distance (MD) merit function. Furthermore some of the figures created by step 6 of the pipeline have been included as well. (See [Pipeline modules](./Pipeline.md) for more information on the output of the different steps in the modelling.)
