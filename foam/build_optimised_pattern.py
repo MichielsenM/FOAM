@@ -135,7 +135,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
             highest_amp_puls = [None]*len(Obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
 
     if asymptotic_object is None: # In this case, rescaling nor optimisation will happen
-        residual = rescale_rotation_and_select_theoretical_pattern(None, asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
+        residual = rescale_rotation_and_select_theoretical_pattern(None, asymptotic_object, estimated_rotation, freqs, orders, Obs, Obs_pattern_parts,
         ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls)
 
         list_out=[estimated_rotation, 0]
@@ -151,7 +151,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         params.add('rotation', value=estimated_rotation, min=1E-5)
         # Fit rotation to observed pattern with the default leastsq algorithm
         optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
-                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
+                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, Obs_pattern_parts,
                 ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
 
         result_minimizer = optimise_rotation.minimize()
@@ -161,7 +161,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         params = Parameters()
         params.add('rotation', value=search_second_initial_value , min=1E-5)
         optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
-                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, ObsErr, Obs_pattern_parts,
+                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, Obs, Obs_pattern_parts,
                 ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls))
 
         result_minimizer2 = optimise_rotation.minimize()
@@ -212,7 +212,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation, freqs_input,
-    orders, Obs, ObsErr, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
+    orders, Obs, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series, highest_amp_puls):
     """
     If rotation is not optimised in the modelling, asymptotic_object should be set to 'None' and
     this function will just select a theoretical pulsation pattern based on the specified method.
@@ -235,8 +235,6 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         Array with the radial orders of the theoretical input frequencies.
     Obs: numpy array
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
-    ObsErr: numpy array
-        Array of errors on the observed frequencies or periods.
     Obs_pattern_parts, ObsErr_pattern_parts: list of numpy arrays
         Holds a numpy array per split off part of the observerd pattern if it is interrupted.
         The list contains only one array if the observed pattern is uninterrupted.

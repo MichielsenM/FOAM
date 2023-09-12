@@ -46,8 +46,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
     # set the name of the output file
-    head, tail = sf.split_line(Path(Theo_file).stem, star_name)
-    DataOutDir = Path(f'{os.getcwd()}/meritvalues')
+    _, tail = sf.split_line(Path(Theo_file).stem, star_name)
     filename = f'{star_name}{tail}_{merit_function}_{file_suffix_observables}'
 
     # Theoretical grid data
