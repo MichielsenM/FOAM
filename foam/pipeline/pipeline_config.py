@@ -18,7 +18,7 @@ class PipelineConfig:
         star: string
             Name of the star, used for generating filenames
         observations: string
-            Full path to the file with the observational data
+            Path to the file with the observational data
         highest_amplitude_pulsation: dictionary of lists
             Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method.
             List with highest amplitudes per part of the split pattern,
@@ -102,7 +102,12 @@ class PipelineConfig:
 
         # Settings about observational data
         self.star = kwargs.pop("star", None)
-        self.observations = kwargs.pop("observations", None)
+        obs_path = kwargs.pop("observations", None)
+        if os.path.isabs(obs_path): # Check if path is absolute path
+            self.observations = obs_path
+        else:                       # Convert relative path to absolute path
+            self.observations = f'{self.main_directory}/{obs_path}'
+            
         self.highest_amplitude_pulsation = kwargs.pop("highest_amplitude_pulsation", None)
 
         # Simulated theoretical model grid
