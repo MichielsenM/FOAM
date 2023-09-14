@@ -20,8 +20,8 @@ bibliography: paper.bib
 
 # Summary
 
-`Foam` is a python package to perform forward asteroseismic modelling of gravity modes.
-It automates and streamlines a considerable fraction of the modelling process, and can be configured to use various different modelling methodologies.
+`Foam` is a python package to perform forward asteroseismic modelling of gravity modes. It automates and streamlines 
+a considerable fraction of the modelling process, and can be configured to use various different modelling methodologies.
 This includes different ways to match the theoretically predicted oscillations to observations, 
 the option to use different sets of observables to compare to their theoretically predicted values, 
 the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningfull way.
