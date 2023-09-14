@@ -10,7 +10,7 @@ Later steps can thus be repeated with different settings without having to repea
 By default, most modules will check and skip their execution if the output they would generate is already present. For example output from [grid extraction](#pipe0_extract_grid) is stored in a folder `grid_summary` at the same level as the directories for separate stars, and will only be needed once per (group of) theoretical grid(s). All other output will be stored in the folders for the different modelled stars (see 'Setting up the directory' in [walkthrough](./Walkthrough.md)).
 Additionally, when considering nested subgrids, the steps concerning [pattern construction](#pipe1_construct_pattern) need only be performed once for the full non-nested grid without repeating for each nested subgrid.
 
-A lot of the intermediate output is stored in hdf5 files, these can be easily read using the `pandas.read_hdf()` functionality of the [pandas](https://pandas.pydata.org/docs/reference/api/pandas.read_hdf.html) python package.
+A lot of the intermediate output is stored in hdf5 files, these can be easily read using the `pandas.read_hdf()` functionality of the <a href="https://pandas.pydata.org/docs/reference/api/pandas.read_hdf.html" target="_blank"> pandas</a> python package.
 
 An example template script for the pipeline is given by `pipeline.py` in `foam/pipeline/`.
 The different modules of the pipeline are listed below along with a short explanation of their functionality, and the output they produce. The naming scheme for the output is explained below.
@@ -91,8 +91,8 @@ The innermost dictionary will hold certain columns of MESA history files, effect
 
 </details>
 
-## pipe4_AICc                     
-Calculate the [Akaike information criterion (AIC)](https://en.wikipedia.org/wiki/Akaike_information_criterion) corrected for small sample size (AICc).
+## pipe4_AICc
+Calculate the <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank"> Akaike information criterion (AIC)</a> corrected for small sample size (AICc).
 This AICc is calculated for the best model for each combination of modelling options.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
@@ -102,7 +102,7 @@ Creates folder `{n_sigma_box}sigmaBox_output_tables/` to store
 </details>
 
 ## pipe5_best_model_errors        
-Calculate the 2 sigma uncertainty region of the maximum likelihood solution using [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem).
+Calculate the 2 sigma uncertainty region of the maximum likelihood solution using <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem" target="_blank"> Bayes' theorem</a>.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
