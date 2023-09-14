@@ -51,6 +51,7 @@ particularly the transition region between the convective core and radiative env
 including multiple options and considerations in the statistical analysis of the grids of stellar equillibrium models.
 
 # Acknowledgements
+
 The research leading to the development of this package has received funding from the Research
 Foundation Flanders (FWO) by means of a PhD scholarship to MM under project No. 11F7120N.
 

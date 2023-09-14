@@ -43,13 +43,62 @@ An example of what the structure of such a file with the observational data look
   <summary> Example observational data (click to expand) </summary>
   You can add additional observables that you want to include in the merit function to the observations by adding extra columns like the ones for logL and logL_err.
 
- |    | frequency | frequency_err | period | period_err | Teff | Teff_err | logg | logg_err | logL | logL_err |
- |----|:---------:|--------------:|:------:|:----------:|:----:|:--------:|:----:|:--------:|:----:|:--------:|
- | f1 | 1.11 | 4e-5 | 0.9009 | 3e-5 | 15200 | 200 | 3.8 | 0.1 | 2.21 | 0.04 |
- | f2 | 1.04 | 5e-5 | 0.9615 | 4e-5 | | | | | | |
- | f3 | 0.98 | 2e-5 | 1.0204 | 1e-5 | | | | | | |
- | f_missing | 0 | 0 | 0 | 0 | | | | | | |
- | f4 | 0.87 | 2e-5 | 1.1494 | 1e-5 | | | | | | |
+  <table>
+    <tr>
+      <th> </th>
+      <th>frequency</th>
+      <th>frequency_err</th>
+      <th>period</th>
+      <th>period_err</th>
+      <th>Teff</th>
+      <th>Teff_err</th>
+      <th>logg</th>
+      <th>logg_err</th>
+      <th>logL</th>
+      <th>logL_err</th>
+    </tr>
+    <tr>
+      <td>f1</td>
+      <td>1.11</td>
+      <td>4e-5</td>
+      <td>0.9009 </td>
+      <td>3e-5 </td>
+      <td>15200 </td>
+      <td>200 </td>
+      <td>3.8 </td>
+      <td>0.1 </td>
+      <td>2.21 </td>
+      <td>0.04 </td>
+    </tr>
+    <tr>
+      <td>f2 </td>
+      <td>1.04 </td>
+      <td>5e-5 </td>
+      <td>0.9615 </td>
+      <td>4e-5 </td>
+    </tr>
+    <tr>
+      <td>f3 </td>
+      <td>0.98 </td>
+      <td>2e-5 </td>
+      <td>1.0204 </td>
+      <td>1e-5 </td>
+    </tr>
+    <tr>
+      <td>f_missing </td>
+      <td>0 </td>
+      <td>0 </td>
+      <td>0 </td>
+      <td>0 </td>
+    </tr>
+    <tr>
+      <td>f4 </td>
+      <td>0.87 </td>
+      <td>2e-5 </td>
+      <td>1.1494 </td>
+      <td>1e-5 </td>
+    </tr>      
+  </table> 
   </details>
 
 ## The theoretical model grid
