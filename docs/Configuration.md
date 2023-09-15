@@ -97,7 +97,7 @@ All keyword arguments are listed below, grouped in categories.
     List of merit functions (repeats modelling for each merit function).
     >> 'CS' uses a reduced chi-squared function.
     >
-    >> 'MD' uses Mahalanobis distances, see [Aerts et al. 2018](https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract)
+    >> 'MD' uses Mahalanobis distances, see <a href="https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract" target="_blank">Aerts et al. (2018)</a>
     for its application in the context of asteroseismology.
 
 - N_periods
@@ -130,7 +130,7 @@ All keyword arguments are listed below, grouped in categories.
 - free_parameters
 >   type: list <br>
     default: ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'] <br>
-    List of varied parameters in the grid, as written in grid filenames, (see [Walkthrough](./Walkthrough))
+    List of varied parameters in the grid, as written in grid filenames, (see <a href="{{site.baseurl}}/Walkthrough">walkthrough</a>)
     that remain free parameters in the modelling.
     In case of a binary system where additional constraints from the companion should be taken into account (see setting `spectro_companion`), this list should start with the first two entries being 'Z', 'M' representing metallicity and mass.
 
@@ -163,7 +163,7 @@ All keyword arguments are listed below, grouped in categories.
 - isocloud_grid_directory
 >   type: string <br>
     default: None <br>
-    The path to the isocloud grid directory. This grid of MESA history files should be constructed in the same way as the regular grid described in [walkthrough](./Walkthrough.md), but only needs the history files. This can be the same theoretical grid as the main one that is used, but can also be an additional grid that is sparser and covers a larger range in stellar masses, since the binary companion might not fall within a grid that is more focussed on the pulsating star.
+    The path to the isocloud grid directory. This grid of MESA history files should be constructed in the same way as the regular grid described in <a href="{{site.baseurl}}/Walkthrough">walkthrough</a>, but only needs the history files. This can be the same theoretical grid as the main one that is used, but can also be an additional grid that is sparser and covers a larger range in stellar masses, since the binary companion might not fall within a grid that is more focussed on the pulsating star.
 
 ### Other settings
 - debugging
@@ -178,5 +178,5 @@ All keyword arguments are listed below, grouped in categories.
 
 - conerplot_axis_labels
 >   type: dictionary, keys and values are strings <br>
-    default: ` {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$', 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ` <br>
+    default: {'rot': r'$\Omega\_{\mathrm{rot}}$ [d$^{-1}$]', 'M': r'M$\_{\rm ini}$', 'Z': r'Z$\_{\rm ini}$', 'logD':r'log(D$\_{\rm env}$)', 'aov':r'$\alpha\_{\rm CBM}$','fov':r'f$\_{\rm CBM}$','Xc':r'$\rm X_c$'} <br>
     keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis.

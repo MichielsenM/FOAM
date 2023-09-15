@@ -42,6 +42,7 @@ An example of what the structure of such a file with the observational data look
   <details>
   <summary> Example observational data (click to expand) </summary>
   You can add additional observables that you want to include in the merit function to the observations by adding extra columns like the ones for logL and logL_err.
+  (See also <a href="https://github.com/MichielsenM/FoAM/blob/master/example_setup/KIC7760680/data_KIC7760680.tsv" target="_blank"> data_KIC7760680.tsv </a> from the example setup explained further down on this page.)
 
   <table>
     <tr>
