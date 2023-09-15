@@ -5,7 +5,7 @@ A python package for FOrward Asteroseismic Modelling of gravity modes.
 This repository is an open-source package, GNU-licensed, and any improvements provided by the users are well accepted. See GNU License in LICENSE.
 
 ## Documentation
-The full documentation can be found at https://michielsenm.github.io/FoAM/
+The full documentation can be found at https://michielsenm.github.io/FOAM/
 
 ## Contents
 
