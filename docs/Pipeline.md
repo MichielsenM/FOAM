@@ -33,7 +33,7 @@ Each word in the filenames enclosed by {} indicates that it is replaced by a val
 </ul>
 </details>
 
-## pipe0_extract_grid
+### pipe0_extract_grid
 Extract all required information from the MESA profiles and GYRE summary files in the theoretical grids.
 Requires the grids to be structured as explained in the [walkthrough](./Walkthrough.md).
 This step will be required once for a (group of) theoretical grid(s). Modelling different stars with the same theoretical grid will all use the same summary files that this step creates.
@@ -48,7 +48,7 @@ This step will be required once for a (group of) theoretical grid(s). Modelling 
 </ul>
 </details>
 
-## pipe1_construct_pattern        
+### pipe1_construct_pattern        
 Construct the theoretical pulsation patterns, select theoretical pulsation patterns matching the observational pattern, and merge with the models surface properties into one file.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
@@ -62,7 +62,7 @@ Creates folder <code>extracted_freqs/</code> to store
 
 After this step, subdirectories will be made in case the pipeline is ran for a nested grid where one or more free parameters are fixed to a certain value.
 
-## pipe2_calculate_likelihood     
+### pipe2_calculate_likelihood     
 Calculate the likelihood of all the theoretical patterns according to the specified merit functions.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
@@ -78,7 +78,7 @@ Creates folder <code>meritvalues/</code> to store
 </ul>
 </details>
 
-## pipe3_add_constraints
+### pipe3_add_constraints
 Select all the models that fall inside an n-sigma error box on the provided Teff, logg and logL. If `n_sigma_box` in the configuration is set to None, this step will be skipped. If `constraint_companion` is also provided in the pipeline configuration, those constraints on a binary companion are also taken into account using isochrone-clouds. 
 <details>
 <summary> <b>Isochrone-clouds</b> (click to expand) </summary> <br>
@@ -100,7 +100,7 @@ The innermost dictionary will hold certain columns of MESA history files, effect
 
 </details>
 
-## pipe4_AICc
+### pipe4_AICc
 Calculate the <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank"> Akaike information criterion (AIC)</a> corrected for small sample size (AICc).
 This AICc is calculated for the best model for each combination of modelling options.
 <details>
@@ -112,7 +112,7 @@ Creates folder <code>{n_sigma_box}sigmaBox_output_tables/</code> to store
 </ul>
 </details>
 
-## pipe5_best_model_errors        
+### pipe5_best_model_errors        
 Calculate the 2 sigma uncertainty region of the maximum likelihood solution using <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem" target="_blank"> Bayes' theorem</a>.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
@@ -123,7 +123,7 @@ In folder <code>{n_sigma_box}sigmaBox_meritvalues/</code>
 </ul>
 </details>
 
-## pipe6_corner_plots             
+### pipe6_corner_plots             
 Make corner plots for all combinations of the different modelling choices.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
@@ -134,7 +134,7 @@ Creates folder <code>{n_sigma_box}sigmaBox_cornerplots/</code> to store
 </ul>
 </details>
 
-## pipe7_table_best_models
+### pipe7_table_best_models
 Write a table with the best model of the grid for each combination of different modelling choices.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
