@@ -25,11 +25,11 @@ a considerable fraction of the modelling process, and can be configured to use v
 This includes different ways to match the theoretically predicted oscillations to observations, 
 the option to use different sets of observables to compare to their theoretically predicted values, 
 the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningfull way.
-See @Michielsen2021 and Michielsen et al. (2023) (accepted) for an application of these methodologies to model observed gravity modes.
+See @Michielsen2021 and Michielsen et al. (2023) (accepted) for applications of these methodologies to model observed gravity modes.
 
 # Statement of need
 
-Stars spend approximately 90% of their evolution on their so called *main sequence*, during which they fuse fusing hydrogen into helium in their cores. In stars with masses above about 1.2 times the mass of the sun, the stellar core in which these fusion processes take place becomes convective. Macroscopic element transport in and near the
+Stars spend approximately 90% of their evolution on their so called *main sequence*, during which they fuse hydrogen into helium in their cores. In stars with masses above about 1.2 times the mass of the sun, the stellar core in which these fusion processes take place becomes convective. Macroscopic element transport in and near the
 convective cores of these stars has a large influence on their life, since it transports additional hydrogen from outside of the nuclear fusion region into this region. In this way it both prolongs the main-sequence lifetime of stars and enlarges the mass of the helium core at the end of the main sequence, which significantly influences all later stages of their evolution. 
 However, these transport processes provide the largest uncertainties in stellar structure and evolution 
 models for stars with convective cores, due to our poor understanding of macroscopic element transport and limited number 
@@ -41,7 +41,7 @@ the properties of the near-core region. We can exploit the probing power of grav
 observed in e.g. Slowly Pulsating B-type stars [@Waelkens1991], to investigate the physics in the interior of these stars,
 particularly the transition region between the convective core and radiative envelope.
 
-`Foam` was developed to streamline the forward modelling process of gravity modes, 
+`Foam` was developed to streamline the forward modelling process of gravity modes in main-sequence stars with convective cores, 
 including multiple options and considerations in the statistical analysis of the grids of stellar equillibrium models.
 
 # Acknowledgements
