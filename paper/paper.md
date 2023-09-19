@@ -44,6 +44,7 @@ particularly the transition region between the convective core and radiative env
 `Foam` was developed to streamline the forward modelling process of gravity modes in main-sequence stars with convective cores, 
 including multiple options and considerations in the statistical analysis of the grids of stellar equillibrium models.
 
+\pagebreak
 # Acknowledgements
 
 The research leading to the development of this package has received funding from the Research
