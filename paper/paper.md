@@ -7,9 +7,9 @@ tags:
 authors:
   - name: Mathias Michielsen
     orcid: 0000-0001-9097-3655
-    equal-contrib: true
+    # equal-contrib: False
     affiliation: 1 
-    corresponding: true 
+    # corresponding: true 
 
 affiliations:
  - name: Institute of Astronomy, KU Leuven, Celestijnenlaan 200D, B-3001 Leuven, Belgium
@@ -25,20 +25,14 @@ a considerable fraction of the modelling process, and can be configured to use v
 This includes different ways to match the theoretically predicted oscillations to observations, 
 the option to use different sets of observables to compare to their theoretically predicted values, 
 the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningfull way.
-See @Michielsen2021 and Michielsen et al. (2023) (under revision) for an application of these methodologies to model observed gravity modes.
+See @Michielsen2021 and Michielsen et al. (2023) (accepted) for an application of these methodologies to model observed gravity modes.
 
 # Statement of need
 
-The impact of massive stars on our universe is not to be underestimated. Through stellar winds
-and supernovae, they are the dominant suppliers of chemical elements, influencing the
-availability of these elements for the formaton of new stars and planets. In this respect, massive
-stars provided the building blocks of our galaxy, the solar system, and Earth as we know it.
-During approximately 90% of their evolution, macroscopic element transport in and near the
-convective cores of these massive stars has a large influence on their life. It both prolongs the main-
-sequence lifetime of stars and enlarges the mass of the helium core at the end of the
-main sequence, which significantly influences all later stages of their evolution. 
+Stars spend approximately 90% of their evolution on their so called *main sequence*, during which they fuse fusing hydrogen into helium in their cores. In stars with masses above about 1.2 times the mass of the sun, the stellar core in which these fusion processes take place becomes convective. Macroscopic element transport in and near the
+convective cores of these stars has a large influence on their life, since it transports additional hydrogen from outside of the nuclear fusion region into this region. In this way it both prolongs the main-sequence lifetime of stars and enlarges the mass of the helium core at the end of the main sequence, which significantly influences all later stages of their evolution. 
 However, these transport processes provide the largest uncertainties in stellar structure and evolution 
-models for massive stars, due to our poor understanding of macroscopic element transport and limited number 
+models for stars with convective cores, due to our poor understanding of macroscopic element transport and limited number 
 of useful observations to test the theories. (See e.g. @Anders2023 for a review on this topic.)
 
 Through asteroseismology, the study of stellar pulsations, we gain the means to unravel
