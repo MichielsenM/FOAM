@@ -80,15 +80,11 @@ All keyword arguments are listed below, grouped in categories.
     options: 'highest_amplitude', 'highest_frequency', 'chisq_longest_sequence' <br>
     default: ['highest_amplitude', 'highest_frequency', 'chisq_longest_sequence'] <br>
     List of methods to construct the theoretical frequency pattern (repeats modelling for each method). <br>
-    >> 'highest_amplitude' builds the pattern starting from the mode with the highest observed amplitude.
+    >> 'highest_amplitude' builds the mode pattern starting from the theoretical mode that is closest to the highest-amplitude mode in the observed pattern.
     >
-    >> 'highest_frequency' will begin matching mode periods starting from the theoretical
-    period that is closest to the highest-frequency mode detected in the observed pattern.
+    >> 'highest_frequency' will begin matching modes starting from the theoretical mode that is closest to the highest-frequency mode detected in the observed pattern.
     >
-    >>  'chisq_longest_sequence' will match each observed mode period to its best matching
-        theoretical counterpart, and adopt the longest sequence of consecutive modes retrieved in this way.
-        In the case of multiple mode series with the same length, a final pattern
-        selection is made based on the best match between theory and observations.
+    >>  'chisq_longest_sequence' will match each observed mode period to its best matching theoretical counterpart, and adopt the longest sequence of consecutive modes retrieved in this way. In the case of multiple mode series with the same length, a final pattern selection is made based on the best match between theory and observations. The rest of the theoretical pattern is then build consecutively in radial order starting from this initial 'longest sequence' pattern.
 
 - merit_functions
 >   type: list of strings <br>

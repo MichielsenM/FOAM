@@ -24,7 +24,7 @@ bibliography: paper.bib
 a considerable fraction of the modelling process, and can be configured to use various different modelling methodologies.
 This includes different ways to match the theoretically predicted oscillations to observations, 
 the option to use different sets of observables to compare to their theoretically predicted values, 
-the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningfull way.
+the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningful way.
 See @Michielsen2021 and Michielsen et al. (2023) (accepted) for applications of these methodologies to model observed gravity modes.
 
 # Statement of need
@@ -42,7 +42,7 @@ observed in e.g. Slowly Pulsating B-type stars [@Waelkens1991], to investigate t
 particularly the transition region between the convective core and radiative envelope.
 
 `Foam` was developed to streamline the forward modelling process of gravity modes in main-sequence stars with convective cores, 
-including multiple options and considerations in the statistical analysis of the grids of stellar equillibrium models.
+including multiple options and considerations in the statistical analysis of the grids of stellar equilibrium models.
 
 \pagebreak
 # Acknowledgements
