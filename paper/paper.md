@@ -7,9 +7,7 @@ tags:
 authors:
   - name: Mathias Michielsen
     orcid: 0000-0001-9097-3655
-    # equal-contrib: False
     affiliation: 1 
-    # corresponding: true 
 
 affiliations:
  - name: Institute of Astronomy, KU Leuven, Celestijnenlaan 200D, B-3001 Leuven, Belgium
@@ -42,7 +40,7 @@ observed in e.g. Slowly Pulsating B-type stars [@Waelkens1991], to investigate t
 particularly the transition region between the convective core and radiative envelope.
 
 `Foam` was developed to streamline the forward modelling process of gravity modes in main-sequence stars with convective cores, 
-including multiple options and considerations in the statistical analysis of the grids of stellar equilibrium models.
+including multiple options and considerations in the statistical analysis of the grids of theoretical stellar models.
 
 \pagebreak
 # Acknowledgements
