@@ -23,6 +23,8 @@ def read_mesa_file(file_path, index_col=None):
     ------- Parameters -------
     file_path: String
         The path to the MESA profile or history file to read in.
+    index_col: Hashable
+        Column to use as row labels.
     ------- Returns -------
     header: dictionary
         A dictionary holding the header info of the MESA file.

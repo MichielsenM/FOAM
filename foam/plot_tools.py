@@ -222,7 +222,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
 
     # Observations
     if n_sigma_box != None:
-        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col='index')
         if (('logL' in Obs_dFrame.columns) or ('logg' in Obs_dFrame.columns)) and ('Teff' in Obs_dFrame.columns)  :
             if not 'logL' in Obs_dFrame.columns:
                 logg_or_logL = 'logg'

@@ -46,7 +46,7 @@ An example of what the structure of such a file with the observational data look
 
   <table>
     <tr>
-      <th> </th>
+      <th>index</th>
       <th>frequency</th>
       <th>frequency_err</th>
       <th>period</th>

@@ -42,7 +42,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     elif 'P' or 'dP' in observables:
         observed_quantity = 'period'
     # Read in the observed data and make an array of the observed obervables
-    Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0)
+    Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0, index_col='index')
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
     # set the name of the output file

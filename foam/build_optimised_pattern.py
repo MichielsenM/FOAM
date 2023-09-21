@@ -49,7 +49,7 @@ def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, me
         Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
-    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0)
+    Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col='index')
     Theo_dFrame = pd.read_hdf(pulsationGrid_file)
 
     Obs    = np.asarray(Obs_dFrame[which_observable])
