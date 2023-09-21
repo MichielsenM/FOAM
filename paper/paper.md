@@ -46,6 +46,6 @@ including multiple options and considerations in the statistical analysis of the
 # Acknowledgements
 
 The research leading to the development of this package has received funding from the Research
-Foundation Flanders (FWO) by means of a PhD scholarship to MM under project No. 11F7120N.
+Foundation Flanders (FWO) by means of a PhD scholarship to MM under project No. 11F7120N. MM is grateful to T. Van Reeth for his help concerning the scaling of g-modes with rotation.
 
 # References
