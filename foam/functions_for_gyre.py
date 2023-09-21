@@ -1,5 +1,4 @@
 """Extract frequencies from a grid of GYRE output, and generate period spacing series."""
-import numpy as np
 import pandas as pd
 from pathlib import Path
 import glob, logging
@@ -8,30 +7,6 @@ from functools import partial
 from foam import support_functions as sf
 
 logger = logging.getLogger('logger.ffg')
-
-################################################################################
-def generate_spacing_series(periods, errors=None):
-    """
-    Generate the period spacing series (delta P = p_(n+1) - p_n )
-    ------- Parameters -------
-    periods, errors (optional): list of floats
-        Periods and their errors in units of days
-    ------- Returns -------
-    observed_spacings, observed_spacings_errors: tuple of lists of floats
-        period spacing series (delta P values) and its errors (if supplied) in units of seconds
-    """
-    spacings = []
-    if errors is None:
-        spacings_errors = None
-        for n,period_n in enumerate(periods[:-1]):
-            spacings.append( abs(period_n - periods[n+1])*86400. )
-    else:
-        spacings_errors = []
-        for n,period_n in enumerate(periods[:-1]):
-            spacings.append( abs(period_n - periods[n+1])*86400. )
-            spacings_errors.append(np.sqrt( errors[n]**2 + errors[n+1]**2 )*86400.)
-
-    return spacings, spacings_errors
 
 ################################################################################
 def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):

@@ -153,30 +153,3 @@ def info_from_profiles(mesa_profile, parameters, extra_header_items):
 
     return line
 
-################################################################################
-def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_surface+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
-    """
-    Combine the output files with the frequencies and surface info of the grid in one new file,
-    only keeping models that have entries in both the grid files.
-    ------- Parameters -------
-    grid_frequencies, grid_surface: string
-        Paths to the files containing the model input parameters and corresponding frequency/surface info of the model.
-    output_name: string
-        Name of the generated file containing the combined info.
-    grid_parameters: list of string
-        List of the model parameters to use for matching the entries in the freq/surface file.
-    """
-    freq_df    = pd.read_hdf(grid_frequencies)
-    surface_df = pd.read_hdf(grid_surface)
-    # Merge with surface info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
-    df_merged  = pd.merge(surface_df, freq_df, how='inner', on=grid_parameters)
-
-    col = df_merged.pop("age") # Don't add the age in the combined file
-
-    # take the column with rotation and place it as the first column, and its error as second column
-    col = df_merged.pop("rot")
-    df_merged.insert(0, col.name, col)
-    col = df_merged.pop("rot_err")
-    df_merged.insert(1, col.name, col)
-    # write the merged dataFrame to a new file
-    df_merged.to_hdf(f'{output_name}', 'puls_surface_grid', format='table', mode='w')

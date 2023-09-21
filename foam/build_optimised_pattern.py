@@ -8,10 +8,34 @@ import multiprocessing, sys
 from functools import partial
 from pathlib import Path
 from lmfit import Minimizer, Parameters
-from foam import functions_for_gyre as ffg
 import logging
 
 logger = logging.getLogger('logger.bop')
+
+################################################################################
+def generate_spacing_series(periods, errors=None):
+    """
+    Generate the period spacing series (delta P = p_(n+1) - p_n )
+    ------- Parameters -------
+    periods, errors (optional): list of floats
+        Periods and their errors in units of days
+    ------- Returns -------
+    observed_spacings, observed_spacings_errors: tuple of lists of floats
+        period spacing series (delta P values) and its errors (if supplied) in units of seconds
+    """
+    spacings = []
+    if errors is None:
+        spacings_errors = None
+        for n,period_n in enumerate(periods[:-1]):
+            spacings.append( abs(period_n - periods[n+1])*86400. )
+    else:
+        spacings_errors = []
+        for n,period_n in enumerate(periods[:-1]):
+            spacings.append( abs(period_n - periods[n+1])*86400. )
+            spacings_errors.append(np.sqrt( errors[n]**2 + errors[n+1]**2 )*86400.)
+
+    return spacings, spacings_errors
+
 ################################################################################
 def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, method_build_series, highest_amplitude_pulsation=[], which_observable='period',
                                         output_file=f'theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None, nr_cpu=None):
@@ -184,11 +208,11 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
             else:
                 Obsperiod = Obs
                 optimised_periods = optimised_pulsations
-            spacings = ffg.generate_spacing_series(Obsperiod, ObsErr)
+            spacings = generate_spacing_series(Obsperiod, ObsErr)
             ax1.errorbar(Obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue', alpha=0.8)
             ax1.plot(Obsperiod[:-1], spacings[0], color='blue')
-            ax1.plot(optimised_periods[:-1], ffg.generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
-            ax1.plot(1/freqs[:-1], ffg.generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', color='green')
+            ax1.plot(optimised_periods[:-1], generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
+            ax1.plot(1/freqs[:-1], generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', color='green')
 
             fig2, ax2 = plt.subplots()
 
@@ -474,8 +498,8 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
 
         final_theoretical_periods = np.array(ordered_theoretical_periods)
 
-        obs_series,obs_series_errors = ffg.generate_spacing_series(operiods,operiods_errors)
-        thr_series, _ = ffg.generate_spacing_series(final_theoretical_periods)
+        obs_series,obs_series_errors = generate_spacing_series(operiods,operiods_errors)
+        thr_series, _ = generate_spacing_series(final_theoretical_periods)
 
         obs_series        = np.array(obs_series)
         obs_series_errors = np.array(obs_series_errors)

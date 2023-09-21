@@ -6,7 +6,7 @@ import sys, logging, os
 import matplotlib.pyplot as plt
 from pathlib import Path
 from foam import support_functions as sf
-from foam import functions_for_gyre as ffg
+from foam import build_optimised_pattern as bop
 
 logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "logger" made in the top level script
 
@@ -129,7 +129,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         periods = np.asarray(Theo_dFrame.filter(like='period').loc[index])
         observables_out = []
         for periods_part in np.split(periods,missing_indices):
-            spacing, _ = ffg.generate_spacing_series(periods_part)
+            spacing, _ = bop.generate_spacing_series(periods_part)
             observables_out = np.append(observables_out, np.asarray(spacing)/86400) # switch back from seconds to days (so both P and dP are in days)
         observables.remove('dP')
 
@@ -185,7 +185,7 @@ def create_obs_observables_array(Obs_dFrame, observables):
         periods_parts = np.split(period,missing_indices)
         periodsErr_parts = np.split(periodErr,missing_indices)
         for periods, periodsErr in zip(periods_parts, periodsErr_parts):
-            spacing, spacing_errs = ffg.generate_spacing_series(periods, periodsErr)
+            spacing, spacing_errs = bop.generate_spacing_series(periods, periodsErr)
             observables_out = np.append(observables_out, np.asarray(spacing)/86400) # switch back from seconds to days (so both P and dP are in days)
             observablesErr_out = np.append(observablesErr_out, np.asarray(spacing_errs)/86400)
 
