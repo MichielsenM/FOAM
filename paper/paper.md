@@ -1,5 +1,5 @@
 ---
-title: 'Foam: A Python package for Forward Asteroseismic Modelling of gravity modes'
+title: 'Foam: A Python package for forward asteroseismic modelling of gravity modes'
 tags:
   - Python
   - astronomy
