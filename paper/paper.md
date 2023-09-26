@@ -23,7 +23,7 @@ a considerable fraction of the modelling process, and can be configured to use v
 This includes different ways to match the theoretically predicted oscillations to observations, 
 the option to use different sets of observables to compare to their theoretically predicted values, 
 the use of different merit functions to determine the goodness of fit, and the option to consider nested subgrids in a statistically meaningful way.
-See @Michielsen2021 and Michielsen et al. (2023) (accepted) for applications of these methodologies to model observed gravity modes.
+See @Michielsen2021 and @Michielsen2023 for applications of these methodologies to model observed gravity modes.
 
 # Statement of need
 
