@@ -11,7 +11,7 @@ def test_merit_chi2():
     result = mle.merit_chi2(YObs, ObsErr, YTheo)
     expected = np.asarray([109, 480, 1])
 
-    assert all ([(a-b)/a< 1E-10 for a,b in zip(expected, result)])
+    assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected, result)])
 
 
 def test_merit_mahalanobis():
@@ -23,7 +23,7 @@ def test_merit_mahalanobis():
     result = mle.merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=False)
     expected = np.asarray([4.96270396, 4.997669, 0.91919192])
 
-    assert all ([(a-b)/a< 1E-8 for a,b in zip(expected, result)])        
+    assert all ([abs((a-b)/a)< 1E-8 for a,b in zip(expected, result)])        
 
 
 class test_matrix(unittest.TestCase):

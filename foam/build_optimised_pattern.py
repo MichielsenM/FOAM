@@ -396,9 +396,9 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
     In case of multiple mode series with the same length, a final pattern selection
     is made based on the best (chi-square) match between theory and observations.
     ------- Parameters -------
-    tperiods, orders : list of floats, integers
+    tperiods, orders : numpy array of floats, integers
         theroretical periods and their radial orders
-    operiods, operiods_errors : list of floats
+    operiods, operiods_errors : numpy arrays of floats
         observational periods and their errors
 
     ------- Returns -------
