@@ -99,7 +99,7 @@ All keyword arguments are listed below, grouped in categories.
 - N_periods
 >   type: int <br>
     default: None <br>
-    Number of periods (or frequencies) in the observed pattern.
+    Number of periods (or frequencies) in the observed pattern. Missing frequencies in interrupted patterns are not counted in this number.
 
 - N_pattern_parts
 >   type: int <br>
@@ -108,6 +108,7 @@ All keyword arguments are listed below, grouped in categories.
 
 - observable_seismic
 >   type: list of strings <br>
+    options: 'P', 'dP', 'f'
     default: ['P', 'dP'] <br>
     List of asteroseismic observables to fit in the merit function (repeats modelling for each observable) options are 'P' (period), 'dP' (period-spacing), and 'f' (frequency).
 
