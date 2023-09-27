@@ -91,11 +91,11 @@ The model of the pulsating star must be compatible with it's observed Teff, logg
 
 Creates folder <code>{n_sigma_box}sigmaBox_meritvalues/</code> to store
 <ul>
-<li> <code>{star}_{grid}_{method}_{merit_function}_{suffix_observables}.hdf</code>: same table as in the [previous step](#pipe2_calculate_likelihood), but only listing the selected models that agree with the n-sigma error box.
+<li> <code>{star}_{grid}_{method}_{merit_function}_{suffix_observables}.hdf</code>: same table as in the <a href="{{site.baseurl}}/Pipeline#pipe2_calculate_likelihood">previous step</a>, but only listing the selected models that agree with the n-sigma error box.
 (Table with the meritvalue assigned by the used merit function, optimised rotation rate, model parameters, and the surface properties (logTeff, logL, logg ...).) </li>
 </ul>
 If constraints of a binary companion are also taken into account, a file <code>isocloud_grid.h5</code> will be created holding a nested dictionary.
-The nested dictionary will have the grid parameter values as keys, with the order of the nested levels the same as the order of the grid parameters (<code>free_parameters</code> followed by <code>fixed_parameters</code>, see [pipeline config](./Configuration.md)).
+The nested dictionary will have the grid parameter values as keys, with the order of the nested levels the same as the order of the grid parameters (<code>free_parameters</code> followed by <code>fixed_parameters</code>, see <a href="{{site.baseurl}}/Configuration">pipeline config</a>.
 The innermost dictionary will hold certain columns of MESA history files, effectively grouping all the data of a grid that is required to construct isoclouds into one nested dictionary.
 
 </details>
@@ -119,7 +119,7 @@ Calculate the 2 sigma uncertainty region of the maximum likelihood solution usin
 
 In folder <code>{n_sigma_box}sigmaBox_meritvalues/</code>
 <ul>
-<li> <code>{star}_{grid}_{method}_{merit_function}_{suffix_observables}_2sigma-error-ellipse.hdf</code>: same as in [add constraints](#pipe3_add_constraints), but only listing the selected models that fall within the 2 sigma error ellipse according to Bayes' theorem. </li>
+<li> <code>{star}_{grid}_{method}_{merit_function}_{suffix_observables}_2sigma-error-ellipse.hdf</code>: same as in <a href="{{site.baseurl}}/Pipeline#pipe3_add_constraints">add constraints</a>, but only listing the selected models that fall within the 2 sigma error ellipse according to Bayes' theorem. </li>
 </ul>
 </details>
 
