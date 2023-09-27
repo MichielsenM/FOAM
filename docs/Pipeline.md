@@ -49,7 +49,7 @@ This step will be required once for a (group of) theoretical grid(s). Modelling 
 </details>
 
 ### pipe1_construct_pattern        
-Construct the theoretical pulsation patterns, select theoretical pulsation patterns matching the observational pattern, and merge with the models surface properties into one file.
+Construct the theoretical pulsation patterns, optimise their rotation rates, select theoretical pulsation patterns matching the observational pattern, and merge with the models surface properties into one file.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
