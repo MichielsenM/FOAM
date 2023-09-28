@@ -4,7 +4,7 @@ title: Pipeline modules and output
 ---
 # Pipeline modules
 
-The pipeline consists of different modules that are be ran sequentially. Each module produces some intermediate output, enabling modules to be skipped if they have been executed before.
+The pipeline consists of different modules that are ran sequentially. Each module produces some intermediate output, enabling modules to be skipped if they have been executed before.
 Later steps can thus be repeated with different settings without having to repeat the full pipeline.
 
 By default, most modules will check and skip their execution if the output they would generate is already present. For example output from [grid extraction](#pipe0_extract_grid) is stored in a folder `grid_summary` at the same level as the directories for separate stars, and will only be needed once per (group of) theoretical grid(s). All other output will be stored in the folders for the different modelled stars (see 'Setting up the directory' in [walkthrough](./Walkthrough.md)).
@@ -12,7 +12,8 @@ Additionally, when considering nested subgrids, the steps concerning [pattern co
 
 A lot of the intermediate output is stored in hdf5 files, these can be easily read using the `pandas.read_hdf()` functionality of the <a href="https://pandas.pydata.org/docs/reference/api/pandas.read_hdf.html" target="_blank"> pandas</a> python package.
 
-An example template script for the pipeline is given by `pipeline.py` in `foam/pipeline/`.
+An empty template script for the pipeline is given by <a href="https://github.com/MichielsenM/FOAM/tree/master/foam/pipeline/pipeline.py" target="_blank"> foam/pipeline/pipeline.py</a>, and examples with some settings filled in can be found in the
+<a href="https://github.com/MichielsenM/FOAM/tree/master/example_setup/KIC7760680/" target="_blank"> example setup</a>.
 The different modules of the pipeline are listed below along with a short explanation of their functionality, and the output they produce. The naming scheme for the output is explained below.
 
 <details>
