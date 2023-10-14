@@ -27,12 +27,15 @@ All keyword arguments are listed below, grouped in categories.
     default: None <br>
     Full path to the file with the observational data.
 
-- highest_amplitude_pulsation
+- pattern_starting_pulsation
 >   type: dictionary of list <br>
     default: None <br>
-    Only required when 'highest-amplitude' method is included in 'pattern_methods' <br>
-    Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method. <br>
-    List with highest amplitudes per part of the split pattern,
+    Only required when 'provided-pulsation' method is included in 'pattern_methods'. <br>
+    This dictionary has two keys, 'period' and 'frequency', holding a list of periods or frequencies, respectively, 
+    to start building the pulsation pattern from when using the 'provided-pulsation' method. <br>
+    Periods are required when periods or period spacings ('P' or 'dP') are used as observables in `observable_seismic`, 
+    and frequencies are required when frequenies ('f') are used as observables in `observable_seismic`. If periods or frequencies are not required, the list can contain `None` instead of values. <br>
+    The list should contain one pulsation per part of the split pattern,
     ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
 
 ### Simulated theoretical model grid
@@ -77,10 +80,10 @@ All keyword arguments are listed below, grouped in categories.
 ### Modelling methodology
 - pattern_methods
 >   type: list of strings <br>
-    options: 'highest-amplitude', 'highest-frequency', 'chisq-longest-sequence' <br>
-    default: ['highest-amplitude', 'highest-frequency', 'chisq-longest-sequence'] <br>
+    options: 'provided-pulsation', 'highest-frequency', 'chisq-longest-sequence' <br>
+    default: ['provided-pulsation', 'highest-frequency', 'chisq-longest-sequence'] <br>
     List of methods to construct the theoretical frequency pattern (repeats modelling for each method). <br>
-    >> 'highest-amplitude' builds the mode pattern starting from the theoretical mode that is closest to the highest-amplitude mode in the observed pattern.
+    >> 'provided-pulsation' builds the mode pattern starting from the theoretical mode that is closest to the provided pulsation frequency or period. Can be used to provide and start from a trusted mode e.g. the highest-amplitude mode in the observed pattern.
     >
     >> 'highest-frequency' will begin matching modes starting from the theoretical mode that is closest to the highest-frequency mode detected in the observed pattern.
     >

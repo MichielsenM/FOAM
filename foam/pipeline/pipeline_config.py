@@ -19,9 +19,10 @@ class PipelineConfig:
             Name of the star, used for generating filenames
         observations: string
             Path to the file with the observational data
-        highest_amplitude_pulsation: dictionary of lists
-            Pulsation with the highest amplitude to build pattern from when using 'highest-amplitude' method.
-            List with highest amplitudes per part of the split pattern,
+        pattern_starting_pulsation: dictionary of lists
+            Dictionary with 'period' and 'frequency' as keys, containing lists of the periods and frequencies, respectively,
+            to start building the pattern from when using 'provided-pulsation' method.
+            The lists have one pulsation per part of the split pattern,
             ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
 
         --- Simulated theoretical model grid ---
@@ -108,7 +109,7 @@ class PipelineConfig:
         else:                       # Convert relative path to absolute path
             self.observations = f'{self.main_directory}/{obs_path}'
             
-        self.highest_amplitude_pulsation = kwargs.pop("highest_amplitude_pulsation", None)
+        self.pattern_starting_pulsation = kwargs.pop("pattern_starting_pulsation", None)
 
         # Simulated theoretical model grid
         self.grid_parent_directory = kwargs.pop("grid_parent_directory", None)
@@ -122,7 +123,7 @@ class PipelineConfig:
         self.gyre_dir = kwargs.pop("gyre_dir", os.environ.get('GYRE_DIR'))
 
         # Modelling methodology
-        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','highest-amplitude', 'highest-frequency'])
+        self.pattern_methods = kwargs.pop("pattern_methods", ['chisq-longest-sequence','provided-pulsation', 'highest-frequency'])
         self.merit_functions = kwargs.pop("merit_functions", ['CS', 'MD'])
         self.observable_seismic = kwargs.pop("observable_seismic", ['P', 'dP'])
         self.observable_additional = kwargs.pop("observable_additional", None)
@@ -219,13 +220,13 @@ class PipelineConfig:
                                   f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".')
                 input_error = True
 
-        # Check if the amount of highest amplitude pulsations provided is equal to the amount of parts the pattern is split into.
-        if 'highest-amplitude' in self.pattern_methods:
-            if ('P' or 'dP' in self.observable_seismic) and not (len(self.highest_amplitude_pulsation['period']) == self.N_pattern_parts):
-                self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of periods provided.')
+        # Check if the amount of pulsations provided is equal to the amount of parts the pattern is split into.
+        if 'provided-pulsation' in self.pattern_methods:
+            if ('P' or 'dP' in self.observable_seismic) and not (len(self.pattern_starting_pulsation['period']) == self.N_pattern_parts):
+                self.logger.error('To build patterns based on the provided pulsation method, there should be a pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of periods provided.')
                 input_error = True
-            if ('f' in self.observable_seismic) and not (len(self.highest_amplitude_pulsation['frequency']) == self.N_pattern_parts):
-                self.logger.error('To build patterns based on the highest amplitude method, there should be a highest amplitude pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of frequencies provided.')
+            if ('f' in self.observable_seismic) and not (len(self.pattern_starting_pulsation['frequency']) == self.N_pattern_parts):
+                self.logger.error('To build patterns based on the provided pulsation method, there should be a pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of frequencies provided.')
                 input_error = True
 
         # Check if none of the fixed parameters are in the list of free parameters, and set name for nested grid
