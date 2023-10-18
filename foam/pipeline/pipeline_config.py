@@ -222,7 +222,7 @@ class PipelineConfig:
 
         # Check if the amount of pulsations provided is equal to the amount of parts the pattern is split into.
         if 'provided-pulsation' in self.pattern_methods:
-            if ('P' or 'dP' in self.observable_seismic) and not (len(self.pattern_starting_pulsation['period']) == self.N_pattern_parts):
+            if ('P' in self.observable_seismic or 'dP' in self.observable_seismic) and not (len(self.pattern_starting_pulsation['period']) == self.N_pattern_parts):
                 self.logger.error('To build patterns based on the provided pulsation method, there should be a pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of periods provided.')
                 input_error = True
             if ('f' in self.observable_seismic) and not (len(self.pattern_starting_pulsation['frequency']) == self.N_pattern_parts):
