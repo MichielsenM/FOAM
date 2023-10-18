@@ -14,7 +14,7 @@ for grid in config.grids:
     surface= f'../grid_summary/surfaceGrid_{grid}.hdf'
     for method in config.pattern_methods:   # Methods to construct theoretical pulsation patterns
         observed_quantities = []            # Whether periods or frequenies are used
-        if 'P' or 'dP' in config.observable_seismic:
+        if ('P' in config.observable_seismic) or ('dP' in config.observable_seismic):
             observed_quantities.append('period')
         if 'f' in config.observable_seismic:
             observed_quantities.append('frequency')

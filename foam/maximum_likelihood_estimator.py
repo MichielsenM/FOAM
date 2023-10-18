@@ -52,13 +52,13 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     # Theoretical grid data
     Theo_dFrame = sf.get_subgrid_dataframe(Theo_file,fixed_params)
 
-    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
-    Theo_puls = np.asarray(Theo_dFrame.filter(like=f'{observed_quantity}'))
-
     missing_absolute = np.where(Theo_dFrame.columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]    # get the interruptions in the pattern, absolute index in dataframe
     missing_relative = np.where(Theo_dFrame.filter(like=f'{observed_quantity}').columns.to_series().str.contains(f'{observed_quantity}_missing'))[0]  # get the interruptions in the pattern, index relative within pulsations
     Theo_dFrame = Theo_dFrame.drop(columns=Theo_dFrame.columns[missing_absolute])   # Remove columns of missing frequencies
     missing_indices=[ missing_relative[i]-i for i in range(len(missing_relative)) ] # Adjust indices for removed lines of missing frequencies
+    
+    Thetas    = np.asarray(Theo_dFrame.filter(['rot']+['rot_err']+grid_parameters ))
+    Theo_puls = np.asarray(Theo_dFrame.filter(like=f'{observed_quantity}'))
 
     # Make new list of theoretical models without entries with value -1
     newTheo = []
@@ -92,7 +92,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     # Combine values and save the results
     CombData = np.concatenate((np.matrix(merit_values).T,newThetas),axis=1)  # add an additional column for MLE 'meritValues'
     df = pd.DataFrame(data=CombData, columns=['meritValue']+['rot']+['rot_err']+grid_parameters) # put the data in a pandas DataFrame
-    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex='freq').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
+    df = pd.merge(df, Theo_dFrame.drop(list(Theo_dFrame.filter(regex=f'{observed_quantity}').columns), axis=1), how='inner', on=['rot', 'rot_err']+grid_parameters)
     df.to_hdf(f'{os.getcwd()}/meritvalues/{filename}.hdf', 'merit_values', format='table', mode='w')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
