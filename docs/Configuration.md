@@ -130,16 +130,15 @@ All keyword arguments are listed below, grouped in categories.
 - free_parameters
 >   type: list <br>
     default: ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'] <br>
-    List of varied parameters in the grid, as written in grid filenames, (see <a href="{{site.baseurl}}/Walkthrough">walkthrough</a>)
-    that remain free parameters in the modelling.
+    List of varied parameters in the grid, as written in the filenames of the models in the grid (see <a href="{{site.baseurl}}/Walkthrough">walkthrough</a>), that remain free parameters in the modelling.
     In case of a binary system where additional constraints from the companion should be taken into account (see setting `spectro_companion`), this list should start with the first two entries being 'Z', 'M' representing metallicity and mass.
 
 - fixed_parameters
 >   type: dict <br>
     default: None <br>
     Dictionary with varied parameters in the grid (dict keys) that are fixed to a certain value (dict value)
-    to consider nested grids with fewer free parameters. Defaults to None to not fix any parameters.
-    (E.g. {'aov': 0.0, 'fov': 0.0} to fix both these mixing parameters to zero.)
+    to consider nested grids with fewer free parameters. These parameters should be included in the filenames, just like the free_parameters. Defaults to None to not fix any parameters.
+    (E.g. {'aov': 0.0, 'fov': 0.0} to fix both these parameters to zero.)
 
 - evolution_parameter
 >   type: string <br>
