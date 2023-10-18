@@ -7,8 +7,8 @@ if __name__ == '__main__':
 
     pipeline_config.config = pipeline_config.PipelineConfig(star = 'KIC7760680',
                                     observations='data_KIC7760680.tsv',
-                                    highest_amplitude_pulsation = {'period': [1.158919], 'frequency': [None]},
-                                    grid_parent_directory = '/YOUR_PATH/MESA_grid',
+                                    pattern_starting_pulsation = {'period': [1.158919], 'frequency': [None]},
+                                    grid_parent_directory = None, #change to '/YOUR_PATH/MESA_grid' if you need to perform step 0
                                     grids = ['DO'], #Diffusive Overshooting grid
                                     rotation_gyre=0.4805,
                                     N_periods = 36,

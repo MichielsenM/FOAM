@@ -1,4 +1,4 @@
 Grid Observables Pattern_construction Z M logD Xc aov fov Omega_rot CS AICc_CS
 DO dP chisq-longest-sequence 0.023 3.2 1.5 0.42 0.0 0.0 0.4623 18086.88 592.78
-DO dP highest-amplitude 0.023 3.4 1.5 0.42 0.0 0.0 0.479 21870.59 714.84
+DO dP provided-pulsation 0.023 3.4 1.5 0.42 0.0 0.0 0.479 21870.59 714.84
 DO dP highest-frequency 0.023 3.3 1.5 0.42 0.0 0.0 0.4711 16678.0 547.33
