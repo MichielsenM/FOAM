@@ -79,9 +79,17 @@ def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, me
     Obs    = np.asarray(Obs_dFrame[which_observable])
     ObsErr = np.asarray(Obs_dFrame[f'{which_observable}_err'])
 
+    missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
+    Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
+    ObsErr_without_missing=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
+    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
+
+    Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
+    ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
+
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
-    theo_pattern_func = partial(theoretical_pattern_from_dfrow, Obs=Obs, ObsErr=ObsErr, which_observable=which_observable,
-                                method_build_series=method_build_series, pattern_starting_pulsation=pattern_starting_pulsation, grid_parameters=grid_parameters,
+    theo_pattern_func = partial(theoretical_pattern_from_dfrow, Obs=Obs, Obs_pattern_parts=Obs_pattern_parts, ObsErr_pattern_parts=ObsErr_pattern_parts,
+                                which_observable=which_observable, method_build_series=method_build_series, pattern_starting_pulsation=pattern_starting_pulsation, grid_parameters=grid_parameters,
                                 asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
 
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
@@ -105,7 +113,7 @@ def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, me
     df.to_hdf(f'{output_file}', 'selected_puls_grid', format='table', mode='w')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observable, method_build_series,
+def theoretical_pattern_from_dfrow(summary_grid_row, Obs, Obs_pattern_parts, ObsErr_pattern_parts, which_observable, method_build_series,
     pattern_starting_pulsation=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False, grid_parameters=None):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
@@ -115,8 +123,10 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
         second tuple entry is a pandas series, containing a row from the pandas dataFrame. (This row holds model parameters and pulsation frequencies.)
     Obs: numpy array
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
-    ObsErr: numpy array
-        Array of errors on the observed frequencies or periods.
+    Obs_pattern_parts, ObsErr_pattern_parts: list of numpy arrays
+        Holds a numpy array (with the observed frequencies or periods, or with their errors) per split off part
+        of the observerd pattern if it is interrupted.
+        The list contains only one array if the observed pattern is uninterrupted.
     which_observable: string
         Which observables are used in the pattern building, options are 'frequency' or 'period'.
     method_build_series: string
@@ -143,14 +153,6 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
     orders = np.asarray([int(o.replace('n_pg', '')) for o in summary_grid_row[1].filter(like='n_pg').index])    # array with radial orders
     orders=orders[~np.isnan(freqs)]
     freqs=freqs[~np.isnan(freqs)]  # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
-
-    missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
-    Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
-    ObsErr_without_missing=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
-    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
-
-    Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
-    ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
 
     if len(Obs_pattern_parts) != len (pattern_starting_pulsation):   # Check if pattern_starting_pulsation has enough entries to not truncate other parts in the zip function.
         if method_build_series == 'provided-pulsation':
@@ -208,7 +210,16 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
             else:
                 Obsperiod = Obs
                 optimised_periods = optimised_pulsations
-            spacings = generate_spacing_series(Obsperiod, ObsErr)
+            
+            # Recombine observational errors in one array
+            ComninedObsErr = []
+            for O_part in ObsErr_pattern_parts:
+                if (len(ComninedObsErr) > 0): 
+                    ComninedObsErr.extend([0])
+                ComninedObsErr.extend(O_part)
+            ComninedObsErr = np.asarray(ComninedObsErr)
+
+            spacings = generate_spacing_series(Obsperiod, ComninedObsErr)
             ax1.errorbar(Obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue', alpha=0.8)
             ax1.plot(Obsperiod[:-1], spacings[0], color='blue')
             ax1.plot(optimised_periods[:-1], generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
@@ -216,7 +227,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, ObsErr, which_observab
 
             fig2, ax2 = plt.subplots()
 
-            ax2.errorbar(Obs, Obs, fmt='o', xerr=ObsErr, label='obs', color='blue', alpha=0.8)
+            ax2.errorbar(Obs, Obs, fmt='o', xerr=ComninedObsErr, label='obs', color='blue', alpha=0.8)
             ax2.plot(optimised_periods, optimised_periods, '*', color='orange', label = 'optimised')
             ax2.plot(1/freqs, 1/freqs, '.', label='initial', color='green')
 
