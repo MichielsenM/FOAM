@@ -84,5 +84,5 @@ for merit in config.merit_functions:
                 if p>=percentile[sigma]:
                     # Write all models enclosed within the error ellips to a separate file
                     df.iloc[:i+1].to_hdf( output_name , 'models_in_2sigma_error_ellipse', format='table', mode='w')
-                    config.logger.info(f'---------- {analysis} ---------- {i+1} --- {p}')
+                    config.logger.debug(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break

@@ -303,7 +303,7 @@ def check_matrix(V, generate_output=True, fig_title='Vmatrix', star_name=None):
     if np.all(np.linalg.eigvals(V) > 0)==False: # If all eigenvalues are >0, it is positive definite
         logger.error('V matrix is possibly not positive definite (since eigenvalues are not all > 0)')
         sys.exit(1)
-    logger.info(f'max(V) = {np.max(V)}')
+    logger.debug(f'max(V) = {np.max(V)}')
     kk=10 # multiply the matrix by the exponent of this, otherwise the determinant can be too small for the numerics
 
     if generate_output is True:

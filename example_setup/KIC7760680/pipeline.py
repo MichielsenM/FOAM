@@ -16,25 +16,39 @@ if __name__ == '__main__':
                                     nr_cpu = 4)
 
     # Run the pipeline
+    pipeline_config.config.logger.info('step 0: Extracting grid')
     importlib.import_module('foam.pipeline.pipe0_extract_grid')
-    print('step 0 done')
+    pipeline_config.config.logger.info('step 0: Done\n')
+
+    pipeline_config.config.logger.info('1: Constructing theoretical patterns')    
     importlib.import_module('foam.pipeline.pipe1_construct_pattern')
-    print('step 1 done')
+    pipeline_config.config.logger.info('step 1: Done\n')
     
     # Change the current working directory for nested grids
     if pipeline_config.config.fixed_parameters is not None:
         Path(pipeline_config.config.nested_grid_dir).mkdir(parents=True, exist_ok=True)
         os.chdir(pipeline_config.config.nested_grid_dir)
     
+    pipeline_config.config.logger.info('2: Calculating liklihoods')    
     importlib.import_module('foam.pipeline.pipe2_calculate_likelihood')
-    print('step 2 done')
+    pipeline_config.config.logger.info('step 2: Done\n')
+
+    pipeline_config.config.logger.info('3: Adding constraints')
     importlib.import_module('foam.pipeline.pipe3_add_constraints')
-    print('step 3 done')
+    pipeline_config.config.logger.info('step 3: Done\n')
+
+    pipeline_config.config.logger.info('4: Calculating AIC')
     importlib.import_module('foam.pipeline.pipe4_AICc')
-    print('step 4 done')
+    pipeline_config.config.logger.info('step 4: Done\n')
+
+    pipeline_config.config.logger.info('5: Calculating best model errors')
     importlib.import_module('foam.pipeline.pipe5_best_model_errors')
-    print('step 5 done')
+    pipeline_config.config.logger.info('step 5: Done\n')
+
+    pipeline_config.config.logger.info('6: Backing plots into a corner')
     importlib.import_module('foam.pipeline.pipe6_corner_plots')
-    print('step 6 done')
+    pipeline_config.config.logger.info('step 6: Done\n')
+
+    pipeline_config.config.logger.info('7: Making table with best models')
     importlib.import_module('foam.pipeline.pipe7_table_best_models')
-    print('step 7 done')
+    pipeline_config.config.logger.info('step 7: Done\n')

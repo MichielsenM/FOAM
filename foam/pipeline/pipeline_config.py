@@ -93,6 +93,7 @@ class PipelineConfig:
         # Logging settings, other scripts spawn a child logger of this one, copying its settings.
         logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger('logger')
+        self.logger.setLevel(logging.INFO)
         if kwargs.pop("debugging", False):
             self.logger.setLevel(logging.DEBUG)
 

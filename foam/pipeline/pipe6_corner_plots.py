@@ -17,7 +17,7 @@ args = []
 for file in files:
     Path_file = Path(file)
     title = Path_file.stem
-    config.logger.info(f'file: {title}')
+    config.logger.debug(f'file: {title}')
     file_ErrorEllips = Path_file.with_stem(f'{Path_file.stem}_2sigma-error-ellipse')
     file_ErrorEllips = str(file_ErrorEllips).replace('meritvalues', f'{directory_prefix}meritvalues')
     if not Path(file_ErrorEllips).is_file():
