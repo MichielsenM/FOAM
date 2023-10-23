@@ -20,6 +20,28 @@ else:
 output_folder = f'{directory_prefix}output_tables'
 Path(output_folder).mkdir(parents=True, exist_ok=True)
 ################################################################################
+# Check for isolated frequenies and correct the number of observables for the period spacings.
+if ('dP' in config.observable_seismic):    
+    Obs_dFrame  = pd.read_table(config.observations, delim_whitespace=True, header=0, index_col='index')
+    Obs    = np.asarray(Obs_dFrame['period'])
+    missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
+    Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
+    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
+    Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
+
+    nr_isolated_puls = 0
+    for part in Obs_pattern_parts:
+        print(part)
+        if len(part) == 1:
+            nr_isolated_puls+=1
+    print(nr_isolated_puls)
+    if config.observable_additional is None:
+        N = config.N_dict['dP']
+        config.N_dict['dP'] = N-nr_isolated_puls
+    else:
+        N = config.N_dict['dP+extra']
+        config.N_dict['dP+extra'] = N-nr_isolated_puls
+################################################################################
 # Get the condition numbers file to use its listed values of ln(det(V)) with V the variance-covariance matrix.
 for merit in config.merit_functions:
     if merit == 'CS':
