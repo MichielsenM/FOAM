@@ -1,0 +1,3 @@
+Grid Observables Pattern_construction Z M logD aov fov Xc Omega_rot MD AICc_MD
+DO P provided-pulsation 0.023 3.0 0.5 0.25 0.02 0.52 0.4832 78.93 -339.41
+DO P highest-frequency 0.019 3.0 0.0 0.2 0.005 0.5 0.4689 75.6 -345.93

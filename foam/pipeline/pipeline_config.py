@@ -147,8 +147,6 @@ class PipelineConfig:
         # Number of observables, calculated from the number of periods
         # Number of period spacings is number of periods minus amount of separated patterns.
         # E.g. uninterrupted pattern: 36 periods, so 35 period spacings
-        # The correction to period spacings when a pattern part consists of only 1 pulsation (isolated) 
-        # and is hence not used, is included in pipe4_AICc.
         if self.observable_additional is None:
             self.N_dict = {'P' : self.N_periods,'dP': self.N_periods-self.N_pattern_parts, 'f' : self.N_periods}
         else:
