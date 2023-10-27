@@ -20,7 +20,7 @@ All keyword arguments are listed below, grouped in categories.
 - star
 >   type: string <br>
     default: None <br>
-    Name of the star, used for generating filenames.
+    Name of the star, used for generating filenames. Do not put underscores (`_`) in the starname, since these characters are used to separate the starname from the rest of the filename.
 
 - observations
 >   type: string <br>
