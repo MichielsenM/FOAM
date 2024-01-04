@@ -9,19 +9,6 @@ An example of a science case for which this pipeline was used is the modelling o
 The paper used an early version of the pipeline without optimising the rotation for each model individually, but a lot of its functionality was already used in this paper.
 Numerous updates in both performance and functionality have been included since and are employed in the modelling of the B-type binary KIC4930889 by <a href="https://doi.org/10.1051/0004-6361/202244192 " target="_blank"> Michielsen et al. (2023)</a>.
 
-There is also some additional functionality outside of the modelling pipeline, mostly in the form of plotting tools, check <a href="https://github.com/MichielsenM/FOAM/blob/master/foam/plot_tools.py" target="_blank"> plot_tools</a> for all available functions. An example to quickly make a Kippenhahn plot or Hertzsprung–Russell diagram from a given <a href="https://docs.mesastar.org/en/latest/index.html" target="_blank"> MESA</a> file in the following way:
-
-
-
-<pre><code>import matplotlib.pyplot as plt
-from foam import plot_tools
-
-plot_tools.plot_hrd('PATH_TO_MESA_HISTORY')
-plot_tools.plot_khd('PATH_TO_MESA_HISTORY')
-plt.show()</code></pre>
-
-
-
 ## Modelling pipeline
 The setup is made for the purpose of asteroseismic gravity mode modelling. It's functionality allows for:
 - Modelling of the observations with multiple different computed grids.
