@@ -15,3 +15,7 @@ Once python and poetry are installed, git clone the <a href="https://github.com/
 ### Installing without poetry
 Although not recommended, if you for some reason do not wish to use poetry, you could install by running `pip install .` instead. Note that this will install it as a package in your python environment, but in non-editable mode.
 
+
+### Test if installation was successful
+To check if the package was installed successfully, you can run the following line in your terminal to print the package version: `python -m foam version`.
+Alternatively you can run the pytests via command `python -m foam test` to see if there are no errors.
