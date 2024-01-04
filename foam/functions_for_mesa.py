@@ -60,7 +60,7 @@ def calculate_number_densities(hist_file):
     number_densities: dictionary
         Column keys specify the element (surf_X_per_N_tot), values are number densities of that element.
     '''
-    header, data = read_mesa_file(hist_file)
+    _, data = read_mesa_file(hist_file)
     element_list = {}
     number_densities = {}
     inverse_average_atomic_mass = np.zeros(len(data[ list(data.keys())[0] ]))

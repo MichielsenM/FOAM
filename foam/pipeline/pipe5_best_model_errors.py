@@ -20,17 +20,17 @@ def likelihood_chi2(chi2):
     """ Likelihood function of reduced chi-squared """
     return np.exp(-0.5*chi2/(N_dict[obs]-config.k))
 
-def likelihood_MD(MD):
+def likelihood_MD(md):
     """ Likelihood function of the mahalanobis distance """
     df_AICc_MD = pd.read_table(f'V_matrix/{config.star}_determinant_conditionNr.tsv', delim_whitespace=True, header=0)
-    lndetV = float( (df_AICc_MD.loc[df_AICc_MD['method'] == f'{config.star}_{analysis}', 'ln(det(V))']).iloc[0] )
-    return np.exp(-0.5*( MD + config.k*np.log(2*np.pi) + lndetV ))
+    ln_det_v = float( (df_AICc_MD.loc[df_AICc_MD['method'] == f'{config.star}_{analysis}', 'ln(det(V))']).iloc[0] )
+    return np.exp(-0.5*( md + config.k*np.log(2*np.pi) + ln_det_v ))
 
 ################################################################################
 if config.n_sigma_box != None:
     directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
-    directory_prefix = f''
+    directory_prefix = ''
 
 for merit in config.merit_functions:
     for obs in config.observable_seismic:
@@ -58,7 +58,7 @@ for merit in config.merit_functions:
                 probabilities.update({column_name:{}})
                 for value in df[column_name].unique():     # construct dictionary
                     probabilities[column_name].update({value:0})
-                for value in df[column_name]:              # sum over all occurences of parameter values
+                for value in df[column_name]:              # sum over all occurrences of parameter values
                     probabilities[column_name][value]+=1
                 for value in df[column_name].unique():     # divide by total number of models to get probabilities
                     probabilities[column_name][value] = probabilities[column_name][value] / len(df)
@@ -82,7 +82,7 @@ for merit in config.merit_functions:
 
                 p +=prob/total_probability
                 if p>=percentile[sigma]:
-                    # Write all models enclosed within the error ellips to a separate file
+                    # Write all models enclosed within the error ellipse to a separate file
                     df.iloc[:i+1].to_hdf( output_name , 'models_in_2sigma_error_ellipse', format='table', mode='w')
                     config.logger.debug(f'---------- {analysis} ---------- {i+1} --- {p}')
                     break

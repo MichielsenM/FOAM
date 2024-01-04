@@ -5,7 +5,7 @@ from foam.pipeline.pipeline_config import config
 if config.n_sigma_box != None:
     directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
-    directory_prefix = f''
+    directory_prefix = ''
 
 if config.observable_additional is not None:
     extra_obs = '+extra'

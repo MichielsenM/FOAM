@@ -71,7 +71,7 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
     return ax_dict, fig
 
 ################################################################################
-def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
+def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
                       percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_box=3, grid_parameters = None,
                       axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
                       'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ):
@@ -83,9 +83,9 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     where the first column is 'meritValue', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
     ------- Parameters -------
-    merit_values_file, merit_values_file_error_ellips: string
+    merit_values_file, merit_values_file_error_ellipse: string
         Path to the hdf5 files with the merit function values and parameters of the models in the grid,
-        and of just the models in the error ellips.
+        and of just the models in the error ellipse.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
@@ -98,13 +98,13 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     percentile_to_show: float
         Percentile of models to show in the plots.
     logg_or_logL: string
-        String 'logg' or 'logL' indicating wheter log of surface gravity (g) or luminosity (L) is plot.
+        String 'logg' or 'logL' indicating whether log of surface gravity (g) or luminosity (L) is plot.
     mark_best_model: boolean
         Indicate the best model with a marker
     grid_parameters: list of string
         List of the parameters in the theoretical grid.
     axis_labels_dict: dictionary
-        Keys are grid paramters, values are strings how those values should be shown on the axis labels
+        Keys are grid parameters, values are strings how those values should be shown on the axis labels
     """
     # Define custom colormap
     cdict = {'red':((0.0, 1.0, 1.0),
@@ -120,8 +120,8 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
                        (1.0, 1.0, 1.0))
             }
     CustomCMap = LinearSegmentedColormap('CustomMap', cdict)
-    # theoretical models within the error ellips
-    df_Theo_EE = pd.read_hdf(merit_values_file_error_ellips, delim_whitespace=True, header=0)
+    # theoretical models within the error ellipse
+    df_Theo_EE = pd.read_hdf(merit_values_file_error_ellipse, delim_whitespace=True, header=0)
     df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
 
     # theoretical models
@@ -132,13 +132,13 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     if df_Theo.iloc[0]['rot'] == df_Theo.iloc[1]['rot'] == df_Theo.iloc[2]['rot'] == df_Theo.iloc[-1]['rot']: # rotation is fixed, don't plot it
         df_EE = df_Theo_EE.filter(['meritValue']+grid_parameters ) # make new dataframe with only needed info
         df = df_Theo.filter(['meritValue']+grid_parameters )       # make new dataframe with only needed info
-        # Remove models in the error ellips from the regular dataframe.
+        # Remove models in the error ellipse from the regular dataframe.
         df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
 
     else: # rotation was varied, include it in the plots
         df_EE = df_Theo_EE.filter(['meritValue']+['rot']+grid_parameters ) # make new dataframe with only needed info
         df = df_Theo.filter(['meritValue']+['rot']+grid_parameters )       # make new dataframe with only needed info
-        # Remove models in the error ellips from the regular dataframe.
+        # Remove models in the error ellipse from the regular dataframe.
         df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
@@ -214,7 +214,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
 
     fig.align_labels()
     # add subplot in top right for Kiel or HRD
-    ax_hrd = fig.add_axes([0.508, 0.65, 0.33, 0.33]) # X, Y, widht, height
+    ax_hrd = fig.add_axes([0.508, 0.65, 0.33, 0.33]) # X, Y, width, height
 
     ax_hrd.set_xlabel(r'log(T$_{\mathrm{eff}}$ [K])', size=label_size)
     ax_hrd.tick_params(labelsize=label_size-4)
@@ -228,7 +228,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
                 logg_or_logL = 'logg'
 
             # Observed spectroscopic error bar, only added if observational constraints were provided.
-            # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigmas wide)
+            # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigma wide)
             width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
             width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
             errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
@@ -256,12 +256,12 @@ def corner_plot(merit_values_file, merit_values_file_error_ellips, fig_title, ob
     if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
-    cax = fig.add_axes([0.856, 0.565, 0.04, 0.415]) # X, Y, widht, height
+    cax = fig.add_axes([0.856, 0.565, 0.04, 0.415]) # X, Y, width, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
-    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.415]) # X, Y, widht, height
+    cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.415]) # X, Y, width, height
     cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
 
-    if df_Theo_EE.shape[0]==1: # To prevent messing up colors due to automatic rescaling of colorbar
+    if df_Theo_EE.shape[0]==1: # To prevent messing up colours due to automatic rescaling of colorbar
         im_EE.set_clim(np.log10(df_Theo_EE['meritValue']), np.log10(df_Theo_EE['meritValue'])*1.1)
 
     if '_MD_' in fig_title:
@@ -468,7 +468,7 @@ def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
         fig = plt.figure( figsize=(10, 4))
         ax = fig.add_subplot(111)
 
-    header, data = ffm.read_mesa_file(hist_file)
+    _, data = ffm.read_mesa_file(hist_file)
 
     xvals=data[xaxis]
     M_star = data['star_mass']

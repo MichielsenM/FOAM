@@ -11,7 +11,7 @@ def test_generate_spacing_series():
     assert result[1] == expected[1]
 
 def test_generate_spacing_series_with_errors():
-    """Test period spacing series and its errors calulated by test_generate_spacing_series"""
+    """Test period spacing series and its errors calculated by test_generate_spacing_series"""
     periods = [1.1, 1.3, 1.39, 1.47, 1.52 ]
     errors = [1E-1, 2E-1, 4E-1, 3E-1, 2E-1]
     expected_spacing = [0.2*86400, 0.09*86400, 0.08*86400, 0.05*86400]

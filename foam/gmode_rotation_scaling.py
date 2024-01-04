@@ -23,9 +23,9 @@ class Asymptotic(object):
                           Part of the mode identification of the pulsation pattern: azimuthal order.
                           mval > 0 for prograde modes. Default value = 1.
                 nmin:     integer
-                          The minimum radial order that we will (attempt to) calulcate. Default value = 1.
+                          The minimum radial order that we will (attempt to) calculate. Default value = 1.
                 nmax:     integer
-                          The maximum radial order that we will (attempt to) calulcate. Default value = 150.
+                          The maximum radial order that we will (attempt to) calculate. Default value = 150.
         """
 
         self.kval = int(kval)
@@ -150,7 +150,7 @@ class Asymptotic(object):
 ################################################################################
     def update_laplacegrid(self,spinmax=10000.,spindensity=1.):
         """
-            Recalculating the spin aparameter range and the corresponding lambda eigenvalues included within the asymptotic object.
+            Recalculating the spin parameter range and the corresponding lambda eigenvalues included within the asymptotic object.
 
             Parameters:
                 self:     asymptotic object

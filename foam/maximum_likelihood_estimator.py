@@ -14,7 +14,7 @@ logger = logging.getLogger('logger.mle_estimator')  # Make a child logger of "lo
 def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_path=None, star_name=None, fixed_params=None, grid_parameters=None):
     """
     Perform a maximum likelihood estimation using the provided type of merit function on the list of observables.
-    Writes a data file with the values of the merit funtion and input parameters of each model.
+    Writes a data file with the values of the merit function and input parameters of each model.
     Can select and continue the analysis of nested grids through the keyword 'fixed_params'.
     ------- Parameters -------
     Obs_path: string
@@ -41,7 +41,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
         observed_quantity = 'frequency'
     elif 'P' or 'dP' in observables:
         observed_quantity = 'period'
-    # Read in the observed data and make an array of the observed obervables
+    # Read in the observed data and make an array of the observed observables
     Obs_dFrame = pd.read_table(Obs_path, delim_whitespace=True, header=0, index_col='index')
     Obs, ObsErr, file_suffix_observables = create_obs_observables_array(Obs_dFrame, observables)
 
@@ -110,7 +110,7 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
-        Contains the indices of the missing pulsations so that the period sapcing pattern can be split around them.
+        Contains the indices of the missing pulsations so that the period spacing pattern can be split around them.
     ------- Returns -------
     observables_out: numpy array of floats
         The values of the specified observables for the model.
@@ -255,7 +255,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None,
     MD: numpy array of floats
         Mahalanobis distances for the given theoretical patterns.
     """
-    # Convert to matrix format (np.matrix is not recommended, use array and nexaxis instead)
+    # Convert to matrix format (np.matrix is not recommended, use array and newaxis instead)
     YObsMat = np.array(YObs)[np.newaxis].T
     YTheoMat = np.array(YTheo)[np.newaxis].T
 
@@ -263,7 +263,7 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None,
     # over the entire grid. Returns a vector of dimension N x 1
     Yav = YTheoMat.mean(1)
 
-    # Calculate the variance-covriance matrix
+    # Calculate the variance-covariance matrix
     q = np.shape(YTheo)[0]  # number of grid points
     N = len(YObs)           # number of observed values
     V = np.zeros((N,N))

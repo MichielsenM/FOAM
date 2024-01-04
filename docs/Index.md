@@ -26,6 +26,6 @@ plt.show()</code></pre>
 The setup is made for the purpose of asteroseismic gravity mode modelling. It's functionality allows for:
 - Modelling of the observations with multiple different computed grids.
 - Use of different merit functions (reduced chi-squared and Mahalanobis Distance are currently implemented).
-- Use of multiple sets of observables. Astroseismic (periods, period spacings, frequencies) but also others (logg, logTeff, logL, ...) can be added in the merit function.
+- Use of multiple sets of observables. Asteroseismic (periods, period spacings, frequencies) but also others (logg, logTeff, logL, ...) can be added in the merit function.
 - Use of multiple different methods to construct theoretical pulsation patterns to match the observed pattern.
 See [pipeline configuration](./Configuration.md) for a more detailed and complete list of the options and choices.

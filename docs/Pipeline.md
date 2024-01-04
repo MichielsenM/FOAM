@@ -29,7 +29,7 @@ Each word in the filenames enclosed by {} indicates that it is replaced by a val
 <li> <code>observable</code> indicates if periods or frequencies are used to construct the patterns </li>
 <li> <code>merit_function</code> the merit function used to calculate goodness of fit, Mahalanobis Distance is abbreviated to MD, and reduced chi-squared is abbreviated to chi2 </li>
 <li> <code>method</code> the method used to generate the theoretical frequency patterns to match the observed pattern. </li>
-<li> <code>suffix_observables</code> the asteroseismic obsevable used in the merit function. Period, period spacing, and frequency will be abbreviated as P, dP, and f, respectively. Contains '+extra' in  case more observables are used in addition to the asteroseismic one. </li>
+<li> <code>suffix_observables</code> the asteroseismic observable used in the merit function. Period, period spacing, and frequency will be abbreviated as P, dP, and f, respectively. Contains '+extra' in  case more observables are used in addition to the asteroseismic one. </li>
 <li> <code>n_sigma_box</code> size in standard deviations of the box with models accepted as solutions compatible with the surface properties (logTeff, logL, logg). </li>
 </ul>
 </details>
@@ -83,7 +83,7 @@ Creates folder <code>meritvalues/</code> to store
 Select all the models that fall inside an n-sigma error box on the provided Teff, logg and logL. If `n_sigma_box` in the configuration is set to None, this step will be skipped. If `constraint_companion` is also provided in the pipeline configuration, those constraints on a binary companion are also taken into account using isochrone-clouds. 
 <details>
 <summary> <b>Isochrone-clouds</b> (click to expand) </summary> <br>
-An isochrone-cloud of a model is made up of all models that have the same metallicity, an age equal within 1 timestep, and whose mass is compatible witin the error margin of the observed mass ratio. (However other parameters can differ between models, e.g. internal mixing processes).
+An isochrone-cloud of a model is made up of all models that have the same metallicity, an age equal within 1 timestep, and whose mass is compatible within the error margin of the observed mass ratio. (However other parameters can differ between models, e.g. internal mixing processes).
 The model of the pulsating star must be compatible with it's observed Teff, logg and logL, while at least one of the models in its isochrone-cloud must be compatible with the companion's observed Teff, logg and logL.
 </details>
 <details>

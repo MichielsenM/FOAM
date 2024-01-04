@@ -34,9 +34,9 @@ All keyword arguments are listed below, grouped in categories.
     This dictionary has two keys, 'period' and 'frequency', holding a list of periods or frequencies, respectively, 
     to start building the pulsation pattern from when using the 'provided-pulsation' method. <br>
     Periods are required when periods or period spacings ('P' or 'dP') are used as observables in `observable_seismic`, 
-    and frequencies are required when frequenies ('f') are used as observables in `observable_seismic`. If periods or frequencies are not required, the list can contain `None` instead of values. <br>
+    and frequencies are required when frequencies ('f') are used as observables in `observable_seismic`. If periods or frequencies are not required, the list can contain `None` instead of values. <br>
     The list should contain one pulsation per part of the split pattern,
-    ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
+    ordered the same as the file with the observations. (List of length 1 in case of continuous pattern.)
 
 ### Simulated theoretical model grid
 - grid_parent_directory
@@ -175,7 +175,7 @@ All keyword arguments are listed below, grouped in categories.
     default: None <br>
     Number of worker processes to use in multiprocessing. The default 'None' will cause the pools to use the number returned by os.cpu_count().
 
-- conerplot_axis_labels
+- cornerplot_axis_labels
 >   type: dictionary, keys and values are strings <br>
     default: {'rot': r'$\Omega\_{\mathrm{rot}}$ [d$^{-1}$]', 'M': r'M$\_{\rm ini}$', 'Z': r'Z$\_{\rm ini}$', 'logD':r'log(D$\_{\rm env}$)', 'aov':r'$\alpha\_{\rm CBM}$','fov':r'f$\_{\rm CBM}$','Xc':r'$\rm X_c$'} <br>
     keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis.

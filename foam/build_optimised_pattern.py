@@ -42,7 +42,7 @@ def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, me
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsationGrid_file'.)
-    The rotation rate will be scaled and optimased for each theoretical pattern individually. This optimisation will not be performed if asymptotic_object=None.
+    The rotation rate will be scaled and optimised for each theoretical pattern individually. This optimisation will not be performed if asymptotic_object=None.
     ------- Parameters -------
     pulsationGrid_file: string
         path to file containing input parameters of the models, and the pulsation frequencies of those models
@@ -82,7 +82,7 @@ def construct_theoretical_puls_pattern(pulsationGrid_file, observations_file, me
     missing_puls = np.where(Obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
     Obs_without_missing=Obs[Obs!=0]                             # remove values indicating interruptions in the pattern
     ObsErr_without_missing=ObsErr[ObsErr!=0]                    # remove values indicating interruptions in the pattern
-    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Ajust indices for removed 0-values of missing frequencies
+    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Adjust indices for removed 0-values of missing frequencies
 
     Obs_pattern_parts = np.split(Obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
     ObsErr_pattern_parts = np.split(ObsErr_without_missing, missing_puls)
@@ -119,13 +119,13 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, Obs_pattern_parts, Obs
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
     ------- Parameters -------
     summary_grid_row: tuple, made of (int, pandas series)
-        tuple retruned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
+        tuple returned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
         second tuple entry is a pandas series, containing a row from the pandas dataFrame. (This row holds model parameters and pulsation frequencies.)
     Obs: numpy array
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
     Obs_pattern_parts, ObsErr_pattern_parts: list of numpy arrays
         Holds a numpy array (with the observed frequencies or periods, or with their errors) per split off part
-        of the observerd pattern if it is interrupted.
+        of the observed pattern if it is interrupted.
         The list contains only one array if the observed pattern is uninterrupted.
     which_observable: string
         Which observables are used in the pattern building, options are 'frequency' or 'period'.
@@ -212,14 +212,14 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, Obs_pattern_parts, Obs
                 optimised_periods = optimised_pulsations
             
             # Recombine observational errors in one array
-            ComninedObsErr = []
+            CombinedObsErr = []
             for O_part in ObsErr_pattern_parts:
-                if (len(ComninedObsErr) > 0): 
-                    ComninedObsErr.extend([0])
-                ComninedObsErr.extend(O_part)
-            ComninedObsErr = np.asarray(ComninedObsErr)
+                if (len(CombinedObsErr) > 0): 
+                    CombinedObsErr.extend([0])
+                CombinedObsErr.extend(O_part)
+            CombinedObsErr = np.asarray(CombinedObsErr)
 
-            spacings = generate_spacing_series(Obsperiod, ComninedObsErr)
+            spacings = generate_spacing_series(Obsperiod, CombinedObsErr)
             ax1.errorbar(Obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue', alpha=0.8)
             ax1.plot(Obsperiod[:-1], spacings[0], color='blue')
             ax1.plot(optimised_periods[:-1], generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
@@ -227,7 +227,7 @@ def theoretical_pattern_from_dfrow(summary_grid_row, Obs, Obs_pattern_parts, Obs
 
             fig2, ax2 = plt.subplots()
 
-            ax2.errorbar(Obs, Obs, fmt='o', xerr=ComninedObsErr, label='obs', color='blue', alpha=0.8)
+            ax2.errorbar(Obs, Obs, fmt='o', xerr=CombinedObsErr, label='obs', color='blue', alpha=0.8)
             ax2.plot(optimised_periods, optimised_periods, '*', color='orange', label = 'optimised')
             ax2.plot(1/freqs, 1/freqs, '.', label='initial', color='green')
 
@@ -259,7 +259,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
 
     ------- Parameters -------
     params: Parameter (object of lmfit)
-        The paramter used to optimise the fit. In this case rotation in units of 1/day.
+        The parameter used to optimise the fit. In this case rotation in units of 1/day.
     asymptotic_object: asymptotic (see 'gmode_rotation_scaling')
         Object to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     estimated_rotation: float
@@ -271,7 +271,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
     Obs: numpy array
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
     Obs_pattern_parts, ObsErr_pattern_parts: list of numpy arrays
-        Holds a numpy array per split off part of the observerd pattern if it is interrupted.
+        Holds a numpy array per split off part of the observed pattern if it is interrupted.
         The list contains only one array if the observed pattern is uninterrupted.
     which_observable: string
         Which observables are used in the pattern building, options are 'frequency' or 'period'.
@@ -289,7 +289,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
     ------- Returns -------
     output_pulsations - Obs: numpy array
         Differences between the scaled pulsations and the observations.
-        The array to be minimised by the lmfit Minimizer if rotation is opitmised.
+        The array to be minimised by the lmfit Minimizer if rotation is optimised.
     """
     if asymptotic_object is not None:
         v = params.valuesdict()
@@ -309,7 +309,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         if which_observable=='frequency':
             # remove frequencies that were already chosen in a different, split-off part of the pattern
             if len(output_pulsations)>0:
-                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
                     np.delete(freqs, np.where(freqs>=output_pulsations[-2])) #index -2 to get lowest, non-zero freq
                 else:                       # If input is in decreasing radial order
                     np.delete(freqs, np.where(freqs<=max(output_pulsations)))
@@ -321,7 +321,7 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         elif which_observable=='period':
             # remove periods that were already chosen in a different, split-off part of the pattern
             if len(output_pulsations)>0:
-                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
                     np.delete(periods, np.where(periods<=max(output_pulsations)))
                 else:                       # If input is in decreasing radial order
                     np.delete(periods, np.where(periods>=output_pulsations[-2])) #index -2 to get lowest, non-zero period
@@ -337,13 +337,13 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         elif method_build_series == 'highest-frequency':
             selected_theoretical_pulsations = puls_series_from_given_puls(Theo_value, Obs_part, highest_obs_freq)
         elif method_build_series == 'chisq-longest-sequence':
-            series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P, plot=False)
+            series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,ObsPeriod,ObsErr_P)
             if which_observable=='frequency':
                 selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
             elif which_observable=='period':
                 selected_theoretical_pulsations = final_theoretical_periods
         else:
-            sys.exit(logger.error(f'Unrecognised method to build pulsational series: {method_build_series}'))
+            sys.exit(logger.error(f'Unrecognised method to build pulsation series: {method_build_series}'))
 
         output_pulsations.extend(selected_theoretical_pulsations)
 
@@ -399,7 +399,7 @@ def puls_series_from_given_puls(TheoIn, Obs, Obs_to_build_from, plot=False):
     return Theo_sequence
 
 ################################################################################
-def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False):
+def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors):
     """
     Method to extract the theoretical pattern that best matches the observed one.
     Match each observed mode period to its best matching theoretical counterpart,
@@ -438,25 +438,15 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
             pairs_orders.append([period,best_match,int(best_order),chisqs[min_ind][0]])
 
         pairs_orders = np.array(pairs_orders)
-        if plot is True:
-            # Plot the results
-            plt.figure(1,figsize=(6.6957,6.6957))
-            plt.subplot(211)
-            plt.plot(pairs_orders[:,0],pairs_orders[:,1],'o')
-            plt.ylabel('$\\mathrm{Period \\,[d]}$',fontsize=20)
-            plt.subplot(212)
-            plt.plot(pairs_orders[:,0],pairs_orders[:,2],'o')
-            plt.ylabel('$\\mathrm{Radial \\, Order}$',fontsize=20)
-            plt.xlabel('$\\mathrm{Period \\,[d]}$',fontsize=20)
 
-        if orders[1]==orders[0]-1:  # If input is in increasing radial order (decerasing n_pg, since n_pg is negative for g-modes)
+        if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
             increase_or_decrease=-1
         else:                       # If input is in decreasing radial order
             increase_or_decrease=1
 
         sequences = []
         ## Go through all pairs of obs and theoretical frequencies and
-        ## check if the next observed freqency has a corresponding theoretical frequency
+        ## check if the next observed frequency has a corresponding theoretical frequency
         ## with the consecutive radial order.
         current = []
         lp = len(pairs_orders[:-1])
@@ -517,21 +507,5 @@ def chisq_longest_sequence(tperiods,orders,operiods,operiods_errors, plot=False)
         thr_series        = np.array(thr_series)
 
         series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
-
-        if plot is True:
-            fig = plt.figure(2,figsize=(6.6957,6.6957))
-            fig.suptitle('$\mathrm{Longest \\ Sequence}$',fontsize=20)
-            axT = fig.add_subplot(211)
-            axT.errorbar(list(range(len(obs_series))),obs_series,yerr=obs_series_errors,marker='x',color='black',label='Obs')
-            axT.plot(list(range(len(thr_series))),thr_series,'rx-',label='Theory')
-            axT.set_ylabel('$\mathrm{Period \\ Spacing \\ (s)}$',fontsize=20)
-            axT.legend(loc='best')
-            axB = fig.add_subplot(212)
-            axB.errorbar(operiods[1:],obs_series-thr_series,yerr=obs_series_errors,marker='',color='black')
-            axB.set_ylabel('$\mathrm{Residuals \\ (s)}$',fontsize=20)
-            axB.set_xlabel('$\mathrm{Period \\ (d^{-1})}$',fontsize=20)
-            axB.text(0.75,0.85,'$\chi^2 = %.2f$'%series_chi2,fontsize=15,transform=axB.transAxes)
-
-            plt.show()
 
         return series_chi2,final_theoretical_periods,corresponding_orders

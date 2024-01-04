@@ -23,7 +23,7 @@ class PipelineConfig:
             Dictionary with 'period' and 'frequency' as keys, containing lists of the periods and frequencies, respectively,
             to start building the pattern from when using 'provided-pulsation' method.
             The lists have one pulsation per part of the split pattern,
-            ordered the same as the file with the observations. (List of lenght 1 in case of continuous pattern.)
+            ordered the same as the file with the observations. (List of length 1 in case of continuous pattern.)
 
         --- Simulated theoretical model grid ---
         grid_parent_directory: string
@@ -83,7 +83,7 @@ class PipelineConfig:
             The path to the isocloud grid directory.
 
         --- Other settings ---
-        conerplot_axis_labels: dictionary, its keys and values are strings
+        cornerplot_axis_labels: dictionary, its keys and values are strings
             keys are the grid parameters, values are how they should be put in the labels of the cornerplots' axis
         debugging: boolean
             Set to True to set logger level to debug
@@ -157,7 +157,7 @@ class PipelineConfig:
         self.isocloud_grid_directory = kwargs.pop("isocloud_grid_directory", None)
 
         # Plotting
-        self.conerplot_axis_labels = kwargs.pop("conerplot_axis_labels", {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
+        self.cornerplot_axis_labels = kwargs.pop("cornerplot_axis_labels", {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
                                                 'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'})
         # Check for errors in input arguments
         self._check_init_arguments(kwargs)
@@ -217,7 +217,7 @@ class PipelineConfig:
         # Check if "Z" and "M" are first free parameters when constraints from binary companion are used.
         if self.constraint_companion is not None:
             if not (self.free_parameters[0] == 'Z' and self.free_parameters[1] == 'M'):
-                self.logger.error(f'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '+
+                self.logger.error('PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '+
                                   f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".')
                 input_error = True
 

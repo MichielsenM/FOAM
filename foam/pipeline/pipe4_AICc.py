@@ -6,11 +6,11 @@ from pathlib import Path
 from foam import support_functions as sf
 from foam.pipeline.pipeline_config import config
 ################################################################################
-k = config.k            # number of free paramters in the grid
+k = config.k            # number of free parameters in the grid
 if config.n_sigma_box != None:
     directory_prefix = f'{config.n_sigma_box}sigmaBox_'
 else:
-    directory_prefix = f''
+    directory_prefix = ''
 
 if config.observable_additional is not None:
     extra_obs = '+extra'

@@ -30,7 +30,7 @@ def split_line(line, sep) :
 def substring(line, sep_first, sep_second) :
     """
     Get part of a string between 2 specified separators.
-    If second separator is not found, return everyting after first separator.
+    If second separator is not found, return everything after first separator.
 
     ------- Parameters -------
     line: string
@@ -73,7 +73,6 @@ def get_param_from_filename(file_path, parameters, values_as_float=False):
                 p = float(p)
             param_dict[parameter] = p
         except:
-            # param_dict[parameter] = '0'
             logger.warning(f'In get_param_from_filename: parameter "{parameter}" not found in \'{file_path}\', value not added')
 
     return param_dict
@@ -122,7 +121,7 @@ def sign(x):
 def get_subgrid_dataframe(file_to_read, fixed_params=None):
     """
     Read a hdf5 file containing the grid information as a pandas dataframe.
-    Parameters can be fixed to certain values to fiter out entries with other values of that parameter.
+    Parameters can be fixed to certain values to filter out entries with other values of that parameter.
     ------- Parameters -------
     file_to_read: string
         path to the file to read
@@ -160,7 +159,7 @@ def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_s
     # Merge with surface info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
     df_merged  = pd.merge(surface_df, freq_df, how='inner', on=grid_parameters)
 
-    col = df_merged.pop("age") # Don't add the age in the combined file
+    _ = df_merged.pop("age") # Don't add the age in the combined file
 
     # take the column with rotation and place it as the first column, and its error as second column
     col = df_merged.pop("rot")

@@ -14,12 +14,12 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     Save this as a file with prefix indicating how many sigma the error box was.
     ------- Parameters -------
     merit_values_file: string
-        Path to the hdf5 files with the merit funtion values and the surface info of the models in the grid.
+        Path to the hdf5 files with the merit function values and the surface info of the models in the grid.
     observations_file: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
     nsigma: int
-        How many sigmas you want to make the interval to accept models.
+        How many sigma you want to make the interval to accept models.
     constraint_companion: dict
         Information on the companion star. Set to None to model single stars,
         or provide this to include binary constraints using isochrone-clouds.
@@ -83,7 +83,7 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
 
     ------- Returns -------
     min_age, max_age: tuple of integers
-        Age of the model one step younger and older than the procided model,
+        Age of the model one step younger and older than the provided model,
         these are the minimum and maximum age to accept models in the isochrone-cloud.
     """
 
@@ -110,11 +110,11 @@ def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'],
 ################################################################################
 def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_grid_summary=None, nsigma=3, surfaceGrid_dataFrame=None, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """
-    Enforce an n-sigma constraint on the models based on spectoscopic observations of the binary companion employing isochrone-clouds.
-    Assumes the same metallicity 'Z' for both primary and secondary, masses 'M' compatible with oberved mass ratio 'q', and ages similar within 1 gridstep.
+    Enforce an n-sigma constraint on the models based on spectroscopic observations of the binary companion employing isochrone-clouds.
+    Assumes the same metallicity 'Z' for both primary and secondary, masses 'M' compatible with observed mass ratio 'q', and ages similar within 1 gridstep.
     ------- Parameters -------
     df_Theo_row: tuple, made of (int, pandas series)
-        tuple retruned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
+        tuple returned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
         second tuple entry is a pandas series, containing a row from the pandas dataFrame.
         (This row holds model parameters, the meritfunction value, and surface properties.)
     constraint_companion: dict
@@ -124,7 +124,7 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
         Nested dictionary, the keys at its two levels are metallicity and mass.
         Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     nsigma: int
-        How many sigmas you want to make the interval to accept models.
+        How many sigma you want to make the interval to accept models.
     surfaceGrid_dataFrame: pandas DataFrame
         DataFrame with the surface properties and ages of the model-grid.
     free_parameters: list of strings

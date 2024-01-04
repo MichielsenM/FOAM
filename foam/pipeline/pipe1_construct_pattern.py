@@ -13,7 +13,7 @@ asymp_obj = grs.Asymptotic(gyre_dir=config.gyre_dir, kval=config.kval, mval=conf
 for grid in config.grids:
     surface= f'../grid_summary/surfaceGrid_{grid}.hdf'
     for method in config.pattern_methods:   # Methods to construct theoretical pulsation patterns
-        observed_quantities = []            # Whether periods or frequenies are used
+        observed_quantities = []            # Whether periods or frequencies are used
         if ('P' in config.observable_seismic) or ('dP' in config.observable_seismic):
             observed_quantities.append('period')
         if 'f' in config.observable_seismic:
