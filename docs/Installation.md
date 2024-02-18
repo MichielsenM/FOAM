@@ -4,6 +4,8 @@ title: Installation
 ---
 # Installation
 
+Pleas note that FOAM was written and tested on Linux. The installation procedure was tested on MacOS, but the functionality was not as extensively tested as on Linux. No tests for Windows have been performed.
+
 ## Prerequisites
 FOAM is a python package which requires python 3.9 or newer, additionally the package uses <a href="https://python-poetry.org/docs/" target="_blank"> poetry</a> for dependency management. Follow their installation instructions to install poetry on your system as well.
 

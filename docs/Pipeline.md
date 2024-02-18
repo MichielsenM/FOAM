@@ -35,7 +35,7 @@ Each word in the filenames enclosed by {} indicates that it is replaced by a val
 </details>
 
 ### pipe0_extract_grid
-Extract all required information from the MESA profiles and GYRE summary files in the theoretical grids.
+Extract all required parameters and quantities from the MESA profiles and GYRE summary files in the theoretical grids.
 Requires the grids to be structured as explained in the [walkthrough](./Walkthrough.md).
 This step will be required once for a (group of) theoretical grid(s). Modelling different stars with the same theoretical grid will all use the same summary files that this step creates.
 
@@ -49,8 +49,8 @@ This step will be required once for a (group of) theoretical grid(s). Modelling 
 </ul>
 </details>
 
-### pipe1_construct_pattern        
-Construct the theoretical pulsation patterns, optimise their rotation rates, select theoretical pulsation patterns matching the observational pattern, and merge with the models surface properties into one file.
+### pipe1_construct_pattern   
+Construct the theoretical pulsation patterns for each stellar model. Thereafter select theoretical pulsation patterns matching the observational pattern whilst optimising their rotation rates. Finally combine this information with the models' surface properties into one file.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
@@ -64,7 +64,7 @@ Creates folder <code>extracted_freqs/</code> to store
 After this step, subdirectories will be made in case the pipeline is ran for a nested grid where one or more free parameters are fixed to a certain value.
 
 ### pipe2_calculate_likelihood     
-Calculate the likelihood of all the theoretical patterns according to the specified merit functions.
+Calculate the likelihood of all the theoretical patterns according to the specified merit functions and observables. This list of observables consist of the pulsations, but can optionally be extended with spectroscopic or astrometric information. (See <code>observable_seismic</code> and <code>observable_additional</code> in the [pipeline configuration](./Configuration.md).)
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 
@@ -80,7 +80,8 @@ Creates folder <code>meritvalues/</code> to store
 </details>
 
 ### pipe3_add_constraints
-Select all the models that fall inside an n-sigma error box on the provided Teff, logg and logL. If `n_sigma_box` in the configuration is set to None, this step will be skipped. If `constraint_companion` is also provided in the pipeline configuration, those constraints on a binary companion are also taken into account using isochrone-clouds. 
+Exclude all the models that fall outside an n-sigma error box on the spectroscopic and astrometric constraints as acceptable solutions.
+The models that fall inside the n-sigma error box on the provided Teff, logg and logL will be written into a new file. If `n_sigma_box` in the configuration is set to None, this step will be skipped. If `constraint_companion` is also provided in the pipeline configuration, those constraints on a binary companion are also taken into account using isochrone-clouds. 
 <details>
 <summary> <b>Isochrone-clouds</b> (click to expand) </summary> <br>
 An isochrone-cloud of a model is made up of all models that have the same metallicity, an age equal within 1 timestep, and whose mass is compatible within the error margin of the observed mass ratio. (However other parameters can differ between models, e.g. internal mixing processes).
@@ -102,8 +103,7 @@ The innermost dictionary will hold certain columns of MESA history files, effect
 </details>
 
 ### pipe4_AICc
-Calculate the <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank"> Akaike information criterion (AIC)</a> corrected for small sample size (AICc).
-This AICc is calculated for the best model for each combination of modelling options.
+Calculate the <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank"> Akaike information criterion (AIC)</a> corrected for small sample size (AICc). This AICc is calculated for the best model for each combination of modelling options. This statistical criterion rewards goodness of fit, but penalises model complexity in the form of additional free parameters. The AIC thus allows a statistical comparison between models of different (nested) grids where the number of free parameters is not the same.
 <details>
 <summary> <b>Output</b> (click to expand) </summary> <br>
 

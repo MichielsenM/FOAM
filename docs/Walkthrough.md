@@ -213,7 +213,7 @@ Model_grids
 </details>
 
 
-## Example setup
+## Running an example setup
 
 A practical example of the setup can be found in the following directory <a href="https://github.com/MichielsenM/FOAM/tree/master/example_setup" target="_blank"> example_setup</a>.
 The folder `KIC7760680` contains an example of a file with observational data (<a href="https://github.com/MichielsenM/FOAM/blob/master/example_setup/KIC7760680/data_KIC7760680.tsv" target="_blank"> data_KIC7760680.tsv </a> ), and two setups for the modelling pipeline. One for modelling the full grid, and one setup to perform the modelling for a subgrid of nested models (in this case for both Convective Boundary Mixing parameters fixed at 0). Some print statements have been included to keep you informed how far the pipeline has progressed, but these can easily be removed or adjusted.
