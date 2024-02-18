@@ -2,11 +2,9 @@
 layout: default
 title: Community guidelines
 ---
-# Vision
+## Vision
 
 Several tools have been developed for asteroseismic analyses, but many of them are closed-source and therefore inaccessible to the general astronomy community. Whereas some efforts have been made to provide publicly available open-source tools for asteroseismic modelling, these predominantly concern the analysis of solar-like oscillators. Foam tries to extend this effort to the modelling of gravity mode oscillators.
-
-# Contributing
 
 ## Contribute to the software
 If you have features or other ideas you want to contribute to the code, please submit them as a pull request.
