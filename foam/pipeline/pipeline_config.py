@@ -13,7 +13,8 @@ class PipelineConfig:
         """
         Initialising the instance of the configuration.
 
-        ------- Parameters -------
+       Parameters
+        ----------
         --- Settings about observational data ---
         star: string
             Name of the star, used for generating filenames
@@ -167,7 +168,8 @@ class PipelineConfig:
         """
         Check for errors in the input kwargs. Logs all errors and exits the program if any are found.
 
-        ------- Parameters -------
+        Parameters
+        ----------
         remaining_kwargs: list
             kwargs passed to the __init__() that have not been popped by it
         """

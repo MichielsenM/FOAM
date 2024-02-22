@@ -20,15 +20,18 @@ def read_mesa_file(file_path, index_col=None):
     line 4: main data names
     line >4:main data values
 
-    ------- Parameters -------
+    Parameters
+    ----------
     file_path: String
         The path to the MESA profile or history file to read in.
     index_col: Hashable
         Column to use as row labels.
-    ------- Returns -------
-    header: dictionary
+
+    Returns
+    ----------
+    header: dict
         A dictionary holding the header info of the MESA file.
-    data: dictionary
+    data: dict
         A dictionary holding the data columns of the MESA file as numpy arrays.
     """
     if h5py.is_hdf5(file_path):
@@ -53,11 +56,15 @@ def calculate_number_densities(hist_file):
     Calculate surface number densities for all isotopes in the MESA grid.
     All isotopes in the used nuclear network need to be be written in the history file,
     otherwise this will function give wrong numbers.
-    ------- Parameters -------
-    hist_file: String
+    
+    Parameters
+    ----------
+    hist_file: string
         The path to the MESA history file.
-    ------- Returns -------
-    number_densities: dictionary
+
+    Returns
+    ----------
+    number_densities: dict
         Column keys specify the element (surf_X_per_N_tot), values are number densities of that element.
     '''
     _, data = read_mesa_file(hist_file)
@@ -79,7 +86,9 @@ def calculate_number_densities(hist_file):
 def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None, additional_observables=None):
     """
     Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info for each globbed MESA profile and write them to 1 large file.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     mesa_profiles: string
         String to glob to find all the relevant MESA profiles.
     output_file: string
@@ -122,7 +131,9 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
 def info_from_profiles(mesa_profile, parameters, extra_header_items):
     """
     Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info from a MESA profile and the model parameters from its filename.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     mesa_profile: string
         path to the MESA profile
     parameters: list of strings
@@ -130,7 +141,8 @@ def info_from_profiles(mesa_profile, parameters, extra_header_items):
     extra_header_items: list of strings
         List of extra observables to add to the surface grid. Must correspond to mesa profile header-item names.
 
-    ------- Returns -------
+    Returns
+    ----------
     line: string
         Line containing all the model- and surface parameters of the MESA profile.
     """

@@ -12,9 +12,10 @@ from foam import functions_for_mesa as ffm
 def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title='', label_size=22, xlim=[],
                         left_space=0.1, bottom_space=0.085, right_space=0.978, top_space=0.97, h_space=0.12, figure_size = [12,8]):
     """
-    Make a plot
+    Make a multipanel figure for plots.
 
-    ------- Parameters -------
+    Parameters
+    ----------
     nr_panels: int
         The number of panels to add to the plot
     xlabel, ylabels: string and list of strings
@@ -35,9 +36,12 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
         Lists of length 2, specifying the lower and upper limits of the x axe.
         Matplotlib sets the limits automatically if the arguments are not given.
 
-    ------- Returns -------
-    ax_dict: Dictionary of the axes
-    fig: The figure
+    Returns
+    ----------
+    ax_dict: dict 
+        Dictionary of the axes
+    fig: Figure
+        The figure
     """
     if keys==None:   # make keys integers
         keys = range(nr_panels)
@@ -82,7 +86,9 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
     The list of variables is retrieved from columns of the merit_values_file,
     where the first column is 'meritValue', which are the MLE values.
     The resulting figure is saved afterwards in the specified location.
-    ------- Parameters -------
+
+    Parameters
+    ----------
     merit_values_file, merit_values_file_error_ellipse: string
         Path to the hdf5 files with the merit function values and parameters of the models in the grid,
         and of just the models in the error ellipse.
@@ -285,13 +291,15 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
 def plot_mesa_file(profile_file, x_value, y_value, ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None):
     """
     Plot the requested quantities for the given MESA profile or history file.
-    ------- Parameters -------
-    profile_file: String
+
+    Parameters
+    ----------
+    profile_file: string
         The path to the profile file to be used for the plotting.
-    x_value, y_value,: String
+    x_value, y_value,: string
         The parameters of the profile plotted on the x and y axis.
         If x_value is mass or radius, it will be put in units relative to the total mass or radius
-    ax: an axis object
+    ax: Axes
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     label_size, alpha: float
         The size of the labels in the figure, and transparency of the plot
@@ -327,11 +335,13 @@ def plot_mesa_file(profile_file, x_value, y_value, ax=None, label_size=16, colou
 ################################################################################
 def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, colour='', linestyle='solid', alpha=1, legend=True, label=None, bins=200):
     """
-    Make a histogram of the mesh points in the MESA profile
-    ------- Parameters -------
-    profile_file: String
+    Make a histogram of the mesh points in the MESA profile.
+
+    Parameters
+    ----------
+    profile_file: string
         The path to the profile file to be used for the plotting.
-    x_value: String
+    x_value: string
         The x value to use for the histogram
         If x_value is mass or radius, it will be put in units relative to the total mass or radius
     ax: an axis object
@@ -375,11 +385,13 @@ def plot_mesh_histogram(profile_file, x_value='radius', ax=None, label_size=16, 
 def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', label_size=16,
     Xc_marked=None, Teff_logscale=True, start_track_from_Xc=None, diagram='HRD'):
     """
-    Makes an HRD plot from a provided MESA history file
-    ------- Parameters -------
-    hist_file: String
+    Makes an HRD plot from a provided MESA history file.
+
+    Parameters
+    ----------
+    hist_file: string
         The path to the profile file to be used for the plot.
-    ax: an axis object
+    ax: Axes
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     colour, linestyle, label: strings
         Specify the colour, linestyle and label of the plotted data.
@@ -453,15 +465,17 @@ def plot_hrd(hist_file, ax=None, colour='blue', linestyle='solid', label='', lab
 ################################################################################
 def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
     """
-    Makes a Kippenhahn plot from a provided MESA history file
-    ------- Parameters -------
-    hist_file: String
+    Makes a Kippenhahn plot from a provided MESA history file.
+
+    Parameters
+    ----------
+    hist_file: string
         The path to the history file to be used for the plot.
-    ax: an axis object
+    ax: Axes
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     number_mix_zones: int
         Number of mixing zones included in the mesa history file
-    xaxis: String
+    xaxis: string
         quantity to put on the x-axis of the plot (e.g. model_number or star_age)
     """
     if ax is None:

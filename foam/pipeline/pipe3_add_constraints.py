@@ -9,7 +9,7 @@ from foam import model_grid as mg
 from foam.pipeline.pipeline_config import config
 
 ################################################################################
-def concat_isocloud_data(d):
+def concat_isocloud_data(dictionary):
     """
     Combines isocloud data from a nested dictionary. 
     The data for all evolutionary tracks per mass(M)-metallicity(Z) combination is combined into a single dataframe.
@@ -17,10 +17,11 @@ def concat_isocloud_data(d):
     If it's not nested, convert the dictionary to a dataframe and concat it with 
     the global dataframe that is created for each mass-metallicity combination.
 
-    ------- Parameters -------
-    d: nested dictionary
+    Parameters
+    ----------
+    dictionary: nested dictionary
     """
-    for k, v in d.items():
+    for k, v in dictionary.items():
         if any(isinstance(i,dict) for i in v.values()): # Check if it is a nested dictionary
             concat_isocloud_data(v)
         else:

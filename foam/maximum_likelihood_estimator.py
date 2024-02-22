@@ -16,7 +16,9 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
     Perform a maximum likelihood estimation using the provided type of merit function on the list of observables.
     Writes a data file with the values of the merit function and input parameters of each model.
     Can select and continue the analysis of nested grids through the keyword 'fixed_params'.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     Obs_path: string
         Path to the tsv file with observations, with a column for each observable and each set of errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
@@ -31,7 +33,7 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
         The type of merit function to use. Currently supports "CS and "MD" ("chi-squared" and "mahalanobis distance").
     star_name: string
         Name of the star, used in file naming.
-    fixed_params: dictionary
+    fixed_params: dict
         Only select and analyse the part of the theoretical grid with the specified parameter values.
         The keys specify for which parameters only the specified value should be selected.
     grid_parameters: list of string
@@ -99,7 +101,9 @@ def calculate_likelihood(Theo_file, observables=None, merit_function=None, Obs_p
 def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_indices):
     """
     Create an array of theoretical observables.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     Theo_dFrame: pandas dataFrame
         DataFrame containing the theoretical periods or frequencies (as the last columns), along with any additional
         columns containing extra observables.
@@ -111,8 +115,10 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
     missing_indices: list of int
         Contains the indices of the missing pulsations so that the period spacing pattern can be split around them.
-    ------- Returns -------
-    observables_out: numpy array of floats
+    
+    Returns
+    ----------
+    observables_out: numpy array, dtype=float
         The values of the specified observables for the model.
     """
     observables = list(observables_in)  # Make a copy to leave the array handed to this function unaltered.
@@ -143,7 +149,9 @@ def create_theo_observables_array(Theo_dFrame, index, observables_in, missing_in
 def create_obs_observables_array(Obs_dFrame, observables):
     """
     Create an array of the observed observables.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     Obs_dFrame: pandas dataFrame
         DataFrame containing the theoretical frequencies, periods, and any additional observables as columns, as well as columns with their errors.
         Column names specify the observable, and "_err" suffix denotes that it's the error.
@@ -152,8 +160,9 @@ def create_obs_observables_array(Obs_dFrame, observables):
         Must contain either 'f' (frequency), 'P' (period), or 'dP' (period-spacing) which will be computed for the period pattern.
         Can contain any additional observables that are added as columns in both the file with observations and the file with theoretical models.
 
-    ------- Returns -------
-    observables_out, observablesErr_out: numpy array of floats
+    Returns
+    ----------
+    observables_out, observablesErr_out: numpy array, dtype=float
         The values of the specified observables (or their errors).
     filename_suffix: string
         suffix for the filename, containing all the included observables, separated by '-'
@@ -221,16 +230,20 @@ def create_obs_observables_array(Obs_dFrame, observables):
 def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
     """
     Calculate chi squared values for the given theoretical patterns
-    ------- Parameters -------
-    YObs, ObsErr: numpy array of floats
+    
+    Parameters
+    ----------
+    YObs, ObsErr: numpy array, dtype=float
         Observed values and their errors (period or frequency)
-    YTheo: numpy array of arrays of floats
+    YTheo: numpy ndarray (2D), dtype=float
         Array of all theoretical patterns to calculate the chi squared value for.
     fig_title, star_name: None
         Should not be used in this function, but is to make it analogous to merit_mahalanobis()
         and enable the use of the lambda function.
-    ------- Returns -------
-    chi2: numpy array of floats
+
+    Returns
+    ----------
+    chi2: numpy array, dtype=float
         chi squared values for the given theoretical values
     """
     chi2 = np.array([  np.sum(((one_YTheo-YObs)/ObsErr)**2) for one_YTheo in YTheo ])
@@ -240,8 +253,10 @@ def merit_chi2(YObs, ObsErr, YTheo, fig_title=None, star_name=None):
 def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None, star_name=None):
     """
     Calculate mahalanobis distance (MD) values for the given theoretical patterns.
-    ------- Parameters -------
-    YObs, ObsErr: numpy array of floats
+    
+    Parameters
+    ----------
+    YObs, ObsErr: numpy array, dtype=float
         Observed values and their errors (period or frequency)
     YTheo: numpy array of arrays of floats
         Array of all theoretical patterns to calculate the MD value for.
@@ -251,8 +266,10 @@ def merit_mahalanobis(YObs, ObsErr, YTheo, generate_output=True, fig_title=None,
         The name of the figure to be created.
     star_name: string
         The name of the analysed star, for file naming purposes.
-    ------- Returns -------
-    MD: numpy array of floats
+
+    Returns
+    ----------
+    MD: numpy array, dtype=float
         Mahalanobis distances for the given theoretical patterns.
     """
     # Convert to matrix format (np.matrix is not recommended, use array and newaxis instead)
@@ -290,8 +307,10 @@ def check_matrix(V, generate_output=True, fig_title='Vmatrix', star_name=None):
     Check the if the the eigenvalues of the Variance-covariance matrix are all positive,
     since this means the matrix is positive definite. Compute its determinant and condition number,
     and write them to a tsv file. Create and save a figure of the variance-covariance matrix.
-    ------- Parameters -------
-    V: 2D np array
+
+    Parameters
+    ----------
+    V: numpy ndarray (2D), dtype=float
         Variance-covariance matrix
     output: boolean
         Flag to write output and plot the variance-covariance matrix

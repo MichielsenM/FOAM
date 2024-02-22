@@ -10,13 +10,15 @@ def split_line(line, sep) :
     """
     Splits a string in 2 parts.
 
-    ------- Parameters -------
+    Parameters
+    ----------
     line: string
         String to split in 2.
     sep: string
         Separator where the string has to be split around.
 
-    ------- Returns -------
+    Returns
+    ----------
     head: string
         Part 1 of the string before the separator.
     tail: string
@@ -32,7 +34,8 @@ def substring(line, sep_first, sep_second) :
     Get part of a string between 2 specified separators.
     If second separator is not found, return everything after first separator.
 
-    ------- Parameters -------
+    Parameters
+    ----------
     line: string
         String to get substring from.
     sep_first: string
@@ -40,7 +43,8 @@ def substring(line, sep_first, sep_second) :
     sep_first: string
         Second separator at which the returned substring should end.
 
-    ------- Returns -------
+    Returns
+    ----------
     head: string
         Part of the string between the 2 separators.
     """
@@ -54,14 +58,16 @@ def get_param_from_filename(file_path, parameters, values_as_float=False):
     """
     Get parameters from filename
 
-    ------- Parameters -------
+    Parameters
+    ----------
     file_path : string
         Full path to the file
-    parameters: list of Strings
+    parameters: list of string
         Names of parameters to extract from filename
 
-    ------- Returns -------
-    param_dict: Dictionary
+    Returns
+    ----------
+    param_dict: dict
         Keys are strings describing the parameter, values are strings giving corresponding parameter values
     """
 
@@ -82,14 +88,16 @@ def read_hdf5(filename):
     """
     Read a HDF5-format file (e.g. GYRE)
 
-    ------- Parameters -------
+    Parameters
+    ----------
     filename : string
         Input file
 
-    ------- Returns -------
-    attributes: dictionary
+    Returns
+    ----------
+    attributes: dict
         Dictionary containing the attributes of the file.
-    data: dictionary
+    data: dict
         Dictionary containing the data from the file as numpy arrays.
     """
     # Open the file
@@ -107,11 +115,14 @@ def sign(x):
     """
     Returns the sign of a number as a string
 
-    ------- Parameters -------
+    Parameters
+    ----------
     x: float or int
 
-    ------- Returns -------
-    A string representing the sign of the number
+    Returns
+    ----------
+    s: string
+        A string representing the sign of the number
     """
     if abs(x) == x:
         return '+'
@@ -122,14 +133,17 @@ def get_subgrid_dataframe(file_to_read, fixed_params=None):
     """
     Read a hdf5 file containing the grid information as a pandas dataframe.
     Parameters can be fixed to certain values to filter out entries with other values of that parameter.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     file_to_read: string
         path to the file to read
-    fixed_params: dictionary
+    fixed_params: dict
         keys are parameters to fix to the value specified in the dictionary
 
-    ------- Returns -------
-    df: pandas dataframe
+    Returns
+    ----------
+    df: pandas DataFrame
     """
     df = pd.read_hdf(file_to_read)
 
@@ -146,7 +160,9 @@ def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_s
     """
     Combine the output files with the frequencies and surface info of the grid in one new file,
     only keeping models that have entries in both the grid files.
-    ------- Parameters -------
+
+    Parameters
+    ----------
     grid_frequencies, grid_surface: string
         Paths to the files containing the model input parameters and corresponding frequency/surface info of the model.
     output_name: string

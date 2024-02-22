@@ -6,26 +6,27 @@ import sys
 ################################################################################
 class Asymptotic(object):
     """
-        A python class to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
+    A python class to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     """
 
     def __init__(self,gyre_dir,kval=0,mval=1,nmin=1,nmax=150):
         """
-            Setting up the environment/asymptotic object to calculate g-mode period spacing patterns.
+        Setting up the environment/asymptotic object to calculate g-mode period spacing patterns.
 
-            Parameters:
-                gyre_dir: string
-                          The GYRE installation directory.
-                kval:     integer
-                          Part of the mode identification of the pulsation pattern. For gravito-inertial
-                          modes with an equivalent in a non-rotating star, k = l - |m|. Default value = 0.
-                mval:     integer
-                          Part of the mode identification of the pulsation pattern: azimuthal order.
-                          mval > 0 for prograde modes. Default value = 1.
-                nmin:     integer
-                          The minimum radial order that we will (attempt to) calculate. Default value = 1.
-                nmax:     integer
-                          The maximum radial order that we will (attempt to) calculate. Default value = 150.
+        Parameters
+        ----------
+        gyre_dir: string
+            The GYRE installation directory.
+        kval: int
+            Part of the mode identification of the pulsation pattern. For gravito-inertial
+            modes with an equivalent in a non-rotating star, k = l - |m|. Default value = 0.
+        mval: int
+            Part of the mode identification of the pulsation pattern: azimuthal order.
+            mval > 0 for prograde modes. Default value = 1.
+        nmin: int
+            The minimum radial order that we will (attempt to) calculate. Default value = 1.
+        nmax: int
+            The maximum radial order that we will (attempt to) calculate. Default value = 150.
         """
 
         self.kval = int(kval)
@@ -38,16 +39,18 @@ class Asymptotic(object):
 ################################################################################
     def _retrieve_laplacegrid(self,gyre_dir):
         """
-            Retrieving the function lambda(nu) given in GYRE.
+        Retrieving the function lambda(nu) given in GYRE.
 
-            Parameters:
-                self:     asymptotic object
-                gyre_dir: string
-                          The GYRE installation directory.
+        Parameters
+        ----------
+            self: asymptotic object
+            gyre_dir: string
+                The GYRE installation directory.
 
-            Returns:
-                lam_fun: function
-                         A function to calculate lambda, given spin parameter values as input.
+        Returns
+        ----------
+        lam_fun: function
+            A function to calculate lambda, given spin parameter values as input.
         """
 
         if(self.kval >= 0):
@@ -73,26 +76,28 @@ class Asymptotic(object):
 ################################################################################
     def _sample_laplacegrid(self,spinmax=1000.,spindensity=1.):
         """
-            Sampling the function lambda(nu) that was set up in _retrieve_laplacegrid().
-            This subroutine includes a har-coded custom sampling density function for the spin parameter.
+        Sampling the function lambda(nu) that was set up in _retrieve_laplacegrid().
+        This subroutine includes a har-coded custom sampling density function for the spin parameter.
 
-            Parameters:
-                self:     asymptotic object
-                spinmax:  float
-                          The maximum spin parameter value for which lambda eigenvalues will be retrieved
-                          (following the Laplace tidal equation). Default value = 1000.
-                spindensity: float
-                          A scaling factor for the sampling density function. The default value (=1) results
-                          in 20000 data points for the spin parameter range [0, 100].
+        Parameters
+        ----------
+        self: asymptotic object
+        spinmax: float
+            The maximum spin parameter value for which lambda eigenvalues will be retrieved
+            (following the Laplace tidal equation). Default value = 1000.
+        spindensity: float
+            A scaling factor for the sampling density function. The default value (=1) results
+            in 20000 data points for the spin parameter range [0, 100].
 
-            Returns:
-                spin:     numpy array, dtype=float
-                          The spin parameter values for which lambda eigenvalues are returned
-                lam:      numpy array, dtype=float
-                          The lambda eigenvalues corresponding to the spin parameter values in the array 'spin'
-                spinsqlam: numpy array, dtype=float
-                          = spin * sqrt(lam)
-        """
+        Returns
+        ----------
+        spin: numpy array, dtype=float
+            The spin parameter values for which lambda eigenvalues are returned
+        lam: numpy array, dtype=float
+            The lambda eigenvalues corresponding to the spin parameter values in the array 'spin'
+        spinsqlam: numpy array, dtype=float
+            = spin * sqrt(lam)
+            """
 
         if((self.kval >= 0) & (self.mval != 0)):
             spinmin = -0.1
@@ -150,16 +155,17 @@ class Asymptotic(object):
 ################################################################################
     def update_laplacegrid(self,spinmax=10000.,spindensity=1.):
         """
-            Recalculating the spin parameter range and the corresponding lambda eigenvalues included within the asymptotic object.
+        Recalculating the spin parameter range and the corresponding lambda eigenvalues included within the asymptotic object.
 
-            Parameters:
-                self:     asymptotic object
-                spinmax:  float
-                          The maximum spin parameter value for which lambda eigenvalues will be retrieved
-                          (following the Laplace tidal equation). Default value = 1000.
-                spindensity: float
-                          A scaling factor for the sampling density function. The default value (=1) results
-                          in 20000 data points for the spin parameter range [0, 100].
+        Parameters
+        ----------
+        self: asymptotic object
+        spinmax: float
+            The maximum spin parameter value for which lambda eigenvalues will be retrieved
+            (following the Laplace tidal equation). Default value = 1000.
+        spindensity: float
+            A scaling factor for the sampling density function. The default value (=1) results
+            in 20000 data points for the spin parameter range [0, 100].
         """
 
         self.spin, self.lam, self.spinsqlam = self._sample_laplacegrid(spinmax=spinmax,spindensity=spindensity)
@@ -167,22 +173,24 @@ class Asymptotic(object):
 ################################################################################
     def uniform_pattern(self,frot,Pi0,alpha_g=0.5,unit='days'):
         """
-            Calculates the asymptotic period spacing pattern for a star with uniform rotation, following Eq.4 in Van Reeth et al. 2016, A&A, 593, A120.
+        Calculates the asymptotic period spacing pattern for a star with uniform rotation, following Eq.4 in Van Reeth et al. 2016, A&A, 593, A120.
 
-            Parameters:
-                self:     asymptotic object
-                frot:     astropy quantity (type: frequency)
-                          the rotation frequency of the star
-                Pi0:      astropy quantity (type: time)
-                          the buoyancy radius of the star
-                alpha_g:  float
-                          phase term, dependent on the boundary conditions of the g-mode cavity. Typically, alpha_g = 1/2.
-                unit:     string
-                          The preferred (astropy) unit of the calculated g-mode pattern. The options are 'days', 'seconds',
-                          'cycle_per_day', 'muHz', 'nHz', 'Hz'. Default = 'days'.
+        Parameters
+        ----------
+        self: asymptotic object
+        frot: astropy quantity (type frequency)
+            the rotation frequency of the star
+        Pi0: astropy quantity (type time)
+            the buoyancy radius of the star
+        alpha_g:  float
+            phase term, dependent on the boundary conditions of the g-mode cavity. Typically, alpha_g = 1/2.
+        unit: string
+            The preferred (astropy) unit of the calculated g-mode pattern. The options are 'days', 'seconds',
+            'cycle_per_day', 'muHz', 'nHz', 'Hz'. Default = 'days'.
 
-            Output:
-                pattern:  array, dtype = astropy quantity matching the preferred 'unit'.
+        Returns
+        ----------
+        pattern:  array, dtype = astropy quantity matching the preferred 'unit'.
         """
 
         ### Verifying the input
@@ -232,20 +240,22 @@ class Asymptotic(object):
 ################################################################################
     def scale_pattern(self, pattern_in, frot_in, frot_out):
         """
-            Scale an input g-mode pulsation pattern according to a different rotation rate
+        Scale an input g-mode pulsation pattern according to a different rotation rate
 
-            Parameters:
-                self:          asymptotic object
-                pattern_in:    astropy quantity array
-                               the input g-mode pulsation pattern (associated with the same mode identification as the asymptotic object)
-                frot_in:       astropy quantity (frequency)
-                               the cyclic rotation frequency associated with the input g-mode pulsation pattern
-                frot_out:      astropy quantity (frequency)
-                               the cyclic rotation frequency to which we want to scale the input g-mode pulsation pattern
+        Parameters
+        ----------
+        self:  asymptotic object
+        pattern_in: astropy quantity array
+            the input g-mode pulsation pattern (associated with the same mode identification as the asymptotic object)
+        frot_in: astropy quantity (frequency)
+            the cyclic rotation frequency associated with the input g-mode pulsation pattern
+        frot_out: astropy quantity (frequency)
+            the cyclic rotation frequency to which we want to scale the input g-mode pulsation pattern
 
-            Returns:
-                pattern_out:   astropy quantity array
-                               the output (scaled) g-mode pulsation pattern, with the same unit as pattern_in
+        Returns
+        ----------
+        pattern_out:   astropy quantity array
+            the output (scaled) g-mode pulsation pattern, with the same unit as pattern_in
         """
 
         # checking if the input pattern has been given as frequencies or periods

@@ -13,14 +13,18 @@ def _make_nested_dict(list_keys, value):
     """
     Recursively make a nested dictionary with the keys at different levels set by list_keys,
     and the most nested level containing the value.
-    ------- Parameters -------
-    list_keys: list
+    
+    Parameters
+    ----------
+    list_keys: list of keys
         list of keys for the different levels of the nested dictionary
     value: any
         The value, list, dictionary... that is coupled to the key
 
-    ------- Returns -------
-    A nested dictionary
+    Returns
+    ----------
+    dict: dict
+        A nested dictionary
     """
 
     if len(list_keys) == 1:
@@ -35,7 +39,9 @@ class GridSummary:
     def __init__(self, grid_parameters=None, Zsun=0.014):
         """
         Summary of the information of the grid of stellar models.
-        ------- Parameters -------
+        
+        Parameters
+        ----------
         grid_path: string
             Path to the stellar model grid.
         Zsun: float
@@ -50,7 +56,9 @@ class GridSummary:
             magnitudes=False, output_name='stellar_grid.h5', file_ending='hist', files_directory_name='history'):
         '''
         Create a hdf5 summary file containing certain columns of all history files in a MESA grid.
-        ------- Parameters -------
+        
+        Parameters
+        ----------
         dir_path: string
             The path to the grid directory.
         columns: list of strings
@@ -118,7 +126,9 @@ class GridSummary:
     def read_summary_file(self, grid_path):
         '''
         Read in a stellar model grid in hdf5 format created with create_summary_file.
-        ----- Parameters -----
+
+        Parameters
+        ----------
         grid_path: string
             Path to the stellar model grid.
         '''

@@ -12,7 +12,9 @@ logger = logging.getLogger('logger.ffg')
 def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', parameters=['rot', 'Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None):
     """
     Extract frequencies from each globbed GYRE file and write them to 1 large file.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     gyre_files: string
         String to glob to find all the relevant GYRE summary files.
     output_file: string
@@ -47,14 +49,17 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', paramete
 def all_freqs_from_summary(GYRE_summary_file, parameters):
     """
     Extract model parameters and pulsation frequencies from a GYRE summary file
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     GYRE_summary_file: string
         path to the GYRE summary file
     parameters: list of strings
         List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
 
-    ------- Returns -------
-    param_dict: dictionary
+    Returns
+    ----------
+    param_dict: dict
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
 

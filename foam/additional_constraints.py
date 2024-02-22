@@ -12,7 +12,9 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     """
     Enforce an n-sigma constraint on the models based on the surface observables.
     Save this as a file with prefix indicating how many sigma the error box was.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     merit_values_file: string
         Path to the hdf5 files with the merit function values and the surface info of the models in the grid.
     observations_file: string
@@ -23,7 +25,7 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
     constraint_companion: dict
         Information on the companion star. Set to None to model single stars,
         or provide this to include binary constraints using isochrone-clouds.
-    isocloud_grid_summary: nested dictionary
+    isocloud_grid_summary: dict
         Nested dictionary, the keys at its two levels are metallicity and mass.
         Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     surfaceGrid_file: string
@@ -69,19 +71,22 @@ def surface_constraint(merit_values_file, observations_file=None, nsigma=3, cons
 def get_age(model, df, free_parameters = ['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], evolution_parameter='Xc', evolution_step = -1E-2):
     """
     Get the age of the models one step older and younger than the provided model.
-    ------- Parameters -------
-        model: pandas series
-            Parameters of the model.
-        df: pandas dataframe
-            Dataframe with the model parameters and age (and surface info) of the theoretical models.
-        free_parameters: list of strings
-            List of all the parameters varied in the model grid.
-        evolution_parameter: string
-            Name of the parameter that is used to track the evolutionary steps of the model.
-        evolution_step: float
-            Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
+   
+    Parameters
+    ----------
+    model: pandas series
+        Parameters of the model.
+    df: pandas dataFrame
+        Dataframe with the model parameters and age (and surface info) of the theoretical models.
+    free_parameters: list of strings
+        List of all the parameters varied in the model grid.
+    evolution_parameter: string
+        Name of the parameter that is used to track the evolutionary steps of the model.
+    evolution_step: float
+        Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
 
-    ------- Returns -------
+    Returns
+    ----------
     min_age, max_age: tuple of integers
         Age of the model one step younger and older than the provided model,
         these are the minimum and maximum age to accept models in the isochrone-cloud.
@@ -112,15 +117,17 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
     """
     Enforce an n-sigma constraint on the models based on spectroscopic observations of the binary companion employing isochrone-clouds.
     Assumes the same metallicity 'Z' for both primary and secondary, masses 'M' compatible with observed mass ratio 'q', and ages similar within 1 gridstep.
-    ------- Parameters -------
+    
+    Parameters
+    ----------
     df_Theo_row: tuple, made of (int, pandas series)
         tuple returned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
         second tuple entry is a pandas series, containing a row from the pandas dataFrame.
-        (This row holds model parameters, the meritfunction value, and surface properties.)
+        (This row holds model parameters, the merit function value, and surface properties.)
     constraint_companion: dict
         Information on the companion star, including surface parameters, mass ratio (q), the errors,
         and a boolean indicating whether the primary or secondary star is assumed pulsating and hence being modelled.
-    isocloud_grid_summary: nested dictionary
+    isocloud_grid_summary: dict
         Nested dictionary, the keys at its two levels are metallicity and mass.
         Holds the surface properties of the grid for the isochrone-cloud modelling per combination of metallicity-mass.
     nsigma: int
@@ -133,7 +140,9 @@ def enforce_binary_constraints(df_Theo_row, constraint_companion=None, isocloud_
         Name of the parameter that is used to track the evolutionary steps of the model.
     evolution_step: float
         Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
-    ------- Returns -------
+    
+    Returns
+    ----------
     index: int or None
         Index of the dataframe that needs to be removed if binary constraints do not allow the model to remain.
         Returns None if the binary constraints do not discard the model.
