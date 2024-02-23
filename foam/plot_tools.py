@@ -75,7 +75,7 @@ def make_multipanel_plot(nr_panels=1, xlabel='', ylabels=[''], keys=None, title=
     return ax_dict, fig
 
 ################################################################################
-def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, observations_file, label_size=20, fig_outputDir='figures_correlation/',
+def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, observations_file, label_size=20, fig_output_dir='figures_correlation/',
                       percentile_to_show=0.5, logg_or_logL='logL', mark_best_model= False, n_sigma_box=3, grid_parameters = None,
                       axis_labels_dict = {'rot': r'$\Omega_{\mathrm{rot}}$ [d$^{-1}$]' ,'M': r'M$_{\rm ini}$', 'Z': r'Z$_{\rm ini}$',
                       'logD':r'log(D$_{\rm env}$)', 'aov':r'$\alpha_{\rm CBM}$','fov':r'f$_{\rm CBM}$','Xc':r'$\rm X_c$'} ):
@@ -99,7 +99,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
         Title of the figure and name of the saved png.
     label_size: int
         Size of the axis labels.
-    fig_outputDir: string
+    fig_output_dir: string
         Output directory for the figures.
     percentile_to_show: float
         Percentile of models to show in the plots.
@@ -127,25 +127,25 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
             }
     CustomCMap = LinearSegmentedColormap('CustomMap', cdict)
     # theoretical models within the error ellipse
-    df_Theo_EE = pd.read_hdf(merit_values_file_error_ellipse, delim_whitespace=True, header=0)
-    df_Theo_EE = df_Theo_EE.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
+    dataframe_theory_error_ellipse = pd.read_hdf(merit_values_file_error_ellipse, delim_whitespace=True, header=0)
+    dataframe_theory_error_ellipse = dataframe_theory_error_ellipse.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
 
     # theoretical models
-    df_Theo = pd.read_hdf(merit_values_file)
-    df_Theo = df_Theo.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
-    df_Theo = df_Theo.iloc[int(df_Theo.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
+    dataframe_theory = pd.read_hdf(merit_values_file)
+    dataframe_theory = dataframe_theory.sort_values('meritValue', ascending=False)    # Order from high to low, to plot lowest values last
+    dataframe_theory = dataframe_theory.iloc[int(dataframe_theory.shape[0]*(1-percentile_to_show)):] # only plot the given percentage lowest meritValues
 
-    if df_Theo.iloc[0]['rot'] == df_Theo.iloc[1]['rot'] == df_Theo.iloc[2]['rot'] == df_Theo.iloc[-1]['rot']: # rotation is fixed, don't plot it
-        df_EE = df_Theo_EE.filter(['meritValue']+grid_parameters ) # make new dataframe with only needed info
-        df = df_Theo.filter(['meritValue']+grid_parameters )       # make new dataframe with only needed info
+    if dataframe_theory.iloc[0]['rot'] == dataframe_theory.iloc[1]['rot'] == dataframe_theory.iloc[2]['rot'] == dataframe_theory.iloc[-1]['rot']: # rotation is fixed, don't plot it
+        df_error_ellipse = dataframe_theory_error_ellipse.filter(['meritValue']+grid_parameters ) # make new dataframe with only needed info
+        df = dataframe_theory.filter(['meritValue']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellipse from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_error_ellipse, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', '_merge'], axis=1)
 
     else: # rotation was varied, include it in the plots
-        df_EE = df_Theo_EE.filter(['meritValue']+['rot']+grid_parameters ) # make new dataframe with only needed info
-        df = df_Theo.filter(['meritValue']+['rot']+grid_parameters )       # make new dataframe with only needed info
+        df_error_ellipse = dataframe_theory_error_ellipse.filter(['meritValue']+['rot']+grid_parameters ) # make new dataframe with only needed info
+        df = dataframe_theory.filter(['meritValue']+['rot']+grid_parameters )       # make new dataframe with only needed info
         # Remove models in the error ellipse from the regular dataframe.
-        df = pd.merge(df,df_EE, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
+        df = pd.merge(df,df_error_ellipse, indicator=True, how='outer', on=grid_parameters, suffixes=[None, '_remove']).query('_merge=="left_only"').drop(['meritValue_remove', 'rot_remove', '_merge'], axis=1)
 
     ax_dict={}  # dictionary of dictionaries, holding the subplots of the figure, keys indicate position (row, column) of the subplot
     nr_params = len(df.columns)-1
@@ -155,21 +155,21 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
     fig=plt.figure(figsize=(10,8))
     gs=GridSpec(nr_params,nr_params) # multiple rows and columns
 
-    if mark_best_model: min_index = df_EE['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
+    if mark_best_model: min_index = df_error_ellipse['meritValue'].idxmin(axis='index', skipna=True)    # get the best model according to the point estimator
 
     for ix in range(0, nr_params):
         for iy in range(0, nr_params-ix):
             if iy==0:
-                shX = None
+                share_x = None
             else:
-                shX = ax_dict[0][ix]
+                share_x = ax_dict[0][ix]
             if (ix==0) or (iy+ix == nr_params-1):
-                shY = None
+                share_y = None
             else:
-                shY = ax_dict[iy][0]
+                share_y = ax_dict[iy][0]
 
             # create subplots and add them to the dictionary
-            ax = fig.add_subplot(gs[nr_params-iy-1:nr_params-iy,ix:ix+1], sharex=shX, sharey=shY)
+            ax = fig.add_subplot(gs[nr_params-iy-1:nr_params-iy,ix:ix+1], sharex=share_x, sharey=share_y)
             ax_dict[iy].update({ix:ax})
 
             # manage visibility and size of the labels and ticks
@@ -191,7 +191,7 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
                 # determine edges of the bins for the histogram distribution plots
                 if df.columns[nr_params-ix] == 'rot':
                     domain = (values[0], values[-1])
-                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=25, range=domain, density=False, cumulative=False, histtype='step' )
+                    ax.hist( df_error_ellipse.iloc[:,nr_params-ix], bins=25, range=domain, density=False, cumulative=False, histtype='step' )
 
                 else:
                     if len(values) > 1:
@@ -202,14 +202,14 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
                     for i in range(len(values)-1):
                         bin_edges.extend([(values[i]+values[i+1])/2])
                     bin_edges.extend([values[-1]+bin_half_width])
-                    ax.hist( df_EE.iloc[:,nr_params-ix], bins=bin_edges, density=False, cumulative=False, histtype='step' )
+                    ax.hist( df_error_ellipse.iloc[:,nr_params-ix], bins=bin_edges, density=False, cumulative=False, histtype='step' )
 
                 ax.tick_params(axis='y',left=False)
                 continue
 
             im = ax.scatter(df.iloc[:,nr_params-ix], df.iloc[:,iy+1], c=np.log10(df.iloc[:,0]), cmap='Greys_r')
-            im = ax.scatter(df_EE.iloc[:,nr_params-ix], df_EE.iloc[:,iy+1], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
-            if mark_best_model: ax.scatter(df_EE.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
+            im = ax.scatter(df_error_ellipse.iloc[:,nr_params-ix], df_error_ellipse.iloc[:,iy+1], c=np.log10(dataframe_theory_error_ellipse['meritValue']), cmap=CustomCMap)
+            if mark_best_model: ax.scatter(df_error_ellipse.loc[min_index][nr_params-ix], df.loc[min_index][iy+1], color='white', marker = 'x')
             # Adjust x an y limits of subplots
             limit_adjust = (max(df.iloc[:,iy+1]) - min(df.iloc[:,iy+1]))*0.08
             if limit_adjust == 0: limit_adjust=0.1
@@ -228,26 +228,26 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
 
     # Observations
     if n_sigma_box != None:
-        Obs_dFrame  = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col='index')
-        if (('logL' in Obs_dFrame.columns) or ('logg' in Obs_dFrame.columns)) and ('Teff' in Obs_dFrame.columns)  :
-            if not 'logL' in Obs_dFrame.columns:
+        obs_dataframe  = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col='index')
+        if (('logL' in obs_dataframe.columns) or ('logg' in obs_dataframe.columns)) and ('Teff' in obs_dataframe.columns)  :
+            if 'logL' not in obs_dataframe.columns:
                 logg_or_logL = 'logg'
 
             # Observed spectroscopic error bar, only added if observational constraints were provided.
             # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigma wide)
-            width_logTeff_sigma= np.log10(Obs_dFrame['Teff'][0]+Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0])
-            width_logTeff_nsigma= np.log10(Obs_dFrame['Teff'][0]+n_sigma_box*Obs_dFrame['Teff_err'][0]) - np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0])
-            errorbox_1s = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-Obs_dFrame['Teff_err'][0]),Obs_dFrame[logg_or_logL][0]-Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                        width_logTeff_sigma, 2*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
-            errorbox_ns = patches.Rectangle((np.log10(Obs_dFrame['Teff'][0]-n_sigma_box*Obs_dFrame['Teff_err'][0]), Obs_dFrame[logg_or_logL][0]-n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0]),
-                        width_logTeff_nsigma, 2*n_sigma_box*Obs_dFrame[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            width_logTeff_sigma= np.log10(obs_dataframe['Teff'][0]+obs_dataframe['Teff_err'][0]) - np.log10(obs_dataframe['Teff'][0]-obs_dataframe['Teff_err'][0])
+            width_logTeff_nsigma= np.log10(obs_dataframe['Teff'][0]+n_sigma_box*obs_dataframe['Teff_err'][0]) - np.log10(obs_dataframe['Teff'][0]-n_sigma_box*obs_dataframe['Teff_err'][0])
+            errorbox_1s = patches.Rectangle((np.log10(obs_dataframe['Teff'][0]-obs_dataframe['Teff_err'][0]),obs_dataframe[logg_or_logL][0]-obs_dataframe[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_sigma, 2*obs_dataframe[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
+            errorbox_ns = patches.Rectangle((np.log10(obs_dataframe['Teff'][0]-n_sigma_box*obs_dataframe['Teff_err'][0]), obs_dataframe[logg_or_logL][0]-n_sigma_box*obs_dataframe[f'{logg_or_logL}_err'][0]),
+                        width_logTeff_nsigma, 2*n_sigma_box*obs_dataframe[f'{logg_or_logL}_err'][0],linewidth=1.7,edgecolor='cyan',facecolor='none', zorder=2.1)
             ax_hrd.add_patch(errorbox_1s)
             ax_hrd.add_patch(errorbox_ns)
 
     if logg_or_logL=='logg': ax_hrd.invert_yaxis()
 
-    im = ax_hrd.scatter(df_Theo['logTeff'], df_Theo[logg_or_logL], c=np.log10(df_Theo['meritValue']), cmap='Greys_r')
-    im_EE = ax_hrd.scatter(df_Theo_EE['logTeff'], df_Theo_EE[logg_or_logL], c=np.log10(df_Theo_EE['meritValue']), cmap=CustomCMap)
+    im = ax_hrd.scatter(dataframe_theory['logTeff'], dataframe_theory[logg_or_logL], c=np.log10(dataframe_theory['meritValue']), cmap='Greys_r')
+    im_error_ellipse = ax_hrd.scatter(dataframe_theory_error_ellipse['logTeff'], dataframe_theory_error_ellipse[logg_or_logL], c=np.log10(dataframe_theory_error_ellipse['meritValue']), cmap=CustomCMap)
     ax_hrd.set_ylabel(f'{logg_or_logL[:-1]} {logg_or_logL[-1]}')
     if logg_or_logL == 'logL':
         ax_hrd.set_ylabel(r'log(L/L$_{\odot}$)', size=label_size)
@@ -259,16 +259,16 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
     ax_hrd.tick_params(which='major', length=6)
     ax_hrd.tick_params(which='minor', length=4)
 
-    if mark_best_model: ax_hrd.scatter(df_Theo_EE['logTeff'][min_index], df_Theo_EE[logg_or_logL][min_index], marker='x', color='white')
+    if mark_best_model: ax_hrd.scatter(dataframe_theory_error_ellipse['logTeff'][min_index], dataframe_theory_error_ellipse[logg_or_logL][min_index], marker='x', color='white')
 
     # Add color bar
     cax = fig.add_axes([0.856, 0.565, 0.04, 0.415]) # X, Y, width, height
     cbar= fig.colorbar(im, cax=cax, orientation='vertical')
     cax2 = fig.add_axes([0.856, 0.137, 0.04, 0.415]) # X, Y, width, height
-    cbar2= fig.colorbar(im_EE, cax=cax2, orientation='vertical', )
+    cbar2= fig.colorbar(im_error_ellipse, cax=cax2, orientation='vertical', )
 
-    if df_Theo_EE.shape[0]==1: # To prevent messing up colours due to automatic rescaling of colorbar
-        im_EE.set_clim(np.log10(df_Theo_EE['meritValue']), np.log10(df_Theo_EE['meritValue'])*1.1)
+    if dataframe_theory_error_ellipse.shape[0]==1: # To prevent messing up colours due to automatic rescaling of colorbar
+        im_error_ellipse.set_clim(np.log10(dataframe_theory_error_ellipse['meritValue']), np.log10(dataframe_theory_error_ellipse['meritValue'])*1.1)
 
     if '_MD_' in fig_title:
         cbar.set_label('log(MD)', rotation=90, size=label_size)
@@ -283,8 +283,8 @@ def corner_plot(merit_values_file, merit_values_file_error_ellipse, fig_title, o
     fig.subplots_adjust(left=0.114, right=0.835, bottom=0.137, top=0.99)
 
     # fig.suptitle(fig_title, horizontalalignment='left', size=20, x=0.28)
-    Path(fig_outputDir).mkdir(parents=True, exist_ok=True)
-    fig.savefig(f'{fig_outputDir}{fig_title}.png', dpi=400)
+    Path(fig_output_dir).mkdir(parents=True, exist_ok=True)
+    fig.savefig(f'{fig_output_dir}{fig_title}.png', dpi=400)
     plt.clf()
     plt.close(fig)
 ################################################################################
@@ -474,9 +474,9 @@ def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
     ax: Axes
         Axes object on which the plot will be made. If None: make figure and axis within this function.
     number_mix_zones: int
-        Number of mixing zones included in the mesa history file
+        Number of mixing zones included in the mesa history file.
     xaxis: string
-        quantity to put on the x-axis of the plot (e.g. model_number or star_age)
+        Quantity to put on the x-axis of the plot (e.g. model_number or star_age).
     """
     if ax is None:
         fig = plt.figure( figsize=(10, 4))
@@ -484,21 +484,20 @@ def plot_khd(hist_file, ax=None, number_mix_zones=8, xaxis='model_number'):
 
     _, data = ffm.read_mesa_file(hist_file)
 
-    xvals=data[xaxis]
-    M_star = data['star_mass']
-    M_ini  = M_star[0]
+    x_values=data[xaxis]
+    m_star = data['star_mass']
+    m_ini  = m_star[0]
 
-    N_mix = number_mix_zones
-    for j in range(N_mix):
+    for j in range(number_mix_zones):
         colours = {'-1':'w', '0':'w', '1':'lightgrey', '2':'b', '7':'g', '3':'cornflowerblue', '8':'red'}
-        if j == N_mix-1:
-            ax.vlines(xvals, 0, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+        if j == number_mix_zones-1:
+            ax.vlines(x_values, 0, data[f'mix_qtop_{number_mix_zones-j}']*m_star/m_ini, color=[colours[str(x)] for x in data[f'mix_type_{number_mix_zones-j}']])
         else:
-            ax.vlines(xvals, data[f'mix_qtop_{N_mix-1-j}']*M_star/M_ini, data[f'mix_qtop_{N_mix-j}']*M_star/M_ini, color=[colours[str(x)] for x in data[f'mix_type_{N_mix-j}']])
+            ax.vlines(x_values, data[f'mix_qtop_{number_mix_zones-1-j}']*m_star/m_ini, data[f'mix_qtop_{number_mix_zones-j}']*m_star/m_ini, color=[colours[str(x)] for x in data[f'mix_type_{number_mix_zones-j}']])
 
-    ax.plot(xvals, M_star / M_ini, lw=1, color='black', label=f'{M_ini:.1f} $M_\odot$')
+    ax.plot(x_values, m_star / m_ini, lw=1, color='black', label=f'{m_ini:.1f} $M_\odot$')
 
-    ax.set_xlim(min(xvals)*0.99, max(xvals)*1.01)
+    ax.set_xlim(min(x_values)*0.99, max(x_values)*1.01)
     ax.set_ylim(0, 1.02)
 
     ax.plot([], [], lw=10, color='lightgrey', label=r'Convective') # Only to make it appear in the Legend

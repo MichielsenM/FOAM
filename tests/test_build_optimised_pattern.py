@@ -23,45 +23,45 @@ def test_generate_spacing_series_with_errors():
 
 def test_puls_series_from_given_puls_at_end():
     """Test building theoretical pulsation pattern from end of pattern."""
-    Theo_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
-    Obs_freq  = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
-    Obs_to_build_from = 1.06
+    theory_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
+    obs_freq  = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
+    obs_to_build_from = 1.06
     expected = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
-    result = bop.puls_series_from_given_puls(Theo_freq, Obs_freq, Obs_to_build_from)
+    result = bop.puls_series_from_given_puls(theory_freq, obs_freq, obs_to_build_from)
 
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected, result)])
 
 def test_puls_series_from_given_puls_midway():
     """Test building theoretical pulsation pattern from midway pattern."""
-    Theo_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
-    Obs_freq = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
-    Obs_to_build_from = 0.88
+    theory_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
+    obs_freq = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
+    obs_to_build_from = 0.88
     expected = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
-    result = bop.puls_series_from_given_puls(Theo_freq, Obs_freq, Obs_to_build_from)
+    result = bop.puls_series_from_given_puls(theory_freq, obs_freq, obs_to_build_from)
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected, result)])
 
 def test_chisq_longest_sequence():
     """Test building theoretical pulsation pattern according to the longest sequence method."""
-    Theo_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
+    theory_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
     orders    = np.asarray([-1, -2, -3, -4, -5, -6, -7, -8])
-    Obs_freq  = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
-    Obs_errs  = np.asarray([ 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
+    obs_freq  = np.asarray([0.68, 0.76, 0.88, 0.95, 1.02, 1.06])
+    obs_errs  = np.asarray([ 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
     expected_freq = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
     expected_orders = [-2, -3, -4, -5, -6, -7]
-    result = bop.chisq_longest_sequence(Theo_freq, orders, Obs_freq, Obs_errs)
+    result = bop.chisq_longest_sequence(theory_freq, orders, obs_freq, obs_errs)
     assert abs(result[0]-6.199999999999989) < 1E-15
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected_freq, result[1])])
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected_orders, result[2])])
 
 def test_chisq_longest_sequence2():
     """Test building theoretical pulsation pattern according to the longest sequence method."""
-    Theo_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
+    theory_freq = np.asarray([0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3])
     orders    = np.asarray([-1, -2, -3, -4, -5, -6, -7, -8])
-    Obs_freq  = np.asarray([0.68, 0.76, 0.84, 0.94, 1.02, 1.06])
-    Obs_errs  = np.asarray([ 0.05, 0.03, 0.07, 0.08, 0.06, 0.1])
+    obs_freq  = np.asarray([0.68, 0.76, 0.84, 0.94, 1.02, 1.06])
+    obs_errs  = np.asarray([ 0.05, 0.03, 0.07, 0.08, 0.06, 0.1])
     expected_freq = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
     expected_orders = [-1, -2, -3, -4, -5, -6]
-    result = bop.chisq_longest_sequence(Theo_freq, orders, Obs_freq, Obs_errs)
+    result = bop.chisq_longest_sequence(theory_freq, orders, obs_freq, obs_errs)
     assert abs(result[0]-0.09826369168357019) < 1E-17
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected_freq, result[1])])
     assert all ([abs((a-b)/a)< 1E-10 for a,b in zip(expected_orders, result[2])])    

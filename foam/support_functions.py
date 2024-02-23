@@ -1,4 +1,4 @@
-"""Helpful functions in general. Reading HDF5, processing strings, manipulating dataframes..."""
+"""Helpful functions in general. Reading HDF5, processing strings, manipulating dataFrames..."""
 import h5py, re
 import pandas as pd
 from pathlib import Path

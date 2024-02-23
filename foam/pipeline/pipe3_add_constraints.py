@@ -72,6 +72,6 @@ if config.n_sigma_box != None:
     if config.nr_cpu is not None:
         nr_cpu = min(config.nr_cpu, 4)
     with multiprocessing.Pool( nr_cpu ) as p: # For some reason 4 processes is faster than more, find out why more becomes slower
-        func = partial( ac.surface_constraint,  observations_file=observations, nsigma=config.n_sigma_box, surfaceGrid_file=f'{config.main_directory}/../grid_summary/surfaceGrid_{grid}.hdf',
+        func = partial( ac.surface_constraint,  observations_file=observations, nsigma=config.n_sigma_box, surface_grid_file=f'{config.main_directory}/../grid_summary/surfaceGrid_{grid}.hdf',
                             constraint_companion=config.constraint_companion, isocloud_grid_summary=isocloud_summary_dict, free_parameters = config.free_parameters, evolution_parameter=config.evolution_parameter, evolution_step = config.evolution_step)
         p.map(func, files_to_analyse)

@@ -95,7 +95,7 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         Name (or path) for the file containing all the pulsation frequencies of the grid.
     parameters: list of strings
         List of parameters varied in the computed grid, so these are taken from the
-        name of the profile files, and included in the ouput file containing the info of the whole grid.
+        name of the profile files, and included in the output file containing the info of the whole grid.
     nr_cpu: int
         Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     additional_observables: list of strings

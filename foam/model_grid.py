@@ -17,7 +17,7 @@ def _make_nested_dict(list_keys, value):
     Parameters
     ----------
     list_keys: list of keys
-        list of keys for the different levels of the nested dictionary
+        List of keys for the different levels of the nested dictionary
     value: any
         The value, list, dictionary... that is coupled to the key
 
@@ -80,14 +80,14 @@ class GridSummary:
             for file in files:
                 if file.endswith(file_ending) and subdir.endswith(files_directory_name):
                     # Read in the files and get the main parameters from the filename
-                    header, data = ffm.read_mesa_file(os.path.join(subdir, file))
+                    _, data = ffm.read_mesa_file(os.path.join(subdir, file))
                     filename_params = sf.get_param_from_filename(file, self.grid_parameters)
 
                     # Keep only the specified columns and the absolute magnitudes (if magnitudes==True)
                     for key in list(data.keys()):
                         if magnitudes == True and key.startswith('abs_mag_'):
                             continue
-                        elif not key in columns:
+                        elif key not in columns:
                             del data[key]
 
                     # Create a nested dictionary with the order of levels the same as the grid_parameters
@@ -98,7 +98,7 @@ class GridSummary:
                         param = param_list.pop(0)
 
                         if i == 0:
-                            if not param in summary_data:
+                            if param not in summary_data:
                                 summary_data[param] = _make_nested_dict(param_list, data)
                                 break
                             else:
@@ -108,7 +108,7 @@ class GridSummary:
                             nested_summary[param] = data
 
                         else:
-                            if not param in nested_summary:
+                            if param not in nested_summary:
                                 nested_summary[param] = _make_nested_dict(param_list, data)
                                 break
                             else:
@@ -145,7 +145,7 @@ class GridSummary:
         """
         dictionary = self.grid_data
         for parameter in self.grid_parameters:
-            dictkeys = sorted(list(dictionary.keys()))
-            values = np.array([x for x in dictkeys])
-            dictionary = dictionary[dictkeys[-1]] # Highest mass values have largest range in logDext, hence use highest key of each parameter
+            dict_keys = sorted(list(dictionary.keys()))
+            values = np.array([x for x in dict_keys])
+            dictionary = dictionary[dict_keys[-1]] # Highest mass values have largest range in logDext, hence use highest key of each parameter
             setattr(self, f'{parameter}_array', values)

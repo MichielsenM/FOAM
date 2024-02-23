@@ -46,13 +46,13 @@ def extract_frequency_grid(gyre_files, output_file='pulsationGrid.hdf', paramete
     df.to_hdf(f'{output_file}', 'pulsgrid', format='table', mode='w')
 
 ################################################################################
-def all_freqs_from_summary(GYRE_summary_file, parameters):
+def all_freqs_from_summary(gyre_summary_file, parameters):
     """
     Extract model parameters and pulsation frequencies from a GYRE summary file
     
     Parameters
     ----------
-    GYRE_summary_file: string
+    gyre_summary_file: string
         path to the GYRE summary file
     parameters: list of strings
         List of input parameters varied in the computed grid, so these are read from the filename and included in returned line.
@@ -63,8 +63,8 @@ def all_freqs_from_summary(GYRE_summary_file, parameters):
         Dictionary containing all the model parameters and pulsation frequencies of the GYRE summary file.
     """
 
-    _, data = sf.read_hdf5(GYRE_summary_file)
-    param_dict = sf.get_param_from_filename(GYRE_summary_file, parameters, values_as_float=True)
+    _, data = sf.read_hdf5(gyre_summary_file)
+    param_dict = sf.get_param_from_filename(gyre_summary_file, parameters, values_as_float=True)
 
     for j in range(len(data['freq'])-1, -1, -1):    # Arrange increasing in radial order
         n_pg = data["n_pg"][j]
