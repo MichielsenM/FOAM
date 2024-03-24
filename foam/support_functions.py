@@ -1,12 +1,17 @@
 """Helpful functions in general. Reading HDF5, processing strings, manipulating dataFrames..."""
-import h5py, re
-import pandas as pd
-from pathlib import Path
-import logging
 
-logger = logging.getLogger('logger.sf')
+import logging
+import re
+from pathlib import Path
+
+import h5py
+import pandas as pd
+
+logger = logging.getLogger("logger.sf")
+
+
 ################################################################################
-def split_line(line, sep) :
+def split_line(line, sep):
     """
     Splits a string in 2 parts.
 
@@ -28,8 +33,9 @@ def split_line(line, sep) :
     assert sep_ == sep
     return head, tail
 
+
 ################################################################################
-def substring(line, sep_first, sep_second) :
+def substring(line, sep_first, sep_second):
     """
     Get part of a string between 2 specified separators.
     If second separator is not found, return everything after first separator.
@@ -48,11 +54,13 @@ def substring(line, sep_first, sep_second) :
     head: string
         Part of the string between the 2 separators.
     """
-    head, tail = split_line(line, sep = sep_first)
+    head, tail = split_line(line, sep=sep_first)
     if sep_second not in tail:
         return tail
-    head, tail = split_line(tail, sep =sep_second)
+    head, tail = split_line(tail, sep=sep_second)
     return head
+
+
 ################################################################################
 def get_param_from_filename(file_path, parameters, values_as_float=False):
     """
@@ -74,14 +82,17 @@ def get_param_from_filename(file_path, parameters, values_as_float=False):
     param_dict = {}
     for parameter in parameters:
         try:
-            p = substring(Path(file_path).stem, parameter, '_')
+            p = substring(Path(file_path).stem, parameter, "_")
             if values_as_float:
                 p = float(p)
             param_dict[parameter] = p
         except:
-            logger.warning(f'In get_param_from_filename: parameter "{parameter}" not found in \'{file_path}\', value not added')
+            logger.warning(
+                f"In get_param_from_filename: parameter \"{parameter}\" not found in '{file_path}', value not added"
+            )
 
     return param_dict
+
 
 ################################################################################
 def read_hdf5(filename):
@@ -101,14 +112,15 @@ def read_hdf5(filename):
         Dictionary containing the data from the file as numpy arrays.
     """
     # Open the file
-    with h5py.File(filename, 'r') as file:
+    with h5py.File(filename, "r") as file:
         # Read attributes
-        attributes = dict(zip(file.attrs.keys(),file.attrs.values()))
+        attributes = dict(zip(file.attrs.keys(), file.attrs.values()))
         # Read datasets
         data = {}
-        for k in file.keys() :
+        for k in file.keys():
             data[k] = file[k][...]
     return attributes, data
+
 
 ################################################################################
 def sign(x):
@@ -125,15 +137,17 @@ def sign(x):
         A string representing the sign of the number
     """
     if abs(x) == x:
-        return '+'
+        return "+"
     else:
-        return '-'
+        return "-"
+
+
 ################################################################################
 def get_subgrid_dataframe(file_to_read, fixed_params=None):
     """
     Read a hdf5 file containing the grid information as a pandas dataframe.
     Parameters can be fixed to certain values to filter out entries with other values of that parameter.
-    
+
     Parameters
     ----------
     file_to_read: string
@@ -149,33 +163,41 @@ def get_subgrid_dataframe(file_to_read, fixed_params=None):
 
     if fixed_params is not None:
         for param in fixed_params.keys():
-            indices_to_drop = df[df[param] != fixed_params[param] ].index
-            df.drop(indices_to_drop, inplace = True)
+            indices_to_drop = df[df[param] != fixed_params[param]].index
+            df.drop(indices_to_drop, inplace=True)
         df.reset_index(drop=True, inplace=True)
 
     return df
 
+
 ################################################################################
-def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_surface+freq.hdf', grid_parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc']):
+def add_surface_to_puls_grid(
+    grid_frequencies,
+    grid_surface,
+    output_name=" grid_surface+freq.hdf",
+    grid_parameters=["Z", "M", "logD", "aov", "fov", "Xc"],
+):
     """
     Combine the output files with the frequencies and surface info of the grid in one new file,
     only keeping models that have entries in both the grid files.
 
     Parameters
     ----------
-    grid_frequencies, grid_surface: string
-        Paths to the files containing the model input parameters and corresponding frequency/surface info of the model.
+    grid_frequencies: string
+        Path to the file containing the model input parameters and corresponding frequencies of the model.
+    grid_surface: string
+        Path to the file containing the model input parameters and corresponding surface info of the model.
     output_name: string
         Name of the generated file containing the combined info.
     grid_parameters: list of string
         List of the model parameters to use for matching the entries in the freq/surface file.
     """
-    freq_df    = pd.read_hdf(grid_frequencies)
+    freq_df = pd.read_hdf(grid_frequencies)
     surface_df = pd.read_hdf(grid_surface)
     # Merge with surface info first, freq info second. Only keeping rows that both dataFrames have in common based on the 'on' columns.
-    df_merged  = pd.merge(surface_df, freq_df, how='inner', on=grid_parameters)
+    df_merged = pd.merge(surface_df, freq_df, how="inner", on=grid_parameters)
 
-    _ = df_merged.pop("age") # Don't add the age in the combined file
+    _ = df_merged.pop("age")  # Don't add the age in the combined file
 
     # take the column with rotation and place it as the first column, and its error as second column
     col = df_merged.pop("rot")
@@ -183,4 +205,4 @@ def add_surface_to_puls_grid(grid_frequencies, grid_surface, output_name='grid_s
     col = df_merged.pop("rot_err")
     df_merged.insert(1, col.name, col)
     # write the merged dataFrame to a new file
-    df_merged.to_hdf(f'{output_name}', 'puls_surface_grid', format='table', mode='w')
+    df_merged.to_hdf(f"{output_name}", "puls_surface_grid", format="table", mode="w")

@@ -1,27 +1,32 @@
 """Selection of the theoretical pulsation patterns that best match the observations,
    with the possibility to optimise the rotation rate in the process through rescaling."""
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import astropy.units as u
-import multiprocessing, sys
+
+import logging
+import multiprocessing
+import sys
 from functools import partial
 from pathlib import Path
-from lmfit import Minimizer, Parameters
-import logging
 
-logger = logging.getLogger('logger.bop')
+import astropy.units as u
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from lmfit import Minimizer, Parameters
+
+logger = logging.getLogger("logger.bop")
+
 
 ################################################################################
 def generate_spacing_series(periods, errors=None):
     """
     Generate the period spacing series (delta P = p_(n+1) - p_n )
-    
+
     Parameters
     ----------
-    periods, errors (optional): list of floats
-        Periods and their errors in units of days
-
+    periods: list of floats
+        Periods in units of days
+     errors (optional): list of floats
+        Errors on periods in units of days
     Returns
     ----------
     observed_spacings, observed_spacings_errors: tuple of lists of floats
@@ -30,24 +35,36 @@ def generate_spacing_series(periods, errors=None):
     spacings = []
     if errors is None:
         spacings_errors = None
-        for n,period_n in enumerate(periods[:-1]):
-            spacings.append( abs(period_n - periods[n+1])*86400. )
+        for n, period_n in enumerate(periods[:-1]):
+            spacings.append(abs(period_n - periods[n + 1]) * 86400.0)
     else:
         spacings_errors = []
-        for n,period_n in enumerate(periods[:-1]):
-            spacings.append( abs(period_n - periods[n+1])*86400. )
-            spacings_errors.append(np.sqrt( errors[n]**2 + errors[n+1]**2 )*86400.)
+        for n, period_n in enumerate(periods[:-1]):
+            spacings.append(abs(period_n - periods[n + 1]) * 86400.0)
+            spacings_errors.append(np.sqrt(errors[n] ** 2 + errors[n + 1] ** 2) * 86400.0)
 
     return spacings, spacings_errors
 
+
 ################################################################################
-def construct_theoretical_puls_pattern(pulsation_grid_file, observations_file, method_build_series, pattern_starting_pulsation=[], which_observable='period',
-                                        output_file='theoretical_frequency_patterns.hdf', asymptotic_object=None, estimated_rotation=None, grid_parameters=None, nr_cpu=None):
+def construct_theoretical_puls_pattern(
+    pulsation_grid_file,
+    observations_file,
+    method_build_series,
+    pattern_starting_pulsation=[],
+    which_observable="period",
+    output_file="theoretical_frequency_patterns.hdf",
+    asymptotic_object=None,
+    estimated_rotation=None,
+    grid_parameters=None,
+    nr_cpu=None,
+):
     """
     Construct the theoretical frequency pattern for each model in the grid, which correspond to the observed pattern.
     (Each theoretical model is a row in 'pulsation_grid_file'.)
-    The rotation rate will be scaled and optimised for each theoretical pattern individually. This optimisation will not be performed if asymptotic_object=None.
-    
+    The rotation rate will be scaled and optimised for each theoretical pattern individually.
+    This optimisation will not be performed if asymptotic_object=None.
+
     Parameters
     ----------
     pulsation_grid_file: string
@@ -79,36 +96,52 @@ def construct_theoretical_puls_pattern(pulsation_grid_file, observations_file, m
         Number of worker processes to use in multiprocessing. The default 'None' will use the number returned by os.cpu_count().
     """
     # Read in the files with observed and theoretical frequencies as pandas DataFrames
-    obs_dataframe  = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col='index')
+    obs_dataframe = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col="index")
     theory_dataframe = pd.read_hdf(pulsation_grid_file)
 
-    obs    = np.asarray(obs_dataframe[which_observable])
-    obs_err = np.asarray(obs_dataframe[f'{which_observable}_err'])
+    obs = np.asarray(obs_dataframe[which_observable])
+    obs_err = np.asarray(obs_dataframe[f"{which_observable}_err"])
 
-    missing_puls = np.where(obs==0)[0]          # if frequency was filled in as 0, it indicates an interruption in the pattern
-    obs_without_missing=obs[obs!=0]                             # remove values indicating interruptions in the pattern
-    obs_err_without_missing=obs_err[obs_err!=0]                    # remove values indicating interruptions in the pattern
-    missing_puls=[ missing_puls[i]-i for i in range(len(missing_puls)) ]    # Adjust indices for removed 0-values of missing frequencies
+    # if frequency was filled in as 0, it indicates an interruption in the pattern
+    missing_puls = np.where(obs == 0)[0]
+    # remove values indicating interruptions in the pattern
+    obs_without_missing = obs[obs != 0]
+    # remove values indicating interruptions in the pattern
+    obs_err_without_missing = obs_err[obs_err != 0]
+    # Adjust indices for removed 0-values of missing frequencies
+    missing_puls = [missing_puls[i] - i for i in range(len(missing_puls))]
 
-    obs_pattern_parts = np.split(obs_without_missing, missing_puls)    # split into different parts of the interrupted pattern
+    # split into different parts of the interrupted pattern
+    obs_pattern_parts = np.split(obs_without_missing, missing_puls)
     obs_err_pattern_parts = np.split(obs_err_without_missing, missing_puls)
 
     # partial function fixes all parameters of the function except for 1 that is iterated over in the multiprocessing pool.
-    theory_pattern_func = partial(theoretical_pattern_from_dfrow, obs=obs, obs_pattern_parts=obs_pattern_parts, obs_err_pattern_parts=obs_err_pattern_parts,
-                                which_observable=which_observable, method_build_series=method_build_series, pattern_starting_pulsation=pattern_starting_pulsation, grid_parameters=grid_parameters,
-                                asymptotic_object=asymptotic_object, estimated_rotation=estimated_rotation, plot_rotation_optimisation=False)
+    theory_pattern_func = partial(
+        theoretical_pattern_from_dfrow,
+        obs=obs,
+        obs_pattern_parts=obs_pattern_parts,
+        obs_err_pattern_parts=obs_err_pattern_parts,
+        which_observable=which_observable,
+        method_build_series=method_build_series,
+        pattern_starting_pulsation=pattern_starting_pulsation,
+        grid_parameters=grid_parameters,
+        asymptotic_object=asymptotic_object,
+        estimated_rotation=estimated_rotation,
+        plot_rotation_optimisation=False,
+    )
 
-    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)   # Make the output file directory
+    # Make the output file directory
+    Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
     # Send the rows of the dataframe iteratively to a pool of processors to get the theoretical pattern for each model
     with multiprocessing.Pool(nr_cpu) as p:
         freqs = p.imap(theory_pattern_func, theory_dataframe.iterrows())
-        header_parameters = ['rot', 'rot_err'] + grid_parameters
+        header_parameters = ["rot", "rot_err"] + grid_parameters
 
-        for i in range(1, obs_dataframe.shape[0]+1):
-            if i-1 in np.where(obs_dataframe.index == 'f_missing')[0]:
-                f = f'{which_observable}_missing'
+        for i in range(1, obs_dataframe.shape[0] + 1):
+            if i - 1 in np.where(obs_dataframe.index == "f_missing")[0]:
+                f = f"{which_observable}_missing"
             else:
-                f = f'{which_observable}{i}'
+                f = f"{which_observable}{i}"
             header_parameters.append(f.strip())
 
         data = []
@@ -116,25 +149,40 @@ def construct_theoretical_puls_pattern(pulsation_grid_file, observations_file, m
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'selected_puls_grid', format='table', mode='w')
+    df.to_hdf(f"{output_file}", "selected_puls_grid", format="table", mode="w")
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def theoretical_pattern_from_dfrow(summary_grid_row, obs, obs_pattern_parts, obs_err_pattern_parts, which_observable, method_build_series,
-    pattern_starting_pulsation=[], asymptotic_object=None, estimated_rotation=None, plot_rotation_optimisation=False, grid_parameters=None):
+def theoretical_pattern_from_dfrow(
+    summary_grid_row,
+    obs,
+    obs_pattern_parts,
+    obs_err_pattern_parts,
+    which_observable,
+    method_build_series,
+    pattern_starting_pulsation=[],
+    asymptotic_object=None,
+    estimated_rotation=None,
+    plot_rotation_optimisation=False,
+    grid_parameters=None,
+):
     """
     Extract model parameters and a theoretical pulsation pattern from a row of the dataFrame that contains all model parameters and pulsation frequencies.
-    
+
     Parameters
     ----------
     summary_grid_row: tuple, made of (int, pandas series)
         tuple returned from pandas.iterrows(), first tuple entry is the row index of the pandas dataFrame
-        second tuple entry is a pandas series, containing a row from the pandas dataFrame. (This row holds model parameters and pulsation frequencies.)
+        second tuple entry is a pandas series, containing a row from the pandas dataFrame.
+        (This row holds model parameters and pulsation frequencies.)
     obs: numpy array, dtype=float
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
-    obs_pattern_parts, obs_err_pattern_parts: list of numpy array, dtype=float
-        Holds a numpy array (with the observed frequencies or periods, or with their errors) per split off part
+    obs_pattern_parts : list of numpy array, dtype=float
+        Holds a numpy array (with the observed frequencies or periods) per split off part
         of the observed pattern if it is interrupted.
         The list contains only one array if the observed pattern is uninterrupted.
+    obs_err_pattern_parts : list of numpy array, dtype=float
+        The errors on the data in obs_pattern_parts.
     which_observable: string
         Which observables are used in the pattern building, options are 'frequency' or 'period'.
     method_build_series: string
@@ -157,24 +205,47 @@ def theoretical_pattern_from_dfrow(summary_grid_row, obs, obs_pattern_parts, obs
     Returns
     ----------
     list_out: list of float
-        The input parameters and pulsation frequencies of the theoretical pattern (or periods, depending on 'which_observable').
+        The input parameters and pulsation frequencies of the theoretical pattern
+        (or periods, depending on 'which_observable').
     """
-    freqs = np.asarray(summary_grid_row[1].filter(like='n_pg')) # all keys containing n_pg (these are all the radial orders)
-    orders = np.asarray([int(o.replace('n_pg', '')) for o in summary_grid_row[1].filter(like='n_pg').index])    # array with radial orders
-    orders=orders[~np.isnan(freqs)]
-    freqs=freqs[~np.isnan(freqs)]  # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
+    # all keys containing n_pg (these are all the radial orders)
+    freqs = np.asarray(summary_grid_row[1].filter(like="n_pg"))
+    # array with radial orders
+    orders = np.asarray([int(o.replace("n_pg", "")) for o in summary_grid_row[1].filter(like="n_pg").index])
+    orders = orders[~np.isnan(freqs)]
+    # remove all entries that are NaN in the numpy array (for when the models have a different amount of computed modes)
+    freqs = freqs[~np.isnan(freqs)]
 
-    if len(obs_pattern_parts) != len (pattern_starting_pulsation):   # Check if pattern_starting_pulsation has enough entries to not truncate other parts in the zip function.
-        if method_build_series == 'provided-pulsation':
-            sys.exit(logger.error('Amount of pulsations specified to build patterns from is not equal to the amount of split-off parts in the pattern.'))
-        else:   # Content of pattern_starting_pulsation doesn't matter if it's not used to build the pattern.
-            pattern_starting_pulsation = [None]*len(obs_pattern_parts) #We only care about the length if the method doesn't use specified pulsations.
+    # Check if pattern_starting_pulsation has enough entries to not truncate other parts in the zip function.
+    if len(obs_pattern_parts) != len(pattern_starting_pulsation):
+        if method_build_series == "provided-pulsation":
+            sys.exit(
+                logger.error(
+                    "Amount of pulsations specified to build patterns from is not equal to the amount of split-off parts in the pattern."
+                )
+            )
+        # Content of pattern_starting_pulsation doesn't matter if it's not used to build the pattern.
+        else:
+            # We only care about the length if the method doesn't use specified pulsations.
+            pattern_starting_pulsation = [None] * len(obs_pattern_parts)
 
-    if asymptotic_object is None: # In this case, rescaling nor optimisation will happen
-        residual = rescale_rotation_and_select_theoretical_pattern(None, asymptotic_object, estimated_rotation, freqs, orders, obs, obs_pattern_parts,
-        obs_err_pattern_parts, which_observable, method_build_series, pattern_starting_pulsation)
+    # In this case, rescaling nor optimisation will happen
+    if asymptotic_object is None:
+        residual = rescale_rotation_and_select_theoretical_pattern(
+            None,
+            asymptotic_object,
+            estimated_rotation,
+            freqs,
+            orders,
+            obs,
+            obs_pattern_parts,
+            obs_err_pattern_parts,
+            which_observable,
+            method_build_series,
+            pattern_starting_pulsation,
+        )
 
-        list_out=[estimated_rotation, 0]
+        list_out = [estimated_rotation, 0]
         for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
 
@@ -184,21 +255,47 @@ def theoretical_pattern_from_dfrow(summary_grid_row, obs, obs_pattern_parts, obs
     else:
         # Optimise the rotation rate and get the pulsations at that rotation rate
         params = Parameters()
-        params.add('rotation', value=estimated_rotation, min=1E-5)
+        params.add("rotation", value=estimated_rotation, min=1e-5)
         # Fit rotation to observed pattern with the default leastsq algorithm
-        optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
-                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, obs, obs_pattern_parts,
-                obs_err_pattern_parts, which_observable, method_build_series, pattern_starting_pulsation))
+        optimise_rotation = Minimizer(
+            rescale_rotation_and_select_theoretical_pattern,
+            params,
+            fcn_args=(
+                asymptotic_object,
+                estimated_rotation,
+                freqs,
+                orders,
+                obs,
+                obs_pattern_parts,
+                obs_err_pattern_parts,
+                which_observable,
+                method_build_series,
+                pattern_starting_pulsation,
+            ),
+        )
 
         result_minimizer = optimise_rotation.minimize()
 
         # Search from second initial value, which is as separated from the first solution as the first initial guess.
-        search_second_initial_value = 2*result_minimizer.params["rotation"].value - estimated_rotation
+        search_second_initial_value = 2 * result_minimizer.params["rotation"].value - estimated_rotation
         params = Parameters()
-        params.add('rotation', value=search_second_initial_value , min=1E-5)
-        optimise_rotation = Minimizer(rescale_rotation_and_select_theoretical_pattern, params,
-                fcn_args=(asymptotic_object, estimated_rotation, freqs, orders, obs, obs_pattern_parts,
-                obs_err_pattern_parts, which_observable, method_build_series, pattern_starting_pulsation))
+        params.add("rotation", value=search_second_initial_value, min=1e-5)
+        optimise_rotation = Minimizer(
+            rescale_rotation_and_select_theoretical_pattern,
+            params,
+            fcn_args=(
+                asymptotic_object,
+                estimated_rotation,
+                freqs,
+                orders,
+                obs,
+                obs_pattern_parts,
+                obs_err_pattern_parts,
+                which_observable,
+                method_build_series,
+                pattern_starting_pulsation,
+            ),
+        )
 
         result_minimizer2 = optimise_rotation.minimize()
         # Select the minimizer with the initial guess that resulted in the best fit.
@@ -207,57 +304,84 @@ def theoretical_pattern_from_dfrow(summary_grid_row, obs, obs_pattern_parts, obs
 
         optimised_pulsations = result_minimizer.residual + obs
 
-        if result_minimizer.message != 'Fit succeeded.':
-            logger.warning(f"""Fitting rotation did not succeed: {result_minimizer.message}
+        if result_minimizer.message != "Fit succeeded.":
+            logger.warning(
+                f"""Fitting rotation did not succeed: {result_minimizer.message}
                             for model {summary_grid_row[1].drop(summary_grid_row[1].filter(regex='n_pg').index).drop('rot').to_dict()} using method: {method_build_series}
-                            rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}""")
+                            rotation found: {result_minimizer.params['rotation'].value} with error: {result_minimizer.params['rotation'].stderr}"""
+            )
 
         if plot_rotation_optimisation:
             fig1, ax1 = plt.subplots()
-            if which_observable == 'frequency':
-                obsperiod = 1/obs
-                optimised_periods = 1/optimised_pulsations
+            if which_observable == "frequency":
+                obsperiod = 1 / obs
+                optimised_periods = 1 / optimised_pulsations
             else:
                 obsperiod = obs
                 optimised_periods = optimised_pulsations
-            
+
             # Recombine observational errors in one array
             combined_obs_err = []
             for obs_err_part in obs_err_pattern_parts:
-                if (len(combined_obs_err) > 0): 
+                if len(combined_obs_err) > 0:
                     combined_obs_err.extend([0])
                 combined_obs_err.extend(obs_err_part)
             combined_obs_err = np.asarray(combined_obs_err)
 
             spacings = generate_spacing_series(obsperiod, combined_obs_err)
-            ax1.errorbar(obsperiod[:-1], spacings[0], fmt='o', yerr=spacings[1], label='obs', color='blue', alpha=0.8)
-            ax1.plot(obsperiod[:-1], spacings[0], color='blue')
-            ax1.plot(optimised_periods[:-1], generate_spacing_series(optimised_periods)[0], '*', ls='solid', color='orange', label = 'optimised')
-            ax1.plot(1/freqs[:-1], generate_spacing_series(1/freqs)[0], '.', ls='solid', label='initial', color='green')
+            ax1.errorbar(obsperiod[:-1], spacings[0], fmt="o", yerr=spacings[1], label="obs", color="blue", alpha=0.8)
+            ax1.plot(obsperiod[:-1], spacings[0], color="blue")
+            ax1.plot(
+                optimised_periods[:-1],
+                generate_spacing_series(optimised_periods)[0],
+                "*",
+                ls="solid",
+                color="orange",
+                label="optimised",
+            )
+            ax1.plot(
+                1 / freqs[:-1], generate_spacing_series(1 / freqs)[0], ".", ls="solid", label="initial", color="green"
+            )
 
             fig2, ax2 = plt.subplots()
 
-            ax2.errorbar(obs, obs, fmt='o', xerr=combined_obs_err, label='obs', color='blue', alpha=0.8)
-            ax2.plot(optimised_periods, optimised_periods, '*', color='orange', label = 'optimised')
-            ax2.plot(1/freqs, 1/freqs, '.', label='initial', color='green')
+            ax2.errorbar(obs, obs, fmt="o", xerr=combined_obs_err, label="obs", color="blue", alpha=0.8)
+            ax2.plot(optimised_periods, optimised_periods, "*", color="orange", label="optimised")
+            ax2.plot(1 / freqs, 1 / freqs, ".", label="initial", color="green")
 
-            ax1.legend(prop={'size': 14})
-            ax2.legend(prop={'size': 14})
-            ax1.set_title(f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}")
-            ax2.set_title(f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}")
+            ax1.legend(prop={"size": 14})
+            ax2.legend(prop={"size": 14})
+            ax1.set_title(
+                f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}"
+            )
+            ax2.set_title(
+                f"initial omega = {estimated_rotation}, optimised omega = {result_minimizer.params['rotation'].value}"
+            )
             plt.show()
 
         # Create list with rotation, its error, all the input parameters, and the optimised pulsations
-        list_out=[result_minimizer.params['rotation'].value, result_minimizer.params['rotation'].stderr]
+        list_out = [result_minimizer.params["rotation"].value, result_minimizer.params["rotation"].stderr]
         for parameter in grid_parameters:
             list_out.append(summary_grid_row[1][parameter])
         list_out.extend(optimised_pulsations)
 
     return list_out
 
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, estimated_rotation, freqs_input,
-    orders, obs, obs_pattern_parts, obs_err_pattern_parts, which_observable, method_build_series, pattern_starting_pulsation):
+def rescale_rotation_and_select_theoretical_pattern(
+    params,
+    asymptotic_object,
+    estimated_rotation,
+    freqs_input,
+    orders,
+    obs,
+    obs_pattern_parts,
+    obs_err_pattern_parts,
+    which_observable,
+    method_build_series,
+    pattern_starting_pulsation,
+):
     """
     If rotation is not optimised in the modelling, asymptotic_object should be set to 'None' and
     this function will just select a theoretical pulsation pattern based on the specified method.
@@ -281,9 +405,12 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
         Array with the radial orders of the theoretical input frequencies.
     obs: numpy array, dtype=float
         Array of observed frequencies or periods. (Ordered increasing in frequency.)
-    obs_pattern_parts, obs_err_pattern_parts: list of numpy array, dtype=float
-        Holds a numpy array per split off part of the observed pattern if it is interrupted.
+    obs_pattern_parts: list of numpy array, dtype=float
+        Holds a numpy array with observed frequencies or periods
+        per split off part of the observed pattern if it is interrupted.
         The list contains only one array if the observed pattern is uninterrupted.
+    obs_err_pattern_parts: list of numpy array, dtype=float
+        The errors on obs_pattern_parts
     which_observable: string
         Which observables are used in the pattern building, options are 'frequency' or 'period'.
     method_build_series: string
@@ -299,74 +426,92 @@ def rescale_rotation_and_select_theoretical_pattern(params, asymptotic_object, e
 
     Returns
     ----------
-    output_pulsations - obs: numpy array, dtype=float
+    (output_pulsations - obs): numpy array, dtype=float
         Differences between the scaled pulsations and the observations.
         The array to be minimised by the lmfit Minimizer if rotation is optimised.
     """
     if asymptotic_object is not None:
         v = params.valuesdict()
-        if estimated_rotation ==0:  # To avoid division by zero in scale_pattern
-            estimated_rotation=1E-99
-        freqs = asymptotic_object.scale_pattern(freqs_input/u.d, estimated_rotation/u.d, v['rotation']/u.d)*u.d
-        freqs = np.asarray(freqs, dtype = np.float64) # convert astropy quantities back to floats
+        # To avoid division by zero in scale_pattern
+        if estimated_rotation == 0:
+            estimated_rotation = 1e-99
+        freqs = asymptotic_object.scale_pattern(freqs_input / u.d, estimated_rotation / u.d, v["rotation"] / u.d) * u.d
+        # convert astropy quantities back to floats
+        freqs = np.asarray(freqs, dtype=np.float64)
     else:
         freqs = freqs_input
 
-    periods = 1/freqs
+    periods = 1 / freqs
 
     output_pulsations = []
-    for obs_part, obs_err_part, pattern_starting_pulsation_part in zip(obs_pattern_parts, obs_err_pattern_parts, pattern_starting_pulsation):
-        if len(output_pulsations)>0: output_pulsations.append(0)  # To indicate interruptions in the pattern
+    for obs_part, obs_err_part, pattern_starting_pulsation_part in zip(
+        obs_pattern_parts, obs_err_pattern_parts, pattern_starting_pulsation
+    ):
+        # To indicate interruptions in the pattern
+        if len(output_pulsations) > 0:
+            output_pulsations.append(0)
 
-        if which_observable=='frequency':
+        if which_observable == "frequency":
             # remove frequencies that were already chosen in a different, split-off part of the pattern
-            if len(output_pulsations)>0:
-                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
-                    np.delete(freqs, np.where(freqs>=output_pulsations[-2])) #index -2 to get lowest, non-zero freq
-                else:                       # If input is in decreasing radial order
-                    np.delete(freqs, np.where(freqs<=max(output_pulsations)))
+            if len(output_pulsations) > 0:
+                # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
+                if orders[1] == orders[0] - 1:
+                    # index -2 to get lowest, non-zero freq
+                    np.delete(freqs, np.where(freqs >= output_pulsations[-2]))
+                # If input is in decreasing radial order
+                else:
+                    np.delete(freqs, np.where(freqs <= max(output_pulsations)))
             theory_value = freqs
-            obs_period = 1/obs_part
-            obs_period_err = obs_err_part/obs_part**2
+            obs_period = 1 / obs_part
+            obs_period_err = obs_err_part / obs_part**2
             highest_obs_freq = max(obs_part)
 
-        elif which_observable=='period':
+        elif which_observable == "period":
             # remove periods that were already chosen in a different, split-off part of the pattern
-            if len(output_pulsations)>0:
-                if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
-                    np.delete(periods, np.where(periods<=max(output_pulsations)))
-                else:                       # If input is in decreasing radial order
-                    np.delete(periods, np.where(periods>=output_pulsations[-2])) #index -2 to get lowest, non-zero period
+            if len(output_pulsations) > 0:
+                # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
+                if orders[1] == orders[0] - 1:
+                    np.delete(periods, np.where(periods <= max(output_pulsations)))
+                # If input is in decreasing radial order
+                else:
+                    # index -2 to get lowest, non-zero period
+                    np.delete(periods, np.where(periods >= output_pulsations[-2]))
             theory_value = periods
             obs_period = obs_part
             obs_period_err = obs_err_part
-            highest_obs_freq = min(obs_part)  # highest frequency is lowest period
+            # highest frequency is lowest period
+            highest_obs_freq = min(obs_part)
         else:
-            sys.exit(logger.error('Unknown observable to fit'))
+            sys.exit(logger.error("Unknown observable to fit"))
 
-        if method_build_series == 'provided-pulsation':
-            selected_theoretical_pulsations = puls_series_from_given_puls(theory_value, obs_part, pattern_starting_pulsation_part)
-        elif method_build_series == 'highest-frequency':
+        if method_build_series == "provided-pulsation":
+            selected_theoretical_pulsations = puls_series_from_given_puls(
+                theory_value, obs_part, pattern_starting_pulsation_part
+            )
+        elif method_build_series == "highest-frequency":
             selected_theoretical_pulsations = puls_series_from_given_puls(theory_value, obs_part, highest_obs_freq)
-        elif method_build_series == 'chisq-longest-sequence':
-            series_chi2,final_theoretical_periods,corresponding_orders = chisq_longest_sequence(periods,orders,obs_period,obs_period_err)
-            if which_observable=='frequency':
-                selected_theoretical_pulsations = 1/np.asarray(final_theoretical_periods)
-            elif which_observable=='period':
+        elif method_build_series == "chisq-longest-sequence":
+            series_chi2, final_theoretical_periods, corresponding_orders = chisq_longest_sequence(
+                periods, orders, obs_period, obs_period_err
+            )
+            if which_observable == "frequency":
+                selected_theoretical_pulsations = 1 / np.asarray(final_theoretical_periods)
+            elif which_observable == "period":
                 selected_theoretical_pulsations = final_theoretical_periods
         else:
-            sys.exit(logger.error(f'Unrecognised method to build pulsation series: {method_build_series}'))
+            sys.exit(logger.error(f"Unrecognised method to build pulsation series: {method_build_series}"))
 
         output_pulsations.extend(selected_theoretical_pulsations)
 
-    return (output_pulsations - obs)
+    return output_pulsations - obs
+
 
 ################################################################################
 def puls_series_from_given_puls(theory_in, obs, obs_to_build_from, plot=False):
     """
     Generate a theoretical pulsation pattern (can be in frequency or period) from the given observations.
     Build consecutively in radial order, starting from the theoretical value closest to the provided observational value.
-    
+
     Parameters
     ----------
     theory_in: numpy array, dtype=float
@@ -383,85 +528,103 @@ def puls_series_from_given_puls(theory_in, obs, obs_to_build_from, plot=False):
     theory_sequence: list of float
         The constructed theoretical frequency pattern
     """
-    nth_obs = np.where(obs==obs_to_build_from)[0][0]    # get index of observation to build the series from
-    diff = abs(theory_in - obs_to_build_from)    # search theoretical freq closest to the given observed one
-    index = np.where(diff==min(diff))[0][0]   # get index of this theoretical frequency
+    # get index of observation to build the series from
+    nth_obs = np.where(obs == obs_to_build_from)[0][0]
+    # search theoretical freq closest to the given observed one
+    diff = abs(theory_in - obs_to_build_from)
+    # get index of this theoretical frequency
+    index = np.where(diff == min(diff))[0][0]
 
     # Insert a value of -1 if observations miss a theoretical counterpart in the beginning
     theory_sequence = []
-    if (index-nth_obs)<0:
-        for i in range(abs((index-nth_obs))):
+    if (index - nth_obs) < 0:
+        for i in range(abs((index - nth_obs))):
             theory_sequence.append(-1)
-        theory_sequence.extend(theory_in[0:index+(len(obs)-nth_obs)])
+        theory_sequence.extend(theory_in[0 : index + (len(obs) - nth_obs)])
     else:
-        theory_sequence.extend(theory_in[index-nth_obs:index+(len(obs)-nth_obs)])
+        theory_sequence.extend(theory_in[index - nth_obs : index + (len(obs) - nth_obs)])
 
     # Insert a value of -1 if observations miss a theoretical counterpart at the end
-    if( index+(len(obs)-nth_obs) > len(theory_in)):
-        for i in range((index+(len(obs)-nth_obs)) - len(theory_in)):
+    if index + (len(obs) - nth_obs) > len(theory_in):
+        for i in range((index + (len(obs) - nth_obs)) - len(theory_in)):
             theory_sequence.append(-1)
 
     if plot is True:
-        fig=plt.figure()
+        fig = plt.figure()
         ax = fig.add_subplot(111)
         theory = np.asarray(theory_sequence)
-        ax.plot((1/obs)[::-1][:-1],np.diff((1/obs)[::-1])*86400,'ko',lw=1.5,linestyle='-')
-        ax.plot((1./theory)[::-1][:-1], -np.diff(1./theory)[::-1]*86400, 'ko', color='blue', lw=1.5,linestyle='--', markersize=6, markeredgewidth=0.,)
+        ax.plot((1 / obs)[::-1][:-1], np.diff((1 / obs)[::-1]) * 86400, "ko", lw=1.5, linestyle="-")
+        ax.plot(
+            (1.0 / theory)[::-1][:-1],
+            -np.diff(1.0 / theory)[::-1] * 86400,
+            "ko",
+            color="blue",
+            lw=1.5,
+            linestyle="--",
+            markersize=6,
+            markeredgewidth=0.0,
+        )
         plt.show()
-
 
     return theory_sequence
 
+
 ################################################################################
-def chisq_longest_sequence(theory_periods,orders,obs_periods,obs_periods_errors):
+def chisq_longest_sequence(theory_periods, orders, obs_periods, obs_periods_errors):
     """
     Method to extract the theoretical pattern that best matches the observed one.
     Match each observed mode period to its best matching theoretical counterpart,
     and adopt the longest sequence of consecutive modes found this way.
     In case of multiple mode series with the same length, a final pattern selection
     is made based on the best (chi-square) match between theory and observations.
-    
+
     Parameters
     ----------
     theory_periods : numpy array, dtype=float
-        theoretical periods and their radial orders
+        Theoretical periods and their radial orders.
     orders : numpy array, dtype=int
-        radial orders corresponding to the periods in theory_periods
-    obs_periods, obs_periods_errors : numpy array, dtype=float
-        observational periods and their errors
+        Radial orders corresponding to the periods in theory_periods.
+    obs_periods: numpy array, dtype=float
+        Observational periods.
+    obs_periods_errors: numpy array, dtype=float
+        The errors on obs_periods.
 
     Returns
     ----------
     series_chi2: float
-        chi2 value of the selected theoretical frequencies
+        chi2 value of the selected theoretical frequencies.
     final_theoretical_periods: numpy array, dtype=float
-        the selected theoretical periods that best match the observed pattern
+        The selected theoretical periods that best match the observed pattern.
     corresponding_orders: list of integers
-        the radial orders of the returned theoretical periods
+        The radial orders of the returned theoretical periods.
     """
-    if len(theory_periods)<len(obs_periods):
-        return 1e16, [-1. for i in range(len(obs_periods))], [-1 for i in range(len(obs_periods))]
+    if len(theory_periods) < len(obs_periods):
+        return 1e16, [-1.0 for i in range(len(obs_periods))], [-1 for i in range(len(obs_periods))]
     else:
         # Find the best matches per observed period
         pairs_orders = []
-        for ii,period in enumerate(obs_periods):
+        for ii, period in enumerate(obs_periods):
             ## Chi_squared array definition
-            chi_sqrs = np.array([ ( (period-theory_period)/obs_periods_errors[ii] )**2 for theory_period in theory_periods  ])
+            chi_sqrs = np.array(
+                [((period - theory_period) / obs_periods_errors[ii]) ** 2 for theory_period in theory_periods]
+            )
 
             ## Locate the theoretical frequency (and accompanying order) with the best chi2
-            min_ind = np.where( chi_sqrs == min( chi_sqrs ) )[0]
+            min_ind = np.where(chi_sqrs == min(chi_sqrs))[0]
             best_match = theory_periods[min_ind][0]
             best_order = orders[min_ind][0]
 
             ## Toss everything together for bookkeeping
-            pairs_orders.append([period,best_match,int(best_order),chi_sqrs[min_ind][0]])
+            pairs_orders.append([period, best_match, int(best_order), chi_sqrs[min_ind][0]])
 
         pairs_orders = np.array(pairs_orders)
 
-        if orders[1]==orders[0]-1:  # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
-            increase_or_decrease=-1
-        else:                       # If input is in decreasing radial order
-            increase_or_decrease=1
+        # If input is in increasing radial order (decreasing n_pg, since n_pg is negative for g-modes)
+        if orders[1] == orders[0] - 1:
+            increase_or_decrease = -1
+        # If input is in decreasing radial order
+        else:
+            increase_or_decrease = 1
 
         sequences = []
         ## Go through all pairs of obs and theoretical frequencies and
@@ -469,16 +632,17 @@ def chisq_longest_sequence(theory_periods,orders,obs_periods,obs_periods_errors)
         ## with the consecutive radial order.
         current = []
         lp = len(pairs_orders[:-1])
-        for ii,sett in enumerate(pairs_orders[:-1]):
-            if abs(sett[2]) == abs(pairs_orders[ii+1][2])+increase_or_decrease:
+        for ii, sett in enumerate(pairs_orders[:-1]):
+            if abs(sett[2]) == abs(pairs_orders[ii + 1][2]) + increase_or_decrease:
                 current.append(sett)
-            else:   # If not consecutive radial order, save the current sequence and start a new one.
+            # If not consecutive radial order, save the current sequence and start a new one.
+            else:
                 current.append(sett)
-                sequences.append(np.array(current).reshape(len(current),4))
+                sequences.append(np.array(current).reshape(len(current), 4))
                 current = []
-            if (ii==lp-1):
+            if ii == lp - 1:
                 current.append(sett)
-                sequences.append(np.array(current).reshape(len(current),4))
+                sequences.append(np.array(current).reshape(len(current), 4))
                 current = []
         len_list = np.array([len(x) for x in sequences])
         longest = np.where(len_list == max(len_list))[0]
@@ -489,25 +653,25 @@ def chisq_longest_sequence(theory_periods,orders,obs_periods,obs_periods_errors)
 
         ## if not, pick, of all the sequences with the same length, the best based on chi2
         else:
-            scores = [ np.sum(sequences[ii][:,-1])/len(sequences[ii]) for  ii in longest]
+            scores = [np.sum(sequences[ii][:, -1]) / len(sequences[ii]) for ii in longest]
             min_score = np.where(scores == min(scores))[0][0]
             lseq = sequences[longest[min_score]]
 
-        obs_ordering_ind = np.where(obs_periods == lseq[:,0][0])[0][0]
-        thr_ordering_ind = np.where(theory_periods == lseq[:,1][0])[0][0]
+        obs_ordering_ind = np.where(obs_periods == lseq[:, 0][0])[0][0]
+        thr_ordering_ind = np.where(theory_periods == lseq[:, 1][0])[0][0]
 
-        ordered_theoretical_periods   = []
-        corresponding_orders          = []
+        ordered_theoretical_periods = []
+        corresponding_orders = []
 
         thr_ind_start = thr_ordering_ind - obs_ordering_ind
         thr_ind_current = thr_ind_start
 
-        for i,oper in enumerate(obs_periods):
+        for i, oper in enumerate(obs_periods):
             thr_ind_current = thr_ind_start + i
-            if (thr_ind_current < 0):
+            if thr_ind_current < 0:
                 tper = -1
                 ordr = -1
-            elif (thr_ind_current >= len(theory_periods)):
+            elif thr_ind_current >= len(theory_periods):
                 tper = -1
                 ordr = -1
             else:
@@ -518,13 +682,13 @@ def chisq_longest_sequence(theory_periods,orders,obs_periods,obs_periods_errors)
 
         final_theoretical_periods = np.array(ordered_theoretical_periods)
 
-        obs_series,obs_series_errors = generate_spacing_series(obs_periods,obs_periods_errors)
+        obs_series, obs_series_errors = generate_spacing_series(obs_periods, obs_periods_errors)
         thr_series, _ = generate_spacing_series(final_theoretical_periods)
 
-        obs_series        = np.array(obs_series)
+        obs_series = np.array(obs_series)
         obs_series_errors = np.array(obs_series_errors)
-        thr_series        = np.array(thr_series)
+        thr_series = np.array(thr_series)
 
-        series_chi2 = np.sum( ( (obs_series-thr_series) /obs_series_errors )**2 ) / len(obs_series)
+        series_chi2 = np.sum(((obs_series - thr_series) / obs_series_errors) ** 2) / len(obs_series)
 
-        return series_chi2,final_theoretical_periods,corresponding_orders
+        return series_chi2, final_theoretical_periods, corresponding_orders

@@ -1,10 +1,16 @@
 """A few helpful functions to process MESA output."""
+
+import glob
+import multiprocessing
+from functools import partial
+from pathlib import Path
+
+import h5py
 import numpy as np
 import pandas as pd
-import multiprocessing, glob, h5py
-from pathlib import Path
-from functools import partial
+
 from foam import support_functions as sf
+
 
 ################################################################################
 def read_mesa_file(file_path, index_col=None):
@@ -37,11 +43,13 @@ def read_mesa_file(file_path, index_col=None):
     if h5py.is_hdf5(file_path):
         return sf.read_hdf5(file_path)
 
-    else:   # assumes the default MESA output format
+    else:  # assumes the default MESA output format
         header_df = pd.read_table(file_path, delim_whitespace=True, nrows=1, header=1)
-        data_df = pd.read_table(file_path, delim_whitespace=True, skiprows=3, header=1, index_col=index_col)
+        data_df = pd.read_table(
+            file_path, delim_whitespace=True, skiprows=3, header=1, index_col=index_col
+        )
 
-        header={}
+        header = {}
         for k in header_df.keys():
             header.update({k: header_df[k].to_numpy()[0]})
         data = {}
@@ -50,13 +58,14 @@ def read_mesa_file(file_path, index_col=None):
 
         return header, data
 
+
 ################################################################################
 def calculate_number_densities(hist_file):
-    '''
+    """
     Calculate surface number densities for all isotopes in the MESA grid.
     All isotopes in the used nuclear network need to be be written in the history file,
     otherwise this will function give wrong numbers.
-    
+
     Parameters
     ----------
     hist_file: string
@@ -66,27 +75,36 @@ def calculate_number_densities(hist_file):
     ----------
     number_densities: dict
         Column keys specify the element (surf_X_per_N_tot), values are number densities of that element.
-    '''
+    """
     _, data = read_mesa_file(hist_file)
     element_list = {}
     number_densities = {}
-    inverse_average_atomic_mass = np.zeros(len(data[ list(data.keys())[0] ]))
+    inverse_average_atomic_mass = np.zeros(len(data[list(data.keys())[0]]))
     for column_name in data.keys():
-        if '_per_Mass_tot' in column_name:
+        if "_per_Mass_tot" in column_name:
             element_list.update({column_name: data[column_name]})
             inverse_average_atomic_mass += data[column_name]
 
-    average_atomic_mass = inverse_average_atomic_mass**(-1)
+    average_atomic_mass = inverse_average_atomic_mass ** (-1)
     for key in element_list.keys():
-        number_densities.update({ key.replace('_per_Mass_tot', '_per_N_tot') : element_list[key]*average_atomic_mass})
+        number_densities.update(
+            {key.replace("_per_Mass_tot", "_per_N_tot"): element_list[key] * average_atomic_mass}
+        )
 
     return number_densities
 
+
 ################################################################################
-def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameters=['Z', 'M', 'logD', 'aov', 'fov', 'Xc'], nr_cpu=None, additional_observables=None):
+def extract_surface_grid(
+    mesa_profiles,
+    output_file="surfaceGrid.hdf",
+    parameters=["Z", "M", "logD", "aov", "fov", "Xc"],
+    nr_cpu=None,
+    additional_observables=None,
+):
     """
     Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info for each globbed MESA profile and write them to 1 large file.
-    
+
     Parameters
     ----------
     mesa_profiles: string
@@ -102,10 +120,15 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         List of observables to add to the surface grid. Must correspond to mesa profile header-item names.
     """
     # Make list of extra observables requested by the user
-    if additional_observables is None: additional_observables=[]
-    extras_to_be_extracted = [ x for x in additional_observables if x not in ['logTeff', 'logL', 'logg', 'age'] ]
+    if additional_observables is None:
+        additional_observables = []
+    extras_to_be_extracted = [
+        x for x in additional_observables if x not in ["logTeff", "logL", "logg", "age"]
+    ]
 
-    extract_func = partial(info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted)
+    extract_func = partial(
+        info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted
+    )
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     with multiprocessing.Pool(nr_cpu) as p:
@@ -115,8 +138,9 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
         Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
         # make a new list, so 'parameters' is not extended before passing it on to 'info_from_profiles'
         header_parameters = list(parameters)
-        header_parameters.extend(['logTeff', 'logL', 'logg', 'age'])
-        header_parameters.extend(extras_to_be_extracted) # Add the extra observables requested by the user
+        header_parameters.extend(["logTeff", "logL", "logg", "age"])
+        # Add the extra observables requested by the user
+        header_parameters.extend(extras_to_be_extracted)
 
         # Make list of lists, put it in a dataframe, and write to a file
         data = []
@@ -124,14 +148,14 @@ def extract_surface_grid(mesa_profiles, output_file='surfaceGrid.hdf', parameter
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f'{output_file}', 'surfaceGrid', format='table', mode='w')
+    df.to_hdf(f"{output_file}", "surfaceGrid", format="table", mode="w")
 
 
 ################################################################################
 def info_from_profiles(mesa_profile, parameters, extra_header_items):
     """
     Extract 'logTeff', 'logL', 'logg', 'age', and extra requested info from a MESA profile and the model parameters from its filename.
-    
+
     Parameters
     ----------
     mesa_profile: string
@@ -146,22 +170,21 @@ def info_from_profiles(mesa_profile, parameters, extra_header_items):
     line: string
         Line containing all the model- and surface parameters of the MESA profile.
     """
-    param_dict = sf.get_param_from_filename(mesa_profile, parameters,values_as_float=True)
+    param_dict = sf.get_param_from_filename(mesa_profile, parameters, values_as_float=True)
     prof_header, prof_data = read_mesa_file(mesa_profile)
 
-    logL = np.log10(float(prof_header['photosphere_L']))
-    logTeff = np.log10(float(prof_header['Teff']))
-    logg = prof_data['log_g'][0]
-    age=int(float(prof_header['star_age']))
+    logL = np.log10(float(prof_header["photosphere_L"]))
+    logTeff = np.log10(float(prof_header["Teff"]))
+    logg = prof_data["log_g"][0]
+    age = int(float(prof_header["star_age"]))
 
-    line=[]
+    line = []
     for p in parameters:
         line.append(param_dict[p])
     line.extend([logTeff, logL, logg, age])
 
-    for obs in extra_header_items:   # Add the extra observables requested by the user
+    for obs in extra_header_items:  # Add the extra observables requested by the user
         item = float(prof_header[obs])
         line.append(item)
 
     return line
-

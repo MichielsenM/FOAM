@@ -1,15 +1,19 @@
 """Calculate g-mode period spacing patterns in the asymptotic regime using the TAR."""
+
 # Class from T. Van Reeth
-import numpy as np
-import astropy.units as u
 import sys
+
+import astropy.units as u
+import numpy as np
+
+
 ################################################################################
 class Asymptotic(object):
     """
     A python class to calculate g-mode period spacing patterns in the asymptotic regime using the TAR.
     """
 
-    def __init__(self,gyre_dir,kval=0,mval=1,nmin=1,nmax=150):
+    def __init__(self, gyre_dir, kval=0, mval=1, nmin=1, nmax=150):
         """
         Setting up the environment/asymptotic object to calculate g-mode period spacing patterns.
 
@@ -31,13 +35,13 @@ class Asymptotic(object):
 
         self.kval = int(kval)
         self.mval = int(mval)
-        self.nvals = np.arange(nmin,nmax+0.1,1.)
+        self.nvals = np.arange(nmin, nmax + 0.1, 1.0)
 
-        self.lam_fun  = self._retrieve_laplacegrid(gyre_dir)
+        self.lam_fun = self._retrieve_laplacegrid(gyre_dir)
         self.spin, self.lam, self.spinsqlam = self._sample_laplacegrid()
 
-################################################################################
-    def _retrieve_laplacegrid(self,gyre_dir):
+    ################################################################################
+    def _retrieve_laplacegrid(self, gyre_dir):
         """
         Retrieving the function lambda(nu) given in GYRE.
 
@@ -53,28 +57,28 @@ class Asymptotic(object):
             A function to calculate lambda, given spin parameter values as input.
         """
 
-        if(self.kval >= 0):
-            kstr = f'+{self.kval}'
+        if self.kval >= 0:
+            kstr = f"+{self.kval}"
         else:
-            kstr = f'{self.kval}'
-        if(self.mval >= 0):
-            mstr = f'+{self.mval}'
+            kstr = f"{self.kval}"
+        if self.mval >= 0:
+            mstr = f"+{self.mval}"
         else:
-            mstr = f'{self.mval}'
+            mstr = f"{self.mval}"
 
-        infile = f'{gyre_dir}/data/tar/tar_fit.m{mstr}.k{kstr}.h5'
+        infile = f"{gyre_dir}/data/tar/tar_fit.m{mstr}.k{kstr}.h5"
 
-        sys.path.append(gyre_dir+'/src/tar/')
-        import gyre_tar_fit
+        sys.path.append(gyre_dir + "/src/tar/")
         import gyre_cheb_fit
+        import gyre_tar_fit
 
         tf = gyre_tar_fit.TarFit.load(infile)
         lam_fun = np.vectorize(tf.lam)
 
         return lam_fun
 
-################################################################################
-    def _sample_laplacegrid(self,spinmax=1000.,spindensity=1.):
+    ################################################################################
+    def _sample_laplacegrid(self, spinmax=1000.0, spindensity=1.0):
         """
         Sampling the function lambda(nu) that was set up in _retrieve_laplacegrid().
         This subroutine includes a har-coded custom sampling density function for the spin parameter.
@@ -97,43 +101,137 @@ class Asymptotic(object):
             The lambda eigenvalues corresponding to the spin parameter values in the array 'spin'
         spinsqlam: numpy array, dtype=float
             = spin * sqrt(lam)
-            """
+        """
 
-        if((self.kval >= 0) & (self.mval != 0)):
+        if (self.kval >= 0) & (self.mval != 0):
             spinmin = -0.1
             # Relatively "ad hoc" optimal sampling (based on "experience")
-            nspinmin = round(spindensity * 20000. * (np.log10(1.+abs(spinmin))/np.log10(101.))**0.5)
-            nspinmax = round(spindensity * 20000. * (np.log10(1.+abs(spinmax))/np.log10(101.))**0.5)
-            if((spinmin < 0.) & (spinmax <= 0.)):
-                spin = -10.**(np.linspace(np.log10(1.+abs(spinmin))**0.5,np.log10(1.+abs(spinmax))**0.5,int(nspinmin-nspinmax))**2.) + 1.
-            elif((spinmin >= 0.) & (spinmax > 0.)):
-                spin = 10.**(np.linspace(np.log10(1.+spinmin)**0.5,np.log10(1.+spinmax)**0.5,int(nspinmax-nspinmin))**2.) - 1.
+            nspinmin = round(
+                spindensity * 20000.0 * (np.log10(1.0 + abs(spinmin)) / np.log10(101.0)) ** 0.5
+            )
+            nspinmax = round(
+                spindensity * 20000.0 * (np.log10(1.0 + abs(spinmax)) / np.log10(101.0)) ** 0.5
+            )
+            if (spinmin < 0.0) & (spinmax <= 0.0):
+                spin = (
+                    -(
+                        10.0
+                        ** (
+                            np.linspace(
+                                np.log10(1.0 + abs(spinmin)) ** 0.5,
+                                np.log10(1.0 + abs(spinmax)) ** 0.5,
+                                int(nspinmin - nspinmax),
+                            )
+                            ** 2.0
+                        )
+                    )
+                    + 1.0
+                )
+            elif (spinmin >= 0.0) & (spinmax > 0.0):
+                spin = (
+                    10.0
+                    ** (
+                        np.linspace(
+                            np.log10(1.0 + spinmin) ** 0.5,
+                            np.log10(1.0 + spinmax) ** 0.5,
+                            int(nspinmax - nspinmin),
+                        )
+                        ** 2.0
+                    )
+                    - 1.0
+                )
             else:
-                spinneg = -10.**(np.linspace(np.log10(1.+abs(spinmin))**0.5,0.,int(nspinmin))**2.) + 1.
-                spinpos = 10.**(np.linspace(0.,np.log10(1.+spinmax)**0.5,int(nspinmax))**2.) - 1.
-                spin = np.unique(np.hstack((spinneg,spinpos)))
+                spinneg = (
+                    -(
+                        10.0
+                        ** (
+                            np.linspace(np.log10(1.0 + abs(spinmin)) ** 0.5, 0.0, int(nspinmin))
+                            ** 2.0
+                        )
+                    )
+                    + 1.0
+                )
+                spinpos = (
+                    10.0 ** (np.linspace(0.0, np.log10(1.0 + spinmax) ** 0.5, int(nspinmax)) ** 2.0)
+                    - 1.0
+                )
+                spin = np.unique(np.hstack((spinneg, spinpos)))
 
-        elif((self.kval >= 0) & (self.mval == 0)):
+        elif (self.kval >= 0) & (self.mval == 0):
             spinmin = -spinmax
             # Relatively "ad hoc" optimal sampling (based on "experience")
-            nspinmin = round(spindensity * 20000. * (np.log10(1.+abs(spinmin))/np.log10(101.))**0.5)
-            nspinmax = round(spindensity * 20000. * (np.log10(1.+abs(spinmax))/np.log10(101.))**0.5)
-            if((spinmin < 0.) & (spinmax <= 0.)):
-                spin = -10.**(np.linspace(np.log10(1.+abs(spinmin))**0.5,np.log10(1.+abs(spinmax))**0.5,int(nspinmin-nspinmax))**2.) + 1.
-            elif((spinmin >= 0.) & (spinmax > 0.)):
-                spin = 10.**(np.linspace(np.log10(1.+spinmin)**0.5,np.log10(1.+spinmax)**0.5,int(nspinmax-nspinmin))**2.) - 1.
+            nspinmin = round(
+                spindensity * 20000.0 * (np.log10(1.0 + abs(spinmin)) / np.log10(101.0)) ** 0.5
+            )
+            nspinmax = round(
+                spindensity * 20000.0 * (np.log10(1.0 + abs(spinmax)) / np.log10(101.0)) ** 0.5
+            )
+            if (spinmin < 0.0) & (spinmax <= 0.0):
+                spin = (
+                    -(
+                        10.0
+                        ** (
+                            np.linspace(
+                                np.log10(1.0 + abs(spinmin)) ** 0.5,
+                                np.log10(1.0 + abs(spinmax)) ** 0.5,
+                                int(nspinmin - nspinmax),
+                            )
+                            ** 2.0
+                        )
+                    )
+                    + 1.0
+                )
+            elif (spinmin >= 0.0) & (spinmax > 0.0):
+                spin = (
+                    10.0
+                    ** (
+                        np.linspace(
+                            np.log10(1.0 + spinmin) ** 0.5,
+                            np.log10(1.0 + spinmax) ** 0.5,
+                            int(nspinmax - nspinmin),
+                        )
+                        ** 2.0
+                    )
+                    - 1.0
+                )
             else:
-                spinneg = -10.**(np.linspace(np.log10(1.+abs(spinmin))**0.5,0.,int(nspinmin))**2.) + 1.
-                spinpos = 10.**(np.linspace(0.,np.log10(1.+spinmax)**0.5,int(nspinmax))**2.) - 1.
-                spin = np.unique(np.hstack((spinneg,spinpos)))
+                spinneg = (
+                    -(
+                        10.0
+                        ** (
+                            np.linspace(np.log10(1.0 + abs(spinmin)) ** 0.5, 0.0, int(nspinmin))
+                            ** 2.0
+                        )
+                    )
+                    + 1.0
+                )
+                spinpos = (
+                    10.0 ** (np.linspace(0.0, np.log10(1.0 + spinmax) ** 0.5, int(nspinmax)) ** 2.0)
+                    - 1.0
+                )
+                spin = np.unique(np.hstack((spinneg, spinpos)))
         else:
-            spinmin = float((abs(self.mval) + abs(self.kval)) * (abs(self.mval) + abs(self.kval) - 1)) / abs(self.mval)
+            spinmin = float(
+                (abs(self.mval) + abs(self.kval)) * (abs(self.mval) + abs(self.kval) - 1)
+            ) / abs(self.mval)
             # Relatively "ad hoc" optimal sampling (based on "experience")
-            nspinmax = round(spindensity * 20000. * (np.log10(1.+abs(spinmax))/np.log10(101.))**0.5)
+            nspinmax = round(
+                spindensity * 20000.0 * (np.log10(1.0 + abs(spinmax)) / np.log10(101.0)) ** 0.5
+            )
 
-            spinpos = 10.**(np.linspace(np.log10(1.)**0.5,np.log10(1.+spinmax)**0.5,int(nspinmax))[1:]**2.) - 1. + spinmin
-            spinneg = np.linspace(0.,spinmin,100)
-            spin = np.unique(np.hstack((spinneg,spinpos)))
+            spinpos = (
+                10.0
+                ** (
+                    np.linspace(
+                        np.log10(1.0) ** 0.5, np.log10(1.0 + spinmax) ** 0.5, int(nspinmax)
+                    )[1:]
+                    ** 2.0
+                )
+                - 1.0
+                + spinmin
+            )
+            spinneg = np.linspace(0.0, spinmin, 100)
+            spin = np.unique(np.hstack((spinneg, spinpos)))
 
         # Obtaining the eigenvalues lambda
         lam = self.lam_fun(spin)
@@ -144,16 +242,16 @@ class Asymptotic(object):
         lam = lam[lam_exists]
 
         # Calculating the derivatives
-        dlamdnu = np.gradient(lam)/np.gradient(spin)
-        d2lamdnu2 = np.gradient(dlamdnu)/np.gradient(spin)
+        dlamdnu = np.gradient(lam) / np.gradient(spin)
+        d2lamdnu2 = np.gradient(dlamdnu) / np.gradient(spin)
 
         # A required array to determine the near-core rotation rate
-        spinsqlam = spin*np.sqrt(lam)
+        spinsqlam = spin * np.sqrt(lam)
 
         return spin, lam, spinsqlam
 
-################################################################################
-    def update_laplacegrid(self,spinmax=10000.,spindensity=1.):
+    ################################################################################
+    def update_laplacegrid(self, spinmax=10000.0, spindensity=1.0):
         """
         Recalculating the spin parameter range and the corresponding lambda eigenvalues included within the asymptotic object.
 
@@ -168,10 +266,12 @@ class Asymptotic(object):
             in 20000 data points for the spin parameter range [0, 100].
         """
 
-        self.spin, self.lam, self.spinsqlam = self._sample_laplacegrid(spinmax=spinmax,spindensity=spindensity)
+        self.spin, self.lam, self.spinsqlam = self._sample_laplacegrid(
+            spinmax=spinmax, spindensity=spindensity
+        )
 
-################################################################################
-    def uniform_pattern(self,frot,Pi0,alpha_g=0.5,unit='days'):
+    ################################################################################
+    def uniform_pattern(self, frot, Pi0, alpha_g=0.5, unit="days"):
         """
         Calculates the asymptotic period spacing pattern for a star with uniform rotation, following Eq.4 in Van Reeth et al. 2016, A&A, 593, A120.
 
@@ -196,48 +296,66 @@ class Asymptotic(object):
         ### Verifying the input
 
         # Make sure that the rotation frequency and the buoyancy radius have appropriate units
-        assert frot.unit.physical_type == 'frequency', "The provided rotation frequency does not have a frequency unit (as provided in astropy.units)."
-        assert Pi0.unit.physical_type == 'time', "The provided buoyancy radius does not have a time unit (as provided in astropy.units)."
+        assert (
+            frot.unit.physical_type == "frequency"
+        ), "The provided rotation frequency does not have a frequency unit (as provided in astropy.units)."
+        assert (
+            Pi0.unit.physical_type == "time"
+        ), "The provided buoyancy radius does not have a time unit (as provided in astropy.units)."
 
         # Can we handle the preferred output unit?
-        allowed_output_units = {'days':u.day,'seconds':u.s,'cycle_per_day':u.day**-1.,'muHz':u.uHz,'nHz':u.nHz,'Hz':u.Hz}
-        assert unit in allowed_output_units.keys(), f"Please ensure that the requested output unit is one of: {', '.join(str(x_unit) for x_unit in allowed_output_units.keys())}."
+        allowed_output_units = {
+            "days": u.day,
+            "seconds": u.s,
+            "cycle_per_day": u.day**-1.0,
+            "muHz": u.uHz,
+            "nHz": u.nHz,
+            "Hz": u.Hz,
+        }
+        assert (
+            unit in allowed_output_units.keys()
+        ), f"Please ensure that the requested output unit is one of: {', '.join(str(x_unit) for x_unit in allowed_output_units.keys())}."
         astrounit = allowed_output_units[unit]
 
         ### Alright, start the calculation!
 
         # Safety check: the following routine only works if frot != 0
-        if(frot != 0.*frot.unit):
+        if frot != 0.0 * frot.unit:
             # Calculating the pattern -- in spin parameter
-            basefun_lhs = 2.*float(frot*Pi0)*(self.nvals+alpha_g)
+            basefun_lhs = 2.0 * float(frot * Pi0) * (self.nvals + alpha_g)
             basefun_rhs = self.spinsqlam
             selected_spin = np.interp(basefun_lhs, basefun_rhs, self.spin)
 
             # Setting the values which lie outside of the computable range to "nan"
-            out_of_range = ~np.r_[(basefun_lhs >= np.amin(basefun_rhs)) & (basefun_lhs <= np.amax(basefun_rhs))]
+            out_of_range = ~np.r_[
+                (basefun_lhs >= np.amin(basefun_rhs)) & (basefun_lhs <= np.amax(basefun_rhs))
+            ]
             selected_spin[out_of_range] = np.nan
 
             # Converting to frequencies -- in the unit of frot
-            puls_freq = (2.*frot/selected_spin) + (self.mval*frot)
+            puls_freq = (2.0 * frot / selected_spin) + (self.mval * frot)
 
-        # if frot == 0, the Taylor expansion cannot be used to model differential rotation: everything reverts to the case of non-rotation.
+        # if frot == 0, the Taylor expansion cannot be used to model differential rotation:
+        # everything reverts to the case of non-rotation.
         else:
-            if(np.amin(self.spin) < 0.):
+            if np.amin(self.spin) < 0.0:
                 # Pulsation frequencies -- in the unit of 1/Pi0
-                puls_freq = np.sqrt(np.interp(0.,self.spin,self.lam)) / (Pi0*(self.nvals+alpha_g))
+                puls_freq = np.sqrt(np.interp(0.0, self.spin, self.lam)) / (
+                    Pi0 * (self.nvals + alpha_g)
+                )
             else:
                 # These are likely r-modes -- not present in a non-rotating star!
-                puls_freq = self.nvals*np.nan
+                puls_freq = self.nvals * np.nan
 
         # Converting to the preferred output unit
-        if(astrounit.physical_type == 'frequency'):
+        if astrounit.physical_type == "frequency":
             pattern = puls_freq.to(astrounit)
         else:
-            pattern = (1./puls_freq).to(astrounit)
+            pattern = (1.0 / puls_freq).to(astrounit)
 
         return pattern
 
-################################################################################
+    ################################################################################
     def scale_pattern(self, pattern_in, frot_in, frot_out):
         """
         Scale an input g-mode pulsation pattern according to a different rotation rate
@@ -259,20 +377,22 @@ class Asymptotic(object):
         """
 
         # checking if the input pattern has been given as frequencies or periods
-        if(pattern_in.unit.physical_type == 'frequency'):
-            in_freq_co = pattern_in.copy() - self.mval*frot_in
+        if pattern_in.unit.physical_type == "frequency":
+            in_freq_co = pattern_in.copy() - self.mval * frot_in
         else:
-            in_freq_co = (1./ pattern_in) - self.mval*frot_in
+            in_freq_co = (1.0 / pattern_in) - self.mval * frot_in
 
-        spin_in = 2.* frot_in.value / in_freq_co.to(frot_in.unit).value
+        spin_in = 2.0 * frot_in.value / in_freq_co.to(frot_in.unit).value
         spin_sqlam = np.interp(spin_in, self.spin, self.spinsqlam)
-        spin_out = np.interp(spin_sqlam * frot_out.value / frot_in.to(frot_out.unit).value, self.spinsqlam, self.spin)
-        out_freq_inert =  (2. * frot_out / spin_out) + self.mval*frot_out
+        spin_out = np.interp(
+            spin_sqlam * frot_out.value / frot_in.to(frot_out.unit).value, self.spinsqlam, self.spin
+        )
+        out_freq_inert = (2.0 * frot_out / spin_out) + self.mval * frot_out
 
-        if(pattern_in.unit.physical_type == 'frequency'):
+        if pattern_in.unit.physical_type == "frequency":
             pattern_out = out_freq_inert.to(pattern_in.unit)
         else:
-            out_per_inert = 1. / out_freq_inert
+            out_per_inert = 1.0 / out_freq_inert
             pattern_out = out_per_inert.to(pattern_in.unit)
 
         return pattern_out
