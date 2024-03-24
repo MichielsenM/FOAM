@@ -1,7 +1,9 @@
 <style>
+.api-page-content {margin: 20px 0px 10px 200px; max-width: 75%;}
+
 .sidenav {
   height: 100%;
-  width: 160px;
+  width: 170px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -21,5 +23,48 @@
 
 .sidenav a:hover {
   color: #f1f1f1;
+}
+
+.dropdown {
+  float: left;
+  overflow: hidden;
+}
+
+.dropdown .dropbtn {
+  font-size: 25px;  
+  border: none;
+  outline: none;
+  color: #a0a0a0;
+  padding: 14px 16px;
+  background-color: inherit;
+  font-family: inherit;
+  margin: 0;
+}
+
+.dropdown-content {
+  font-size: 17px;
+  display: none;
+  position: absolute;
+  background-color: #111;
+  z-index: 1;
+  padding-left: 5px;
+  padding-bottom: 15px;
+}
+
+.dropdown-content a {
+  font-size: 16px;
+  float: none;
+  color: #a0a0a0;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {
+  color: #f1f1f1
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
 }
 </style>

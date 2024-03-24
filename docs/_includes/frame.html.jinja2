@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+{% include "nav-style.html" %}
+{% include "nav-collapsible.html" %}
+<div id="page-content" class="api-page-content">
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,maximum-scale=2">
+
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <h1 id="project_title"> FAOM API documentation</h1>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+
+    {% block content %}{% endblock %}
+    {% filter minify_css %}
+        {% block style %}
+            {# The same CSS files as in pdoc's default template, except for layout.css.
+            You may leave out Bootstrap Reboot, which corrects inconsistences across browsers
+            but may conflict with you website's stylesheet. #}
+            <style>{% include "resources/bootstrap-reboot.min.css" %}</style>
+            <style>{% include "syntax-highlighting.css" %}</style>
+            <style>{% include "theme.css" %}</style>
+            <style>{% include "content.css" %}</style>
+        {% endblock %}
+    {% endfilter %}    
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">FOAM maintained by <a href="https://github.com/MichielsenM">MichielsenM</a>, created by Mathias Michielsen</p>
+        <p>Generated with <a href="https://pdoc.dev/">Pdoc</a>. Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+  </body>
+</div>  
+</html>

@@ -5,6 +5,10 @@
 
 .inner {
   max-width: 60%;
-  // margin-left: 160px;
   margin: 0 auto; /* This centers the element horizontally */
+}
+
+.page-content {
+  margin: 0 0 0 200px; 
+  max-width: 75%;
 }

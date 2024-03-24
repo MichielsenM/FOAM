@@ -1,0 +1,56 @@
+name: generate API
+
+# build the documentation whenever there are new commits on main
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - foam/*
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "API"
+  cancel-in-progress: false
+
+jobs:
+  # Build the documentation and upload the static HTML files as an artifact.
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-status: ${{ steps.auto-commit-action.outputs.changes_detected }}    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      # Install all dependencies and pdoc
+      - run: pip install pdoc
+      - run: pip install -e .
+      # Build the documentation into docs/API/
+      - run: pdoc -d numpy --no-include-undocumented -t docs/_includes ./foam -o docs/API
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/API
+          name: API-docs
+      - name: save API docs to repo
+        id: auto-commit-action
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Saved new API to docs
+          file_pattern: '*.html'
+  # Deployment job    
+  deploy-workflow:
+    name: Deploy new API pages
+    needs: [build]
+    if: needs.build.outputs.deploy-status == 'true'
+    uses: ./.github/workflows/deploy-pages.yml
