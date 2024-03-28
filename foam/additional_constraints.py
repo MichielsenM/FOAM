@@ -97,6 +97,7 @@ def surface_constraint(
         )
         indices_to_drop = dataframe_theory.apply(func, axis=1)
         for index_to_drop in indices_to_drop:
+            # Check if index_to_drop equals itself to filter out NaN values
             if (index_to_drop is not None) and (index_to_drop == index_to_drop):
                 dataframe_theory.drop(index_to_drop, inplace=True)
 
@@ -169,7 +170,7 @@ def enforce_binary_constraints(
     Enforce an n-sigma constraint on the models based on
     spectroscopic observations of the binary companion employing isochrone-clouds.
     Assumes the same metallicity 'Z' for both primary and secondary,
-    masses 'M' compatible with observed mass ratio 'q', and ages similar within 1 gridstep.
+    masses 'M' compatible with observed mass ratio 'q', and ages similar within 1 grid step.
 
     Parameters
     ----------

@@ -11,7 +11,7 @@ from foam import support_functions as sf
 from foam.pipeline.pipeline_config import config
 
 ################################################################################
-N_dict = config.N_dict  # number of observables
+n_dict = config.n_dict  # number of observables
 sigma = 2
 percentile = {1: 0.68, 2: 0.95, 3: 0.997}
 
@@ -24,13 +24,13 @@ else:
 ################################################################################
 def likelihood_chi2(chi2):
     """Likelihood function of reduced chi-squared"""
-    return np.exp(-0.5 * chi2 / (N_dict[obs] - config.k))
+    return np.exp(-0.5 * chi2 / (n_dict[obs] - config.k))
 
 
-def likelihood_MD(md):
+def likelihood_md(md):
     """Likelihood function of the mahalanobis distance"""
-    df_AICc_MD = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", delim_whitespace=True, header=0)
-    ln_det_v = float((df_AICc_MD.loc[df_AICc_MD["method"] == f"{config.star}_{analysis}", "ln(det(V))"]).iloc[0])
+    df_aicc_md = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", delim_whitespace=True, header=0)
+    ln_det_v = float((df_aicc_md.loc[df_aicc_md["method"] == f"{config.star}_{analysis}", "ln(det(V))"]).iloc[0])
     return np.exp(-0.5 * (md + config.k * np.log(2 * np.pi) + ln_det_v))
 
 
@@ -57,7 +57,7 @@ for merit in config.merit_functions:
             df = df.sort_values("meritValue", ascending=True)
 
             # Dictionary containing different likelihood functions
-            switcher = {"CS": likelihood_chi2, "MD": likelihood_MD}
+            switcher = {"CS": likelihood_chi2, "MD": likelihood_md}
             # get the desired function from the dictionary. Returns the lambda function if option is not in the dictionary.
             likelihood_function = switcher.get(
                 merit, lambda x: sys.exit(config.logger.error(f"invalid type of maximum likelihood estimator:{merit}"))

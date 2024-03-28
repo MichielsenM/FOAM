@@ -99,12 +99,12 @@ All keyword arguments are listed below, grouped in categories.
     >> 'MD' uses Mahalanobis distances, see <a href="https://ui.adsabs.harvard.edu/abs/2018ApJS..237...15A/abstract" target="_blank">Aerts et al. (2018)</a>
     for its application in the context of asteroseismology.
 
-- N_periods
+- n_periods
 >   type: int <br>
     default: None <br>
     Number of periods (or frequencies) in the observed pattern. Missing frequencies in interrupted patterns are not counted in this number.
 
-- N_pattern_parts
+- n_pattern_parts
 >   type: int <br>
     default: 1 <br>
     In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.

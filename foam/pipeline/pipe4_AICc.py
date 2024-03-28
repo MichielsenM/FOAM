@@ -42,7 +42,7 @@ for merit in config.merit_functions:
 
                 # Calculate the AICc
                 # number of observables
-                N = config.N_dict[obs]
+                N = config.n_dict[obs]
                 if merit == "CS":
                     AICc = (df["meritValue"].iloc[0] / (N - k)) + (2 * k * N) / (N - k - 1)
                     df_AICc.loc[len(df_AICc)] = [f"{config.star}_{grid}_{method}_CS_{obs}", AICc]

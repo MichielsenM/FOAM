@@ -73,9 +73,9 @@ class PipelineConfig:
              Name of the parameter that is used to track the evolutionary steps of the model.
          evolution_step: float
              Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
-         N_periods: int
+         n_periods: int
              Number of periods in the observed pattern
-         N_pattern_parts: int
+         n_pattern_parts: int
              In how many parts the observed pattern is split. Defaults to 1 assuming an uninterrupted pattern.
 
          --- For modelling binaries and enforcing constraints of the companion star. ---
@@ -156,18 +156,18 @@ class PipelineConfig:
 
         # Number of free parameters
         self.k = len(self.free_parameters)
-        self.N_periods = kwargs.pop("N_periods", None)
-        self.N_pattern_parts = kwargs.pop("N_pattern_parts", 1)
+        self.n_periods = kwargs.pop("n_periods", None)
+        self.n_pattern_parts = kwargs.pop("n_pattern_parts", 1)
         # Number of observables, calculated from the number of periods
         # Number of period spacings is number of periods minus amount of separated patterns.
         # E.g. uninterrupted pattern: 36 periods, so 35 period spacings
         if self.observable_additional is None:
-            self.N_dict = {"P": self.N_periods, "dP": self.N_periods - self.N_pattern_parts, "f": self.N_periods}
+            self.n_dict = {"P": self.n_periods, "dP": self.n_periods - self.n_pattern_parts, "f": self.n_periods}
         else:
-            self.N_dict = {
-                "P+extra": self.N_periods + len(self.observable_additional),
-                "dP+extra": self.N_periods - self.N_pattern_parts + len(self.observable_additional),
-                "f+extra": self.N_periods + len(self.observable_additional),
+            self.n_dict = {
+                "P+extra": self.n_periods + len(self.observable_additional),
+                "dP+extra": self.n_periods - self.n_pattern_parts + len(self.observable_additional),
+                "f+extra": self.n_periods + len(self.observable_additional),
             }
 
         # Binarity
@@ -247,29 +247,29 @@ class PipelineConfig:
 
         # Check if names of grids are specified
         if self.grids is None:
-            self.logger.error(f"PipelineConfig: Name of theoretical grid not specified")
+            self.logger.error("PipelineConfig: Name of theoretical grid not specified")
             input_error = True
 
         # Check if "Z" and "M" are first free parameters when constraints from binary companion are used.
         if self.constraint_companion is not None:
             if not (self.free_parameters[0] == "Z" and self.free_parameters[1] == "M"):
                 self.logger.error(
-                    'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as frist entries. '
+                    'PipelineConfig: if constraints from a binary companion should be taken into account, "free_parameters" should start with "Z" and "M" as first entries. '
                     + f'However the first entries of this list were "{self.free_parameters[0]}" and "{self.free_parameters[1]}".'
                 )
                 input_error = True
 
         # Check if the amount of pulsations provided is equal to the amount of parts the pattern is split into.
         if "provided-pulsation" in self.pattern_methods:
-            if ("P" in self.observable_seismic or "dP" in self.observable_seismic) and not (
-                len(self.pattern_starting_pulsation["period"]) == self.N_pattern_parts
+            if ("P" in self.observable_seismic or "dP" in self.observable_seismic) and (
+                len(self.pattern_starting_pulsation["period"]) != self.n_pattern_parts
             ):
                 self.logger.error(
                     "To build patterns based on the provided pulsation method, there should be a pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of periods provided."
                 )
                 input_error = True
-            if ("f" in self.observable_seismic) and not (
-                len(self.pattern_starting_pulsation["frequency"]) == self.N_pattern_parts
+            if ("f" in self.observable_seismic) and (
+                len(self.pattern_starting_pulsation["frequency"]) != self.n_pattern_parts
             ):
                 self.logger.error(
                     "To build patterns based on the provided pulsation method, there should be a pulsation provided per part of the (interrupted) pulsation pattern. Incorrect number of frequencies provided."

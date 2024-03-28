@@ -15,7 +15,7 @@ if __name__ == "__main__":
         grid_parent_directory=None,  # change to '/YOUR_PATH/MESA_grid' if you need to perform step 0
         grids=["DO"],  # Diffusive Overshooting grid
         rotation_gyre=0.4805,
-        N_periods=36,
+        n_periods=36,
         observable_seismic=["dP"],
         nr_cpu=4,
     )
