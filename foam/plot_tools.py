@@ -342,19 +342,19 @@ def corner_plot(
 
             # Observed spectroscopic error bar, only added if observational constraints were provided.
             # To add the 1 and n-sigma spectro error boxes, calculate their width (so 2 and 2*n sigma wide)
-            width_logTeff_sigma = np.log10(obs_dataframe["Teff"][0] + obs_dataframe["Teff_err"][0]) - np.log10(
-                obs_dataframe["Teff"][0] - obs_dataframe["Teff_err"][0]
-            )
+            width_logTeff_sigma = np.log10(
+                obs_dataframe["Teff"].iloc[0] + obs_dataframe["Teff_err"].iloc[0]
+            ) - np.log10(obs_dataframe["Teff"].iloc[0] - obs_dataframe["Teff_err"].iloc[0])
             width_logTeff_nsigma = np.log10(
-                obs_dataframe["Teff"][0] + n_sigma_box * obs_dataframe["Teff_err"][0]
-            ) - np.log10(obs_dataframe["Teff"][0] - n_sigma_box * obs_dataframe["Teff_err"][0])
+                obs_dataframe["Teff"].iloc[0] + n_sigma_box * obs_dataframe["Teff_err"].iloc[0]
+            ) - np.log10(obs_dataframe["Teff"].iloc[0] - n_sigma_box * obs_dataframe["Teff_err"].iloc[0])
             errorbox_1s = patches.Rectangle(
                 (
-                    np.log10(obs_dataframe["Teff"][0] - obs_dataframe["Teff_err"][0]),
-                    obs_dataframe[logg_or_logL][0] - obs_dataframe[f"{logg_or_logL}_err"][0],
+                    np.log10(obs_dataframe["Teff"].iloc[0] - obs_dataframe["Teff_err"].iloc[0]),
+                    obs_dataframe[logg_or_logL].iloc[0] - obs_dataframe[f"{logg_or_logL}_err"].iloc[0],
                 ),
                 width_logTeff_sigma,
-                2 * obs_dataframe[f"{logg_or_logL}_err"][0],
+                2 * obs_dataframe[f"{logg_or_logL}_err"].iloc[0],
                 linewidth=1.7,
                 edgecolor="cyan",
                 facecolor="none",
@@ -362,11 +362,11 @@ def corner_plot(
             )
             errorbox_ns = patches.Rectangle(
                 (
-                    np.log10(obs_dataframe["Teff"][0] - n_sigma_box * obs_dataframe["Teff_err"][0]),
-                    obs_dataframe[logg_or_logL][0] - n_sigma_box * obs_dataframe[f"{logg_or_logL}_err"][0],
+                    np.log10(obs_dataframe["Teff"].iloc[0] - n_sigma_box * obs_dataframe["Teff_err"].iloc[0]),
+                    obs_dataframe[logg_or_logL].iloc[0] - n_sigma_box * obs_dataframe[f"{logg_or_logL}_err"].iloc[0],
                 ),
                 width_logTeff_nsigma,
-                2 * n_sigma_box * obs_dataframe[f"{logg_or_logL}_err"][0],
+                2 * n_sigma_box * obs_dataframe[f"{logg_or_logL}_err"].iloc[0],
                 linewidth=1.7,
                 edgecolor="cyan",
                 facecolor="none",

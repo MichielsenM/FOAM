@@ -56,24 +56,26 @@ def surface_constraint(
 
     if "Teff" in obs_dataframe.columns:
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logTeff < np.log10(obs_dataframe["Teff"][0] + nsigma * obs_dataframe["Teff_err"][0])
+            dataframe_theory.logTeff
+            < np.log10(obs_dataframe["Teff"].iloc[0] + nsigma * obs_dataframe["Teff_err"].iloc[0])
         ]
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logTeff > np.log10(obs_dataframe["Teff"][0] - nsigma * obs_dataframe["Teff_err"][0])
+            dataframe_theory.logTeff
+            > np.log10(obs_dataframe["Teff"].iloc[0] - nsigma * obs_dataframe["Teff_err"].iloc[0])
         ]
     if "logg" in obs_dataframe.columns:
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logg < obs_dataframe["logg"][0] + nsigma * obs_dataframe["logg_err"][0]
+            dataframe_theory.logg < obs_dataframe["logg"].iloc[0] + nsigma * obs_dataframe["logg_err"].iloc[0]
         ]
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logg > obs_dataframe["logg"][0] - nsigma * obs_dataframe["logg_err"][0]
+            dataframe_theory.logg > obs_dataframe["logg"].iloc[0] - nsigma * obs_dataframe["logg_err"].iloc[0]
         ]
     if "logL" in obs_dataframe.columns:
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logL < obs_dataframe["logL"][0] + nsigma * obs_dataframe["logL_err"][0]
+            dataframe_theory.logL < obs_dataframe["logL"].iloc[0] + nsigma * obs_dataframe["logL_err"].iloc[0]
         ]
         dataframe_theory = dataframe_theory[
-            dataframe_theory.logL > obs_dataframe["logL"][0] - nsigma * obs_dataframe["logL_err"][0]
+            dataframe_theory.logL > obs_dataframe["logL"].iloc[0] - nsigma * obs_dataframe["logL_err"].iloc[0]
         ]
 
     if constraint_companion is not None:
