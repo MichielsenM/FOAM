@@ -51,7 +51,7 @@ def surface_constraint(
     evolution_step: float
         Change in the evolutionary parameter from one step to the next (negative if quantity decreases, e.g. central hydrogen content Xc)
     """
-    obs_dataframe = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col="index")
+    obs_dataframe = pd.read_table(observations_file, sep="\s+", header=0, index_col="index")
     dataframe_theory = pd.read_hdf(merit_values_file)
 
     if "Teff" in obs_dataframe.columns:

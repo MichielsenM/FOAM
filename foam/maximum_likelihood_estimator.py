@@ -59,7 +59,7 @@ def calculate_likelihood(
     elif "P" or "dP" in observables:
         observed_quantity = "period"
     # Read in the observed data and make an array of the observed observables
-    obs_dataframe = pd.read_table(obs_path, delim_whitespace=True, header=0, index_col="index")
+    obs_dataframe = pd.read_table(obs_path, sep="\s+", header=0, index_col="index")
     obs, obs_err, file_suffix_observables = create_obs_observables_array(obs_dataframe, observables)
 
     # set the name of the output file

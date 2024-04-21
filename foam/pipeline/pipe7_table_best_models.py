@@ -19,7 +19,7 @@ else:
 for merit in config.merit_functions:
     # Get the pre-calculated AICc values from another file
     df_AICc = pd.read_table(
-        f"{directory_prefix}output_tables/{config.star}_AICc-values_{merit}.tsv", delim_whitespace=True, header=0
+        f"{directory_prefix}output_tables/{config.star}_AICc-values_{merit}.tsv", sep='\s+', header=0
     )
     with open(f"{directory_prefix}output_tables/{config.star}_best-model-table_{merit}.txt", "w") as outfile:
         params = ""

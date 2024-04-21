@@ -31,7 +31,7 @@ for merit in config.merit_functions:
     if merit == "CS":
         df_AICc = pd.DataFrame(data=[], columns=["method", "AICc"])
     elif merit == "MD":
-        df_AICc = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", delim_whitespace=True, header=0)
+        df_AICc = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", sep="\s+", header=0)
 
     for grid in config.grids:
         for method in config.pattern_methods:

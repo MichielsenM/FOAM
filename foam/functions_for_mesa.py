@@ -44,10 +44,8 @@ def read_mesa_file(file_path, index_col=None):
         return sf.read_hdf5(file_path)
 
     else:  # assumes the default MESA output format
-        header_df = pd.read_table(file_path, delim_whitespace=True, nrows=1, header=1)
-        data_df = pd.read_table(
-            file_path, delim_whitespace=True, skiprows=3, header=1, index_col=index_col
-        )
+        header_df = pd.read_table(file_path, sep="\s+", nrows=1, header=1)
+        data_df = pd.read_table(file_path, sep="\s+", skiprows=3, header=1, index_col=index_col)
 
         header = {}
         for k in header_df.keys():
@@ -87,9 +85,7 @@ def calculate_number_densities(hist_file):
 
     average_atomic_mass = inverse_average_atomic_mass ** (-1)
     for key in element_list.keys():
-        number_densities.update(
-            {key.replace("_per_Mass_tot", "_per_N_tot"): element_list[key] * average_atomic_mass}
-        )
+        number_densities.update({key.replace("_per_Mass_tot", "_per_N_tot"): element_list[key] * average_atomic_mass})
 
     return number_densities
 
@@ -122,13 +118,9 @@ def extract_surface_grid(
     # Make list of extra observables requested by the user
     if additional_observables is None:
         additional_observables = []
-    extras_to_be_extracted = [
-        x for x in additional_observables if x not in ["logTeff", "logL", "logg", "age"]
-    ]
+    extras_to_be_extracted = [x for x in additional_observables if x not in ["logTeff", "logL", "logg", "age"]]
 
-    extract_func = partial(
-        info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted
-    )
+    extract_func = partial(info_from_profiles, parameters=parameters, extra_header_items=extras_to_be_extracted)
     # Glob all the files, then iteratively send them to a pool of processors
     profiles = glob.iglob(mesa_profiles)
     with multiprocessing.Pool(nr_cpu) as p:

@@ -29,7 +29,7 @@ def likelihood_chi2(chi2):
 
 def likelihood_md(md):
     """Likelihood function of the mahalanobis distance"""
-    df_aicc_md = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", delim_whitespace=True, header=0)
+    df_aicc_md = pd.read_table(f"V_matrix/{config.star}_determinant_conditionNr.tsv", sep="\s+", header=0)
     ln_det_v = float((df_aicc_md.loc[df_aicc_md["method"] == f"{config.star}_{analysis}", "ln(det(V))"]).iloc[0])
     return np.exp(-0.5 * (md + config.k * np.log(2 * np.pi) + ln_det_v))
 

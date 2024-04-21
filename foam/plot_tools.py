@@ -160,7 +160,7 @@ def corner_plot(
     }
     CustomCMap = LinearSegmentedColormap("CustomMap", cdict)
     # theoretical models within the error ellipse
-    dataframe_theory_error_ellipse = pd.read_hdf(merit_values_file_error_ellipse, delim_whitespace=True, header=0)
+    dataframe_theory_error_ellipse = pd.read_hdf(merit_values_file_error_ellipse, sep="\s+", header=0)
     dataframe_theory_error_ellipse = dataframe_theory_error_ellipse.sort_values(
         "meritValue", ascending=False
     )  # Order from high to low, to plot lowest values last
@@ -333,7 +333,7 @@ def corner_plot(
 
     # Observations
     if n_sigma_box != None:
-        obs_dataframe = pd.read_table(observations_file, delim_whitespace=True, header=0, index_col="index")
+        obs_dataframe = pd.read_table(observations_file, sep="\s+", header=0, index_col="index")
         if (("logL" in obs_dataframe.columns) or ("logg" in obs_dataframe.columns)) and (
             "Teff" in obs_dataframe.columns
         ):
