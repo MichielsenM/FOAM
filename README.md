@@ -20,8 +20,4 @@ The full documentation can be found at https://michielsenm.github.io/FOAM/
 
 ### Author
 Developed by Mathias Michielsen
-```
-mathias.michielsen[at]kuleuven.be
-Instituut voor Sterrenkunde
-KU Leuven, Belgium
-```
+
