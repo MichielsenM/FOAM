@@ -62,6 +62,6 @@ Next to the tables with the best model parameters and their AIC values, the corn
 # Acknowledgements
 
 The research leading to the development of this package has received funding from the Research
-Foundation Flanders (FWO) by means of a PhD scholarship to MM under project No. 11F7120N. MM is grateful to T. Van Reeth for his help concerning the scaling of g-modes with rotation, and to A. Kemp for his suggestions regarding the online documentation.
+Foundation Flanders (FWO) by means of a PhD scholarship to MM under project No. 11F7120N. MM is grateful to Timothy Van Reeth for his help concerning the scaling of g-modes with rotation, to Alex Kemp for his suggestions regarding the online documentation, and to the reviewers Ashley Chontos and Ankit Barik for their constructive remarks.
 
 # References
