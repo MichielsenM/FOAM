@@ -140,7 +140,7 @@ def extract_surface_grid(
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f"{output_file}", "surfaceGrid", format="table", mode="w")
+    df.to_hdf(path_or_buf=output_file, key="surface_grid", format="table", mode="w")
 
 
 ################################################################################

@@ -97,6 +97,8 @@ for merit in config.merit_functions:
                 p += prob / total_probability
                 if p >= percentile[sigma]:
                     # Write all models enclosed within the error ellipse to a separate file
-                    df.iloc[: i + 1].to_hdf(output_name, "models_in_2sigma_error_ellipse", format="table", mode="w")
+                    df.iloc[: i + 1].to_hdf(
+                        path_or_buf=output_name, key="models_in_2sigma_error_ellipse", format="table", mode="w"
+                    )
                     config.logger.debug(f"---------- {analysis} ---------- {i+1} --- {p}")
                     break

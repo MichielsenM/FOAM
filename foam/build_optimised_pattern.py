@@ -149,7 +149,7 @@ def construct_theoretical_puls_pattern(
             data.append(line)
 
     df = pd.DataFrame(data=data, columns=header_parameters)
-    df.to_hdf(f"{output_file}", "selected_puls_grid", format="table", mode="w")
+    df.to_hdf(path_or_buf=output_file, key="selected_puls_grid", format="table", mode="w")
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

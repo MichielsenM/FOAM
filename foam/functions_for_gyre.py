@@ -53,7 +53,7 @@ def extract_frequency_grid(
 
     # Generate the directory for the output file and write the file afterwards
     Path(Path(output_file).parent).mkdir(parents=True, exist_ok=True)
-    df.to_hdf(f"{output_file}", "pulsgrid", format="table", mode="w")
+    df.to_hdf(path_or_buf=output_file, key="pulsation_grid", format="table", mode="w")
 
 
 ################################################################################

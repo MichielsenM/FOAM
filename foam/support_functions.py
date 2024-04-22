@@ -205,4 +205,4 @@ def add_surface_to_puls_grid(
     col = df_merged.pop("rot_err")
     df_merged.insert(1, col.name, col)
     # write the merged dataFrame to a new file
-    df_merged.to_hdf(f"{output_name}", "puls_surface_grid", format="table", mode="w")
+    df_merged.to_hdf(path_or_buf=output_name, key="pulsation_surface_grid", format="table", mode="w")

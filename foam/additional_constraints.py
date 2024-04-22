@@ -105,7 +105,7 @@ def surface_constraint(
 
     output_file = f"{nsigma}sigmaBox_{merit_values_file}"
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-    dataframe_theory.to_hdf(f"{output_file}", "surface_constrained_models", format="table", mode="w")
+    dataframe_theory.to_hdf(path_or_buf=output_file, key="surface_constrained_models", format="table", mode="w")
 
 
 ################################################################################

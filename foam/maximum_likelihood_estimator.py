@@ -131,7 +131,7 @@ def calculate_likelihood(
         how="inner",
         on=["rot", "rot_err"] + grid_parameters,
     )
-    df.to_hdf(f"{os.getcwd()}/meritvalues/{filename}.hdf", "merit_values", format="table", mode="w")
+    df.to_hdf(path_or_buf=f"{os.getcwd()}/meritvalues/{filename}.hdf", key="merit_values", format="table", mode="w")
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
