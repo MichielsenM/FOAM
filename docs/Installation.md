@@ -9,7 +9,7 @@ Please note that FOAM was written and tested on Linux. The installation procedur
 ## Prerequisites
 FOAM is a python package which requires python 3.9 or newer. The package requires <a href="https://gyre.readthedocs.io/en/stable/" target="_blank"> GYRE</a> to be installed as well. Please follow their <a href="https://gyre.readthedocs.io/en/stable/ref-guide/installation.html" target="_blank"> installation instructions</a>.
 
-FOAM depends on a number of python packages which are listed in the <a href="https://github.com/MichielsenM/FOAM/tree/master/pyproject.toml" target="_blank"> pyproject.toml</a> file. These dependencies will be installed when FOAM is installed using poetry.
+FOAM depends on a number of python packages which are listed in the <a href="https://github.com/MichielsenM/FOAM/tree/master/pyproject.toml" target="_blank"> pyproject.toml</a> file. These dependencies will automatically be installed when following the installation instructions below.
 
 ## Installing FOAM
 ### Installation using poetry (editable mode)
