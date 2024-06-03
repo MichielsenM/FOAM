@@ -1,4 +1,4 @@
-# Foam
+# Foam [![DOI](https://joss.theoj.org/papers/10.21105/joss.05884/status.svg)](https://doi.org/10.21105/joss.05884)
 
 A python package for FOrward Asteroseismic Modelling of gravity modes.
 
@@ -6,6 +6,9 @@ This repository is an open-source package, GNU-licensed. See GNU License in LICE
 
 ## Documentation
 The full documentation can be found at https://michielsenm.github.io/FOAM/
+
+## Attribution
+If you use FOAM in your work, please cite [Michielsen (2024)](https://doi.org/10.21105/joss.05884).
 
 ## Contents
 
